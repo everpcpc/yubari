@@ -19,6 +19,6 @@ BOTS = [
 ]
 
 try:
-    from local_config import *  # NOQA
+    from .local_config import *  # NOQA
 except:
     pass
