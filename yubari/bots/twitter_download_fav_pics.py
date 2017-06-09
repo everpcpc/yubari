@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # coding: utf-8
 
 import os
@@ -7,36 +7,27 @@ import logging
 
 import requests
 from requests.adapters import HTTPAdapter
-
-import tweepy
+from tweepy import Stream, StreamListener
 from tweepy.models import Status
 
-config_file = '/home/everpcpc/config/twitter.json'
+from yubari.config import TWITTER_IMG_PATH
+from yubari.lib.twitter import ttapi
 
-with open(config_file, 'r', encoding='utf-8') as f:
-    conf = json.load(f)
 
-DOWNLOAD_PATH = conf['DOWNLOAD_PATH']
-
-auth = tweepy.OAuthHandler(conf['CONSUMER_KEY'], conf['CONSUMER_SECRET'])
-auth.set_access_token(conf['ACCESS_TOKEN'], conf['ACCESS_TOKEN_SECRET'])
-
-logger = logging.getLogger('twitter')
-logging.basicConfig(level=logging.INFO,
-                    format='%(name)s - %(levelname)s - %(message)s')
-logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARN)
+logger = logging.getLogger(__name__)
 
 sess = requests.Session()
 sess.mount('https://', HTTPAdapter(max_retries=3))
-api = tweepy.API(auth)
 
 
-class PCStreamListener(tweepy.StreamListener):
+class PCStreamListener(StreamListener):
     def on_data(self, raw_data):
         data = json.loads(raw_data)
-        if 'event' in data:
+        if 'friends' in data:
+            logger.debug('first time get friend list')
+        elif 'event' in data:
             event = data['event']
-            logger.info('get event %s' % event)
+            logger.debug('get event %s' % event)
             event_fn = getattr(self, 'on_%s' % event, None)
             status = Status.parse(self.api, data['target_object'])
             if event_fn is None:
@@ -45,7 +36,7 @@ class PCStreamListener(tweepy.StreamListener):
                 if event_fn(status) is False:
                     return False
         else:
-            logger.info('new timeline item')
+            logger.debug('new timeline item')
 
     def on_favorite(self, status):
         self.process_image(status, 'download')
@@ -60,7 +51,7 @@ class PCStreamListener(tweepy.StreamListener):
             if media['type'] == "photo":
                 url = media['media_url_https']
                 filename = url.split('/')[-1]
-                full_path = os.path.join(DOWNLOAD_PATH, filename)
+                full_path = os.path.join(TWITTER_IMG_PATH, filename)
                 if type_ == 'download':
                     if os.path.exists(full_path):
                         logger.info("%s exists" % filename)
@@ -79,6 +70,10 @@ class PCStreamListener(tweepy.StreamListener):
                         logger.info('%s absent, ignore.' % filename)
 
 
+def run():
+    psl = Stream(auth=ttapi.auth, listener=PCStreamListener())
+    psl.userstream(_with='user')
+
+
 if __name__ == '__main__':
-    psl = tweepy.Stream(auth=api.auth, listener=PCStreamListener())
-    psl.userstream(_with='everpcpc', async=True)
+    run()
