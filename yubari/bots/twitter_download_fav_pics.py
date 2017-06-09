@@ -27,11 +27,12 @@ class PCStreamListener(StreamListener):
             logger.debug('first time get friend list')
         elif 'event' in data:
             event = data['event']
-            logger.debug('get event %s' % event)
+            logger.debug('get event %s', event)
             event_fn = getattr(self, 'on_%s' % event, None)
             status = Status.parse(self.api, data['target_object'])
+
             if event_fn is None:
-                logger.warn('%s is not supported' % event)
+                logger.warn('%s is not supported', event)
             else:
                 if event_fn(status) is False:
                     return False
@@ -54,9 +55,9 @@ class PCStreamListener(StreamListener):
                 full_path = os.path.join(TWITTER_IMG_PATH, filename)
                 if type_ == 'download':
                     if os.path.exists(full_path):
-                        logger.info("%s exists" % filename)
+                        logger.info("%s exists", filename)
                     else:
-                        logger.info("--> Downloading %s" % url)
+                        logger.info("--> Downloading %s", url)
                         r = sess.get(url, stream=True, timeout=5)
                         with open(full_path, 'wb') as f:
                             for chunk in r.iter_content(chunk_size=1024):
@@ -64,10 +65,10 @@ class PCStreamListener(StreamListener):
                                     f.write(chunk)
                 elif type_ == 'delete':
                     if os.path.exists(full_path):
-                        logger.info('--> Deleting %s' % filename)
+                        logger.info('--> Deleting %s', filename)
                         os.remove(full_path)
                     else:
-                        logger.info('%s absent, ignore.' % filename)
+                        logger.info('%s absent, ignore.', filename)
 
 
 def run():
