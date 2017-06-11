@@ -70,6 +70,9 @@ class PCStreamListener(StreamListener):
                     else:
                         logger.info('%s absent, ignore.', filename)
 
+    def on_error(self, code):
+        logger.error("error: %s", code)
+
 
 def run():
     psl = Stream(auth=ttapi.auth, listener=PCStreamListener())
