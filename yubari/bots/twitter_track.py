@@ -56,7 +56,8 @@ class MyStreamListener(StreamListener):
             return
 
         status = Status.parse(self.api, data)
-        user = status.user
+
+        user = getattr(status, "user", None)
         if not user:
             logger.debug("empty user")
             return
