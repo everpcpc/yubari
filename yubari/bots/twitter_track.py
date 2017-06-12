@@ -16,7 +16,6 @@ from yubari.lib.qq import qqbot
 logger = logging.getLogger(__name__)
 
 TWITTER_maesan = '2381595966'
-TAG_SAMIDARE = "毎日五月雨"
 TWITTER_KanColle_STAFF = "294025417"
 KanColle_PROFILE_IMAGE_TMP = '/tmp/twitter_kancolle_staff_profile_image'
 kancolle_profile_image = ""
@@ -69,8 +68,11 @@ class MyStreamListener(StreamListener):
             logger.debug("ignore user: %s", user.name)
 
     def proceed_kancolle(self, status):
-        logger.info("kancolle: %s", status.text.replace("\n", " "))
+        tags = status.entities.get("hashtags", [])
+        if "艦これ" not in tags:
+            return
 
+        logger.info("kancolle: %s", status.text.replace("\n", " "))
         user = status.user
 
         global kancolle_profile_image
@@ -84,14 +86,14 @@ class MyStreamListener(StreamListener):
 
     def proceed_samidare(self, status):
         tags = status.entities.get("hashtags", [])
-        if TAG_SAMIDARE not in tags:
+        if "毎日五月雨" not in tags:
             return
 
         logger.info("maesan: %s", status.text.replace("\n", " "))
         medias = status.entities.get("media", [])
         for media in medias:
-            logger.info("samidare: %s", media.media_url_https)
-            qqbot.sendSelfMsg(media.media_url_https)
+            logger.info("samidare: %s", media["media_url_https"])
+            qqbot.sendSelfMsg(media["media_url_https"])
 
     def on_error(self, code):
         logger.error("error: %s", code)
