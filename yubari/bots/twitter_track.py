@@ -63,6 +63,12 @@ class MyStreamListener(StreamListener):
         if not user:
             logger.debug("empty user")
             return
+        if user.id_str not in TWITTERS.values():
+            logger.debug("other user")
+            return
+        if getattr(status, "retweeted_status", None):
+            logger.debug("ignore retweet from: %s", user.name)
+            return
         if user.id_str == TWITTERS["KanColle_STAFF"]:
             self.proceed_kancolle(status)
         elif user.id_str == TWITTERS["maesanpicture"]:
