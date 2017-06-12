@@ -15,21 +15,22 @@ from yubari.lib.qq import qqbot
 
 logger = logging.getLogger(__name__)
 
-KanColle_PROFILE_IMAGE_TMP = '/tmp/twitter_kancolle_staff_profile_image'
+kancolle_PROFILE_IMAGE_TMP = '/tmp/twitter_kancolle_staff_profile_image'
 kancolle_profile_image = ""
 
 TWITTERS = {
     "KanColle_STAFF": "294025417",
     "maesanpicture": "2381595966",
+    "komatan": "96604067",
     "Strangestone": "93332575"
 }
 
 
 def load_profile_img():
-    if not os.path.exists(KanColle_PROFILE_IMAGE_TMP):
+    if not os.path.exists(kancolle_PROFILE_IMAGE_TMP):
         return
     global kancolle_profile_image
-    with open(KanColle_PROFILE_IMAGE_TMP, 'r') as f:
+    with open(kancolle_PROFILE_IMAGE_TMP, 'r') as f:
         url = f.read()
         if url and url.startswith("https://"):
             kancolle_profile_image = url
@@ -42,7 +43,7 @@ def update_profile_img(img):
     kancolle_profile_image = img
     send_profile_image(img)
     logger.info("profile image changed to: %s", img)
-    with open(KanColle_PROFILE_IMAGE_TMP, 'w') as f:
+    with open(kancolle_PROFILE_IMAGE_TMP, 'w') as f:
         f.write(img)
 
 
@@ -66,6 +67,8 @@ class MyStreamListener(StreamListener):
             self.proceed_kancolle(status)
         elif user.id_str == TWITTERS["maesanpicture"]:
             self.proceed_samidare(status)
+        elif user.id_str == TWITTERS["komatan"]:
+            self.proceed_komatan(status)
         elif user.id_str == TWITTERS["Strangestone"]:
             self.proceed_tawawa(status)
         else:
@@ -94,6 +97,15 @@ class MyStreamListener(StreamListener):
             logger.info("samidare: %s", media["media_url_https"])
             qqbot.sendSelfMsg(media["media_url_https"])
 
+    def proceed_komatan(self, status):
+        medias = status.entities.get("media", [])
+        if not medias:
+            return
+        logger.info("komatan: %s", status.text.replace("\n", " "))
+        for media in medias:
+            logger.info("komatan: %s", media["media_url_https"])
+            qqbot.sendSelfMsg(media["media_url_https"])
+
     def proceed_tawawa(self, status):
         if not status.text.startswith("月曜日のたわわ"):
             return
@@ -110,7 +122,6 @@ class MyStreamListener(StreamListener):
 def run():
     load_profile_img()
     msl = Stream(auth=ttapi.auth, listener=MyStreamListener())
-    #  msl.filter(track=[TAG_SAMIDARE], follow=[TWITTER_KanColle_STAFF, TWITTER_maesan])
     msl.filter(follow=TWITTERS.values())
 
 
