@@ -22,7 +22,11 @@ class QQBot(object):
         return base64.b64encode(msg.encode('gbk')).decode()
 
     def _decode(self, msg):
-        return base64.b64decode(msg).decode('gbk')
+        try:
+            ret = base64.b64decode(msg).decode('gbk')
+        except:
+            ret = "decode failed: %s" % msg
+        return ret
 
     def sendGroupMsg(self, msg):
         self._send("{} {} {}".format("sendGroupMsg", QQ_GROUP, self._encode(msg)))

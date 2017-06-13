@@ -81,7 +81,8 @@ class MyStreamListener(StreamListener):
             logger.debug("ignore user: %s", user.name)
 
     def proceed_kancolle(self, status):
-        tags = status.entities.get("hashtags", [])
+        _tags = status.entities.get("hashtags", [])
+        tags = [t["text"] for t in _tags]
         if "艦これ" not in tags:
             return
         logger.info("kancolle: %s", status.text.replace("\n", " "))
@@ -94,7 +95,8 @@ class MyStreamListener(StreamListener):
         qqbot.sendGroupMsg('\n'.join(msg))
 
     def proceed_samidare(self, status):
-        tags = status.entities.get("hashtags", [])
+        _tags = status.entities.get("hashtags", [])
+        tags = [t["text"] for t in _tags]
         if "毎日五月雨" not in tags:
             return
         logger.info("maesan: %s", status.text.replace("\n", " "))
