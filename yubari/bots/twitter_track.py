@@ -42,7 +42,7 @@ def update_profile_img(img):
         return
     kancolle_profile_image = img
     send_profile_image(img)
-    logger.info("profile image changed to: %s", img)
+    logger.info("profile image changed from [%s] to [%s]", kancolle_profile_image, img)
     with open(kancolle_PROFILE_IMAGE_TMP, 'w') as f:
         f.write(img)
 

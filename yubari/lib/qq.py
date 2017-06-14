@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import re
 import base64
 
 from greenstalk.client import Client
 
+from yubari.consts import QQ_FACE_SEND, QQ_FACE_CODE, RE_QQ_FACE
 from yubari.config import QQ_BOT, QQ_GROUP, QQ_ME
 
 
@@ -19,6 +21,13 @@ class QQBot(object):
         self.client.put(msg)
 
     def _encode(self, msg):
+        try:
+            msg = re.sub(
+                RE_QQ_FACE,
+                lambda x: QQ_FACE_SEND.format(QQ_FACE_CODE.index(x.group(0))) if x.group(0) else x,
+                msg)
+        except Exception as e:
+            logger.error("Failed replace face: %s", e)
         return base64.b64encode(msg.encode('gbk')).decode()
 
     def _decode(self, msg):
