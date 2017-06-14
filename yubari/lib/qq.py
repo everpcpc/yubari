@@ -70,7 +70,7 @@ class QQBot(object):
                     raise Exception("msg type not supported: %s" % body[0])
                 self.client.delete(id_)
             except Exception as e:
-                logging.error("failed to proceed msg [{}]: {}".format(body[4], e))
+                logger.error("failed to proceed msg [{}]: {}".format(body[4], e))
                 self.client.bury(id_)
 
 
