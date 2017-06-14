@@ -28,7 +28,7 @@ TWITTERS = {
 def get_previous_profile_img():
     if not os.path.exists(kancolle_PROFILE_IMAGE_TMP):
         logger.warning("kancolle profile image not exists")
-        return
+        return ""
     with open(kancolle_PROFILE_IMAGE_TMP, 'r') as f:
         url = f.read()
         if url and url.startswith("https://"):
