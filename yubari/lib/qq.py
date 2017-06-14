@@ -22,11 +22,7 @@ class QQBot(object):
         return base64.b64encode(msg.encode('gbk')).decode()
 
     def _decode(self, msg):
-        try:
-            ret = base64.b64decode(msg).decode('gbk')
-        except:
-            ret = "decode failed: %s" % msg
-        return ret
+        return base64.b64decode(msg).decode('gbk')
 
     def sendGroupMsg(self, msg):
         self._send("{} {} {}".format("sendGroupMsg", QQ_GROUP, self._encode(msg)))
@@ -43,26 +39,30 @@ class QQBot(object):
             if not id_ or not body_:
                 continue
             body = body_.split()
-            if body[0] == "eventPrivateMsg":
-                yield dict(
-                    event="PrivateMsg",
-                    subtype=body[1],
-                    time=body[2],
-                    qq=body[3],
-                    msg=self._decode(body[4]))
+            try:
+                if body[0] == "eventPrivateMsg":
+                    yield dict(
+                        event="PrivateMsg",
+                        subtype=body[1],
+                        time=body[2],
+                        qq=body[3],
+                        msg=self._decode(body[4]))
+                    self.client.delete(id_)
+                elif body[0] == "eventGroupMsg":
+                    yield dict(
+                        event="GroupMsg",
+                        subtype=body[1],
+                        time=body[2],
+                        group=body[3],
+                        qq=body[4],
+                        anoymouse=body[5],
+                        msg=self._decode(body[6]))
+                else:
+                    raise Exception("msg type not supported: %s" % body[0])
                 self.client.delete(id_)
-            elif body[0] == "eventGroupMsg":
-                yield dict(
-                    event="GroupMsg",
-                    subtype=body[1],
-                    time=body[2],
-                    group=body[3],
-                    qq=body[4],
-                    anoymouse=body[5],
-                    msg=self._decode(body[6]))
-                self.client.delete(id_)
-            else:
-                yield dict(error="msg type not supported: %s" % body[0])
+            except Exception as e:
+                logging.error("failed to proceed msg [{}]: {}".format(body[4], e))
+                self.client.bury(id_)
 
 
 qqbot = QQBot()
