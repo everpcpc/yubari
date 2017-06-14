@@ -2,12 +2,15 @@
 # coding: utf-8
 
 import re
+import logging
 import base64
 
 from greenstalk.client import Client
 
 from yubari.consts import QQ_FACE_SEND, QQ_FACE_CODE, RE_QQ_FACE
 from yubari.config import QQ_BOT, QQ_GROUP, QQ_ME
+
+logger = logging.getLogger(__name__)
 
 
 class QQBot(object):

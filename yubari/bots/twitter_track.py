@@ -16,7 +16,6 @@ from yubari.lib.qq import qqbot
 logger = logging.getLogger(__name__)
 
 kancolle_PROFILE_IMAGE_TMP = '/tmp/twitter_kancolle_staff_profile_image'
-kancolle_profile_image = ""
 
 TWITTERS = {
     "KanColle_STAFF": "294025417",
@@ -26,23 +25,23 @@ TWITTERS = {
 }
 
 
-def load_profile_img():
+def get_previous_profile_img():
     if not os.path.exists(kancolle_PROFILE_IMAGE_TMP):
+        logger.warning("kancolle profile image not exists")
         return
-    global kancolle_profile_image
     with open(kancolle_PROFILE_IMAGE_TMP, 'r') as f:
         url = f.read()
         if url and url.startswith("https://"):
-            kancolle_profile_image = url
+            return url
+    return ""
 
 
 def update_profile_img(img):
-    global kancolle_profile_image
-    if kancolle_profile_image == img:
+    previous_image = get_previous_profile_img()
+    if previous_image and previous_image == img:
         return
-    kancolle_profile_image = img
+    logger.info("profile image changed from [%s] to [%s]", previous_image, img)
     send_profile_image(img)
-    logger.info("profile image changed from [%s] to [%s]", kancolle_profile_image, img)
     with open(kancolle_PROFILE_IMAGE_TMP, 'w') as f:
         f.write(img)
 
@@ -128,7 +127,6 @@ class MyStreamListener(StreamListener):
 
 
 def run():
-    load_profile_img()
     msl = Stream(auth=ttapi.auth, listener=MyStreamListener())
     msl.filter(follow=TWITTERS.values())
 
