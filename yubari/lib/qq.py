@@ -6,6 +6,7 @@ import logging
 import base64
 
 from greenstalk.client import Client
+from greenstalk.exceptions import NotFoundError
 
 from yubari.consts import QQ_FACE_SEND, QQ_FACE_CODE, RE_QQ_FACE
 from yubari.config import QQ_BOT, QQ_GROUP, QQ_ME
@@ -53,7 +54,7 @@ class QQBot(object):
             body = body_.split()
             try:
                 if body[0] == "eventPrivateMsg":
-                    yield dict(
+                    ret = dict(
                         event="PrivateMsg",
                         subtype=body[1],
                         time=body[2],
@@ -61,7 +62,7 @@ class QQBot(object):
                         msg=self._decode(body[4]))
                     self.client.delete(id_)
                 elif body[0] == "eventGroupMsg":
-                    yield dict(
+                    ret = dict(
                         event="GroupMsg",
                         subtype=body[1],
                         time=body[2],
@@ -71,7 +72,10 @@ class QQBot(object):
                         msg=self._decode(body[6]))
                 else:
                     raise Exception("msg type not supported: %s" % body[0])
+                yield ret
                 self.client.delete(id_)
+            except NotFoundError as e:
+                logger.warning("msg not found to delete: {}".format(id_, e))
             except Exception as e:
                 logger.error("failed to proceed msg [{}]: {}".format(body[4], e))
                 self.client.bury(id_)
