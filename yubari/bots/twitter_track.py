@@ -37,6 +37,8 @@ def get_previous_profile_img():
 
 
 def update_profile_img(img):
+    if not img:
+        return
     previous_image = get_previous_profile_img()
     if previous_image and previous_image == img:
         return
@@ -102,7 +104,7 @@ class MyStreamListener(StreamListener):
         medias = status.entities.get("media", [])
         for media in medias:
             logger.info("samidare: %s", media["media_url_https"])
-            qqbot.sendSelfMsg(media["media_url_https"])
+            qqbot.sendGroupMsg(media["media_url_https"])
 
     def proceed_komatan(self, status):
         medias = status.entities.get("media", [])
@@ -120,7 +122,7 @@ class MyStreamListener(StreamListener):
         medias = status.entities.get("media", [])
         for media in medias:
             logger.info("tawawa: %s", media["media_url_https"])
-            qqbot.sendSelfMsg(media["media_url_https"])
+            qqbot.sendGroupMsg(media["media_url_https"])
 
     def on_error(self, code):
         logger.error("error: %s", code)
