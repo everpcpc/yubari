@@ -32,10 +32,10 @@ class QQBot(object):
                 msg)
         except Exception as e:
             logger.error("Failed replace face: %s", e)
-        return base64.b64encode(msg.encode('gbk')).decode()
+        return base64.b64encode(msg.encode('GB18030')).decode()
 
     def _decode(self, msg):
-        return base64.b64decode(msg).decode('gbk')
+        return base64.b64decode(msg).decode('GB18030')
 
     def sendGroupMsg(self, msg):
         self._send("{} {} {}".format("sendGroupMsg", QQ_GROUP, self._encode(msg)))
@@ -60,7 +60,6 @@ class QQBot(object):
                         time=body[2],
                         qq=body[3],
                         msg=self._decode(body[4]))
-                    self.client.delete(id_)
                 elif body[0] == "eventGroupMsg":
                     ret = dict(
                         event="GroupMsg",
