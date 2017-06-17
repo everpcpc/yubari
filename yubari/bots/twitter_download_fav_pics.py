@@ -29,13 +29,15 @@ class PCStreamListener(StreamListener):
             event = data['event']
             logger.debug('get event %s', event)
             event_fn = getattr(self, 'on_%s' % event, None)
-            status = Status.parse(self.api, data['target_object'])
-
             if event_fn is None:
                 logger.warn('%s is not supported', event)
-            else:
-                if event_fn(status) is False:
-                    return False
+                return
+            target = data.get('target_object')
+            if not target:
+                logger.warn('target is None on: %s', event)
+                return
+            status = Status.parse(self.api, target)
+            event_fn(status)
         else:
             logger.debug('new timeline item')
 

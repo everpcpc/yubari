@@ -16,6 +16,7 @@ QQ_IMG_PATH = ""
 QQ_GROUP = ""
 QQ_BOT = ""
 QQ_ME = ""
+MENTION_NAME = []
 
 BOTS = [
 ]
