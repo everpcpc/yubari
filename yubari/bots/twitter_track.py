@@ -45,13 +45,9 @@ def update_profile_img(img):
     if previous_image and previous_image == img:
         return
     logger.info("profile image changed from [%s] to [%s]", previous_image, img)
-    send_profile_image(img)
+    qqbot.sendGroupMsg(img=img.replace("_normal", ""))
     with open(kancolle_PROFILE_IMAGE_TMP, 'w') as f:
         f.write(img)
-
-
-def send_profile_image(img):
-    qqbot.sendGroupMsg(qqbot.pull_img(img.replace("_normal", "")))
 
 
 class MyStreamListener(StreamListener):
@@ -103,24 +99,31 @@ class MyStreamListener(StreamListener):
             return
         logger.info("maesan: %s", status.text.replace("\n", " "))
         medias = status.entities.get("media", [])
+        if not medias:
+            return
+        qqbot.sendGroupMsg(status.text)
         for media in medias:
             logger.info("samidare: %s", media["media_url_https"])
-            qqbot.sendGroupMsg(qqbot.pull_img(media["media_url_https"]))
+            qqbot.sendGroupMsg(img=media["media_url_https"])
 
     def proceed_komatan(self, status):
         medias = status.entities.get("media", [])
         if not medias:
             return
         logger.info("komatan: %s", status.text.replace("\n", " "))
+        qqbot.sendGroupMsg(status.text)
         for media in medias:
             logger.info("komatan: %s", media["media_url_https"])
-            qqbot.sendGroupMsg(qqbot.pull_img(media["media_url_https"]))
+            qqbot.sendGroupMsg(img=media["media_url_https"])
 
     def proceed_tawawa(self, status):
         if not status.text.startswith("月曜日のたわわ"):
             return
         logger.info("tawawa: %s", status.text.replace("\n", " "))
         medias = status.entities.get("media", [])
+        if not medias:
+            return
+        qqbot.sendGroupMsg(status.text)
         for media in medias:
             logger.info("tawawa: %s", media["media_url_https"])
             qqbot.sendGroupMsg(qqbot.pull_img(media["media_url_https"]))

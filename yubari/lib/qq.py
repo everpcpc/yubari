@@ -43,7 +43,7 @@ class QQBot(object):
     def _decode(self, msg):
         return base64.b64decode(msg).decode('GB18030')
 
-    def pull_img(self, url):
+    def _pull_img(self, url):
         filename = url.split('/')[-1]
         full_path = os.path.join(QQ_IMG_PATH, filename)
         if os.path.exists(full_path):
@@ -62,14 +62,22 @@ class QQBot(object):
         return "[CQ:image,file={}]".format(filename)
 
 
-    def sendGroupMsg(self, msg):
+    def sendGroupMsg(self, msg="", img=None):
+        if img:
+            msg += self._pull_img(img)
+        if not msg:
+            logger.error("send group msg empty")
         self._send("{} {} {}".format("sendGroupMsg", QQ_GROUP, self._encode(msg)))
 
-    def sendPrivateMsg(self, qq, msg):
+    def sendPrivateMsg(self, qq, msg="", img=None):
+        if img:
+            msg += self._pull_img(img)
+        if not msg:
+            logger.error("send %s msg empty", qq)
         self._send("{} {} {}".format("sendPrivateMsg", qq, self._encode(msg)))
 
-    def sendSelfMsg(self, msg):
-        self.sendPrivateMsg(QQ_ME, msg)
+    def sendSelfMsg(self, msg="", img=None):
+        self.sendPrivateMsg(QQ_ME, msg, img)
 
     def poll(self):
         while True:
