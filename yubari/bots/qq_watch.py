@@ -15,7 +15,7 @@ def run():
     last_msg = ""
     for msg in qqbot.poll():
         logger.info(msg)
-        content = msg.get('msg')
+        content = msg.get('msg').strip()
         for word in MENTION_NAME:
             if word in content:
                 qqbot.sendSelfMsg(content)
@@ -29,7 +29,7 @@ def run():
                     continue_count += 1
                 else:
                     logger.info("repeat: %s", content)
-                    qqbot.sendSelfMsg(content)
+                    qqbot.sendGroupMsg(content)
                     continue_count = 0
 
 
