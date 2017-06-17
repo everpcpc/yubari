@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import time
 import logging
 
 from yubari.config import QQ_GROUP, MENTION_NAME
@@ -13,12 +14,20 @@ logger = logging.getLogger(__name__)
 def run():
     continue_count = 0
     last_msg = ""
+    last_call = 0
     for msg in qqbot.poll():
         logger.info(msg)
         content = msg.get('msg').strip()
         for word in MENTION_NAME:
             if word in content:
-                qqbot.sendSelfMsg(content)
+                now = int(time.time())
+                if now - last_call < 1800:
+                    logger.info("called in last 30min")
+                    return
+                call_msg = "呀呀呀，召唤一号机[CQ:at,qq=%s]" % QQ_ME
+                qqbot.sendGroupMsg(call_msg)
+                last_call = now
+                return
         if msg.get('event') == 'GroupMsg':
             if msg.get('group') == QQ_GROUP:
                 if content != last_msg:
