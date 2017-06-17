@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import re
 import logging
 import base64
+import requests
+from requests.adapters import HTTPAdapter
 
 from greenstalk.client import Client
 from greenstalk.exceptions import NotFoundError
 
 from yubari.consts import QQ_FACE_SEND, QQ_FACE_CODE, RE_QQ_FACE
-from yubari.config import QQ_BOT, QQ_GROUP, QQ_ME
+from yubari.config import QQ_BOT, QQ_GROUP, QQ_ME, QQ_IMG_PATH
 
 logger = logging.getLogger(__name__)
+
+sess = requests.Session()
+sess.mount('https://', HTTPAdapter(max_retries=3))
 
 
 class QQBot(object):
@@ -36,6 +42,25 @@ class QQBot(object):
 
     def _decode(self, msg):
         return base64.b64decode(msg).decode('GB18030')
+
+    def pull_img(self, url):
+        filename = url.split('/')[-1]
+        full_path = os.path.join(QQ_IMG_PATH, filename)
+        if os.path.exists(full_path):
+            logger.info("%s exists", filename)
+        else:
+            logger.info("--> Downloading %s", url)
+            try:
+                r = sess.get(url, stream=True, timeout=5)
+                with open(full_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk:
+                            f.write(chunk)
+            except Exception as e:
+                logger.error("pull img failed: %s", e)
+                return url
+        return "[CQ:image,file={}]".format(filename)
+
 
     def sendGroupMsg(self, msg):
         self._send("{} {} {}".format("sendGroupMsg", QQ_GROUP, self._encode(msg)))
