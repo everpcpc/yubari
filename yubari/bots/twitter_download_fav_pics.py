@@ -48,7 +48,7 @@ class PCStreamListener(StreamListener):
         self.process_image(status, 'delete')
 
     def process_image(self, status, type_):
-        entities = getattr(status, "extended_entities")
+        entities = getattr(status, "extended_entities", None)
         if not entities:
             return []
         medias = entities.get("media", [])

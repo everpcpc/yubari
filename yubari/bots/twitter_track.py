@@ -50,7 +50,7 @@ def update_profile_img(img):
 
 
 def get_medias(status):
-    entities = getattr(status, "extended_entities")
+    entities = getattr(status, "extended_entities", None)
     if not entities:
         return []
     return entities.get("media", [])
