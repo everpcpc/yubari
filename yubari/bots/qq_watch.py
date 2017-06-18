@@ -23,18 +23,18 @@ def run():
     last_msg = ""
     last_call = 0
     for msg in qqbot.poll():
-        logger.info(msg)
-        content = msg.get('msg').strip()
-        if check_mention_self(content):
-            now = int(time.time())
-            if now - last_call < 1800:
-                logger.info("called in last 30min")
-                continue
-            call_msg = "呀呀呀，召唤一号机[CQ:at,qq=%s]" % QQ_ME
-            qqbot.sendGroupMsg(call_msg)
-            last_call = now
-            continue
         if msg.get('event') == 'GroupMsg':
+            content = msg["msg"].strip()
+            logger.info("(%s)[%s]:{%s}", msg["group"], msg["qq"], content)
+            if check_mention_self(content):
+                now = int(time.time())
+                if now - last_call < 1800:
+                    logger.info("called in last 30min")
+                    continue
+                call_msg = "呀呀呀，召唤一号机[CQ:at,qq=%s]" % QQ_ME
+                qqbot.sendGroupMsg(call_msg)
+                last_call = now
+                continue
             if msg.get('group') == QQ_GROUP:
                 if content != last_msg:
                     last_msg = content
@@ -46,6 +46,10 @@ def run():
                     logger.info("repeat: %s", content)
                     qqbot.sendGroupMsg(content)
                     continue_count = 0
+        elif msg.get('event') == 'PrivateMsg':
+            logger.info("[%s]:{%s}", msg["qq"], msg["msg"])
+        else:
+            logger.info(msg)
 
 
 if __name__ == "__main__":
