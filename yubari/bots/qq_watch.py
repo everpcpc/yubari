@@ -23,12 +23,14 @@ def run():
     last_msg = ""
     last_call = 0
     for msg in qqbot.poll():
+        now = int(time.time())
         if msg.get('event') == 'GroupMsg':
+            if msg["qq"] == QQ_ME:
+                last_call = now
             content = msg["msg"].strip()
             logger.info("(%s)[%s]:{%s}", msg["group"], msg["qq"], content)
             if check_mention_self(content):
-                now = int(time.time())
-                if now - last_call < 1800:
+                if now - last_call < 1200:
                     logger.info("called in last 30min")
                     continue
                 call_msg = "呀呀呀，召唤一号机[CQ:at,qq=%s]" % QQ_ME
