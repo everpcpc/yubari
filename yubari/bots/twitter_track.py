@@ -9,13 +9,12 @@ from datetime import datetime
 from tweepy import Stream, StreamListener
 from tweepy.models import Status
 
+from yubari.config import kancolle_PROFILE_IMAGE_TMP
 from yubari.lib.twitter import ttapi
 from yubari.lib.qq import qqbot
 
 
 logger = logging.getLogger(__name__)
-
-kancolle_PROFILE_IMAGE_TMP = '/tmp/twitter_kancolle_staff_profile_image'
 
 TWITTERS = {
     "KanColle_STAFF": "294025417",

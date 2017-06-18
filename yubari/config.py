@@ -2,6 +2,7 @@
 # coding: utf-8
 
 TWITTER_IMG_PATH = ""
+kancolle_PROFILE_IMAGE_TMP = ""
 
 TWITTER_CONSUMER_KEY = ""
 TWITTER_CONSUMER_SECRET = ""
