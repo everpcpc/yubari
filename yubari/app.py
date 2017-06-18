@@ -35,7 +35,7 @@ def start_all():
     while True:
         for b in processes:
             p = processes[b]
-            sleep(1)
+            sleep(3)
             if p.exitcode is None:
                 if p.is_alive():
                     continue
