@@ -49,6 +49,13 @@ def update_profile_img(img):
         f.write(img)
 
 
+def get_medias(status):
+    entities = getattr(status, "extended_entities")
+    if not entities:
+        return []
+    return entities.get("media", [])
+
+
 class MyStreamListener(StreamListener):
     def on_data(self, raw_data):
         data = json.loads(raw_data)
@@ -97,7 +104,7 @@ class MyStreamListener(StreamListener):
         if "毎日五月雨" not in tags:
             return
         logger.info("maesan: %s", status.text.replace("\n", " "))
-        medias = status.extended_entities.get("media", [])
+        medias = get_medias(status)
         if not medias:
             return
         qqbot.sendGroupMsg(status.text)
@@ -106,7 +113,7 @@ class MyStreamListener(StreamListener):
             qqbot.sendGroupMsg(img=media["media_url_https"])
 
     def proceed_komatan(self, status):
-        medias = status.extended_entities.get("media", [])
+        medias = get_medias(status)
         if not medias:
             return
         logger.info("komatan: %s", status.text.replace("\n", " "))
@@ -119,7 +126,7 @@ class MyStreamListener(StreamListener):
         if not status.text.startswith("月曜日のたわわ"):
             return
         logger.info("tawawa: %s", status.text.replace("\n", " "))
-        medias = status.extended_entities.get("media", [])
+        medias = get_medias(status)
         if not medias:
             return
         qqbot.sendGroupMsg(status.text)
