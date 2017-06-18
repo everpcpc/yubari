@@ -97,7 +97,7 @@ class MyStreamListener(StreamListener):
         if "毎日五月雨" not in tags:
             return
         logger.info("maesan: %s", status.text.replace("\n", " "))
-        medias = status.entities.get("media", [])
+        medias = status.extended_entities.get("media", [])
         if not medias:
             return
         qqbot.sendGroupMsg(status.text)
@@ -106,11 +106,11 @@ class MyStreamListener(StreamListener):
             qqbot.sendGroupMsg(img=media["media_url_https"])
 
     def proceed_komatan(self, status):
-        medias = status.entities.get("media", [])
+        medias = status.extended_entities.get("media", [])
         if not medias:
             return
         logger.info("komatan: %s", status.text.replace("\n", " "))
-        qqbot.sendGroupMsg(status.text)
+        # qqbot.sendGroupMsg(status.text)
         for media in medias:
             logger.info("komatan: %s", media["media_url_https"])
             qqbot.sendGroupMsg(img=media["media_url_https"])
@@ -119,7 +119,7 @@ class MyStreamListener(StreamListener):
         if not status.text.startswith("月曜日のたわわ"):
             return
         logger.info("tawawa: %s", status.text.replace("\n", " "))
-        medias = status.entities.get("media", [])
+        medias = status.extended_entities.get("media", [])
         if not medias:
             return
         qqbot.sendGroupMsg(status.text)

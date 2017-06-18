@@ -48,8 +48,8 @@ class PCStreamListener(StreamListener):
         self.process_image(status, 'delete')
 
     def process_image(self, status, type_):
-        medias = status.entities.get('media', [])
-        logger.info('[%s]', status.text.replace('\n', ' '))
+        medias = status.extended_entities.get("media", [])
+        logger.info('[%s] %s medias', status.text.replace('\n', ' '), len(medias))
         for media in medias:
             if media['type'] == "photo":
                 url = media['media_url_https']
@@ -71,6 +71,8 @@ class PCStreamListener(StreamListener):
                         os.remove(full_path)
                     else:
                         logger.info('%s absent, ignore.', filename)
+            else:
+                logger.info('ignore media type %s', media['type'])
 
     def on_error(self, code):
         logger.error("error: %s", code)
