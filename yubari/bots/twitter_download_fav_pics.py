@@ -48,7 +48,10 @@ class PCStreamListener(StreamListener):
         self.process_image(status, 'delete')
 
     def process_image(self, status, type_):
-        medias = status.extended_entities.get("media", [])
+        entities = getattr(status, "extended_entities")
+        if not entities:
+            return []
+        medias = entities.get("media", [])
         logger.info('[%s] %s medias', status.text.replace('\n', ' '), len(medias))
         for media in medias:
             if media['type'] == "photo":
