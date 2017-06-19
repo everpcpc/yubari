@@ -132,7 +132,7 @@ class MyStreamListener(StreamListener):
         qqbot.sendGroupMsg(status.text)
         for media in medias:
             logger.info("tawawa: %s", media["media_url_https"])
-            qqbot.sendGroupMsg(qqbot.pull_img(media["media_url_https"]))
+            qqbot.sendGroupMsg(img=media["media_url_https"])
 
     def on_error(self, code):
         logger.error("error: %s", code)
