@@ -30,17 +30,17 @@ def run():
             content = msg["msg"].strip()
             logger.info("(%s)[%s]:{%s}", msg["group"], msg["qq"], content)
             if check_mention_self(content):
-                if now - last_call < 1200:
+                if now - last_call > 1200:
+                    call_msg = "呀呀呀，召唤一号机[CQ:at,qq=%s]" % QQ_ME
+                    qqbot.sendGroupMsg(call_msg)
+                    last_call = now
+                else:
                     logger.info("called in last 30min")
-                    continue
-                call_msg = "呀呀呀，召唤一号机[CQ:at,qq=%s]" % QQ_ME
-                qqbot.sendGroupMsg(call_msg)
-                last_call = now
                 continue
             if msg.get('group') == QQ_GROUP:
                 if content != last_msg:
                     last_msg = content
-                    continue_count = 0
+                    continue_count = 1
                     continue
                 if continue_count < 2:
                     continue_count += 1
