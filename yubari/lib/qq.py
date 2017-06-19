@@ -41,7 +41,10 @@ class QQBot(object):
         return base64.b64encode(msg.encode('GB18030')).decode()
 
     def _decode(self, msg):
-        return base64.b64decode(msg).decode('GB18030')
+        if msg == "0":
+            return ""
+        else:
+            return base64.b64decode(msg).decode('GB18030')
 
     def _pull_img(self, url):
         filename = url.split('/')[-1]
@@ -60,7 +63,6 @@ class QQBot(object):
                 logger.error("pull img failed: %s", e)
                 return url
         return "[CQ:image,file={}]".format(filename)
-
 
     def sendGroupMsg(self, msg="", img=None):
         if img:
@@ -107,9 +109,9 @@ class QQBot(object):
                 yield ret
                 self.client.delete(id_)
             except NotFoundError as e:
-                logger.warning("msg not found to delete: {}".format(id_, e))
+                logger.warning("msg %s not found to delete: %s", id_, e)
             except Exception as e:
-                logger.error("failed to proceed msg [{}]: {}".format(body[4], e))
+                logger.error("failed to proceed msg [%s]: %s", body[4], e)
                 self.client.bury(id_)
 
 
