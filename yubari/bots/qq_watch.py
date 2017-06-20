@@ -27,7 +27,7 @@ def run():
         if msg.get('event') == 'GroupMsg':
             if msg["qq"] == QQ_ME:
                 last_call = now
-            content = msg["msg"].strip()
+            content = msg["msg"].replace("\n", " ").strip()
             logger.info("(%s)[%s]:{%s}", msg["group"], msg["qq"], content)
             if check_mention_self(content):
                 if now - last_call > 1200:
