@@ -35,7 +35,7 @@ def run():
                     qqbot.sendGroupMsg(call_msg)
                     last_call = now
                 else:
-                    logger.info("called in last 30min")
+                    logger.info("called in last 10min")
                 continue
             if msg.get('group') == QQ_GROUP:
                 if content != last_msg:
