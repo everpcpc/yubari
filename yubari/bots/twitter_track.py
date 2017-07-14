@@ -92,11 +92,19 @@ class MyStreamListener(StreamListener):
         logger.info("kancolle: %s", status.text.replace("\n", " "))
         user = status.user
         update_profile_img(user.profile_image_url_https)
+
         msg = [user.name]
         timestamp = int(int(status.timestamp_ms) / 1000)
         msg.append(datetime.fromtimestamp(timestamp).ctime())
         msg.append(status.text)
-        qqbot.sendGroupMsg('\n'.join(msg))
+        #  qqbot.sendGroupMsg('\n'.join(msg))
+
+        medias = get_medias(status)
+        if not medias:
+            return
+        for media in medias:
+            logger.info("kancolle: %s", media["media_url_https"])
+            qqbot.sendGroupMsg(img=media["media_url_https"])
 
     def proceed_samidare(self, status):
         _tags = status.entities.get("hashtags", [])
