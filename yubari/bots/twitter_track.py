@@ -85,10 +85,10 @@ class MyStreamListener(StreamListener):
             logger.debug("ignore user: %s", user.name)
 
     def proceed_kancolle(self, status):
-        _tags = status.entities.get("hashtags", [])
-        tags = [t["text"] for t in _tags]
-        if "艦これ" not in tags:
-            return
+        # _tags = status.entities.get("hashtags", [])
+        # tags = [t["text"] for t in _tags]
+        # if "艦これ" not in tags:
+        #     return
         logger.info("kancolle: %s", status.text.replace("\n", " "))
         user = status.user
         update_profile_img(user.profile_image_url_https)
