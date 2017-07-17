@@ -44,7 +44,7 @@ def update_profile_img(img):
     if previous_image and previous_image == img:
         return
     logger.info("profile image changed from [%s] to [%s]", previous_image, img)
-    qqbot.sendGroupMsg(img=img.replace("_normal", ""))
+    #  qqbot.sendGroupMsg(img=img.replace("_normal", ""))
     with open(kancolle_PROFILE_IMAGE_TMP, 'w') as f:
         f.write(img)
 
@@ -52,7 +52,11 @@ def update_profile_img(img):
 def get_medias(status):
     entities = getattr(status, "extended_entities", None)
     if not entities:
-        return []
+        et = getattr(status, "entities", None)
+        if not et:
+            return []
+        logger.warning("no extended_entities but entities: %s", et)
+        entities = et
     return entities.get("media", [])
 
 
