@@ -4,7 +4,7 @@
 import time
 import logging
 
-from yubari.config import QQ_GROUP, MENTION_NAME, QQ_ME
+from yubari.config import QQ_GROUP, MENTION_NAME, QQ_ME, QQ_IGNORE
 from yubari.lib.qq import qqbot
 
 
@@ -25,6 +25,8 @@ def run():
     for msg in qqbot.poll():
         now = int(time.time())
         if msg.get('event') == 'GroupMsg':
+            if msg["qq"] in QQ_IGNORE:
+                continue
             if msg["qq"] == QQ_ME:
                 last_call = now
             content = msg["msg"].replace("\n", " ").strip()

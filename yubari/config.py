@@ -17,10 +17,12 @@ QQ_IMG_PATH = ""
 QQ_GROUP = ""
 QQ_BOT = ""
 QQ_ME = ""
-MENTION_NAME = []
+QQ_IGNORE = ()
+MENTION_NAME = ()
 
-BOTS = [
-]
+BOTS = (
+)
+
 
 try:
     from .local_config import *  # NOQA
