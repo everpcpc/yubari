@@ -55,7 +55,6 @@ def get_medias(status):
         et = getattr(status, "entities", None)
         if not et:
             return []
-        logger.warning("no extended_entities but entities: %s", et)
         entities = et
     return entities.get("media", [])
 
@@ -89,10 +88,6 @@ class MyStreamListener(StreamListener):
             logger.debug("ignore user: %s", user.name)
 
     def proceed_kancolle(self, status):
-        # _tags = status.entities.get("hashtags", [])
-        # tags = [t["text"] for t in _tags]
-        # if "艦これ" not in tags:
-        #     return
         logger.info("kancolle: %s", status.text.replace("\n", " "))
         user = status.user
         update_profile_img(user.profile_image_url_https)
