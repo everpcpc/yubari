@@ -18,3 +18,7 @@ build:
 	@echo "Building..."
 	@(cd yubari; go build)
 	@mv ${current_dir}/yubari/yubari ${GOPATH}/bin/
+
+install:
+	@echo "Installing to /usr/local/bin/ ..."
+	@sudo cp ${GOPATH}/bin/yubari /usr/local/bin/
