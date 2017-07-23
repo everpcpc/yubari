@@ -1,4 +1,4 @@
-package main
+package yubari
 
 import (
 	"github.com/op/go-logging"
@@ -10,6 +10,8 @@ var (
 )
 
 func GetLogger() *logging.Logger {
+	log := logging.MustGetLogger("yubari")
+
 	stdFormat := logging.MustStringFormatter(
 		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{color:reset} %{message}`,
 	)
@@ -24,6 +26,5 @@ func GetLogger() *logging.Logger {
 	// logging.AddModuleLevel(stdBackend).SetLevel(logging.CRITICAL, "")
 	logging.SetBackend(sysLogger, stdLogger)
 
-	log := logging.MustGetLogger("yubari")
 	return log
 }
