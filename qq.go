@@ -1,4 +1,4 @@
-package yubari
+package main
 
 import (
 	"fmt"

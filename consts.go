@@ -1,3 +1,3 @@
-package yubari
+package main
 
 var ()
