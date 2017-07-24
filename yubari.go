@@ -23,4 +23,11 @@ func main() {
 	}
 	face := QQface{faceId}
 	fmt.Println(face.String())
+	qqBot := &QQBot{Id: 0}
+	err = qqBot.Connect("localhost:11300")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	qqBot.SendSelfMsg("嗯？")
 }
