@@ -19,7 +19,7 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 	cfg = &Config{File: *cfgfile}
 	file, e := ioutil.ReadFile(*cfgfile)
 	if e != nil {
-		Logger.Fatalf("Configfile error (%v)\n", e)
+		logger.Fatalf("Configfile error (%v)\n", e)
 		os.Exit(2)
 	}
 	json.Unmarshal(file, cfg)

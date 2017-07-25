@@ -6,10 +6,12 @@ import (
 )
 
 func main() {
+	logger = GetLogger(true, false)
+
 	cfgfile := flag.String("c", "config.json", "Config file")
 	flag.Parse()
 	cfg := ReadConfig(cfgfile)
-	Logger.Infof("Starting with config: %+v", cfg)
+	logger.Infof("Starting with config: %+v", cfg)
 
 	/*
 		data := []byte(`{"/laugh": 12, "/cry": 2}`)
@@ -34,7 +36,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	Logger.Infof("Starting qqbot: %+v", qqBot)
+	logger.Infof("Starting qqbot: %+v", qqBot)
 	qqWatch()
 }
 
@@ -44,11 +46,11 @@ func qqWatch() {
 	for msg := range messages {
 		switch msg["event"] {
 		case "PrivateMsg":
-			Logger.Infof("[%s]:{%s}", msg["qq"], msg["msg"])
+			logger.Infof("[%s]:{%s}", msg["qq"], msg["msg"])
 		case "GroupMsg":
-			Logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
+			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
 		default:
-			Logger.Info(msg)
+			logger.Info(msg)
 		}
 	}
 }

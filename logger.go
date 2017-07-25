@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	Logger = GetLogger(true, false)
+	logger *logging.Logger
 )
 
 func GetLogger(std bool, sys bool) *logging.Logger {
