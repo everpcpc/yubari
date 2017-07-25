@@ -6,3 +6,4 @@ dist/
 tmp/
 go/
 local_config.py
+config.json

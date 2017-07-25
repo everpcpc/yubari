@@ -2,11 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"strconv"
 )
 
 func main() {
+	cfgfile := flag.String("c", "config.json", "Config file")
+	flag.Parse()
+	cfg := ReadConfig(cfgfile)
+	fmt.Println(cfg)
+
 	data := []byte(`{"/laugh": 12, "/cry": 2}`)
 	var objmap map[string]*json.RawMessage
 	err := json.Unmarshal(data, &objmap)
