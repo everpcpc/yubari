@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	btd "github.com/kr/beanstalk"
+	bt "github.com/kr/beanstalk"
 	"strings"
 	"time"
 	// "regexp"
+)
+
+var (
+	qqBot *QQBot
 )
 
 type QQface struct {
@@ -17,24 +21,25 @@ type QQface struct {
 type QQBot struct {
 	Id     string
 	Cfg    *Config
-	Client *btd.Conn
-	SendQ  *btd.Tube
-	RecvQ  *btd.TubeSet
+	Client *bt.Conn
+	SendQ  *bt.Tube
+	RecvQ  *bt.TubeSet
+}
+
+func NewQQBot(cfg *Config) (*QQBot, error) {
+	q := &QQBot{Id: cfg.QQBot, Cfg: cfg}
+	client, err := bt.Dial("tcp", cfg.BeanstalkAddr)
+	if err != nil {
+		return q, err
+	}
+	q.Client = client
+	q.SendQ = &bt.Tube{Conn: client, Name: fmt.Sprintf("%s(i)", q.Id)}
+	q.RecvQ = bt.NewTubeSet(client, fmt.Sprintf("%s(o)", q.Id))
+	return q, nil
 }
 
 func (q *QQface) String() string {
 	return fmt.Sprintf("[CQ:face,id=%d]", q.Id)
-}
-
-func (q *QQBot) Connect(addr string) error {
-	client, err := btd.Dial("tcp", addr)
-	if err != nil {
-		return err
-	}
-	q.Client = client
-	q.SendQ = &btd.Tube{Conn: client, Name: fmt.Sprintf("%s(i)", q.Id)}
-	q.RecvQ = btd.NewTubeSet(client, fmt.Sprintf("%s(o)", q.Id))
-	return nil
 }
 
 func (q *QQBot) send(msg []byte) error {
@@ -59,7 +64,7 @@ func (q *QQBot) SendPrivateMsg(qq string, msg string) error {
 }
 
 func (q *QQBot) SendSelfMsg(msg string) error {
-	return q.SendPrivateMsg(q.Cfg.SelfQQ, msg)
+	return q.SendPrivateMsg(q.Cfg.QQSelf, msg)
 }
 
 func formMsg(t string, to string, msg string) ([]byte, error) {
@@ -71,7 +76,19 @@ func formMsg(t string, to string, msg string) ([]byte, error) {
 	return bytes.Join([][]byte{[]byte(t), []byte(to), []byte(base64Msg)}, []byte(" ")), nil
 }
 
-func (q *QQBot) Poll() {
+func decodeMsg(msg string) (string, error) {
+	gb18030Msg, err := base64.StdEncoding.DecodeString(msg)
+	if err != nil {
+		return "", err
+	}
+	utf8Msg, err := Gb18030ToUtf8(gb18030Msg)
+	if err != nil {
+		return "", err
+	}
+	return string(utf8Msg), nil
+}
+
+func (q *QQBot) Poll(messages chan map[string]string) {
 	for true {
 		id, body_, err := q.RecvQ.Reserve(1 * time.Hour)
 		if err != nil {
@@ -83,10 +100,37 @@ func (q *QQBot) Poll() {
 		switch body[0] {
 		case "eventPrivateMsg":
 			ret["event"] = "PrivateMsg"
+			ret["subtype"] = body[1]
+			ret["time"] = body[2]
+			ret["qq"] = body[3]
+			ret["msg"], err = decodeMsg(body[4])
+			if err != nil {
+				Logger.Error(err)
+				continue
+			}
 		case "eventGroupMsg":
 			ret["event"] = "GroupMsg"
+			ret["subtype"] = body[1]
+			ret["time"] = body[2]
+			ret["group"] = body[3]
+			ret["qq"] = body[4]
+			ret["anonymous"] = body[5]
+			ret["msg"], err = decodeMsg(body[6])
+			if err != nil {
+				Logger.Error(err)
+				continue
+			}
 		default:
 			err = q.Client.Bury(id, 0)
+			if err != nil {
+				Logger.Error(err)
+			}
+			continue
+		}
+		messages <- ret
+		err = q.Client.Delete(id)
+		if err != nil {
+			Logger.Error(err)
 		}
 	}
 }

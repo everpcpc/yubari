@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	File      string
-	SelfQQ    string `json:"self_qq"`
-	BotQQ     string `json:"bot_qq"`
-	QQGroup   string `json:"qq_group"`
-	BtdServer string `json:"btd_server"`
+	File          string
+	QQSelf        string   `json:"qq_self"`
+	QQBot         string   `json:"qq_bot"`
+	QQGroup       string   `json:"qq_group"`
+	QQIgnore      []string `json:"qq_ignore"`
+	BeanstalkAddr string   `json:"beanstalk_addr"`
 }
 
 func ReadConfig(cfgfile *string) (cfg *Config) {

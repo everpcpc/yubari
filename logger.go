@@ -13,7 +13,7 @@ func GetLogger(std bool, sys bool) *logging.Logger {
 	log := logging.MustGetLogger("yubari")
 	if std {
 		stdFormat := logging.MustStringFormatter(
-			`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{color:reset} %{message}`,
+			`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`,
 		)
 		stdLogger := logging.NewBackendFormatter(logging.NewLogBackend(os.Stdout, "", 0), stdFormat)
 		logging.SetBackend(stdLogger)

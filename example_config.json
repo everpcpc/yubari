@@ -1,6 +1,8 @@
 {
-	"self_qq": "",
-	"bot_qq": "",
-	"qq_group": "",
-	"btd_server": ""
+	"qq_self": "000000000",
+	"qq_bot": "0000000000",
+	"qq_group": "000000000",
+	"qq_ignore": [],
+	"qq_img_path": "",
+	"beanstalk_addr": "localhost:11300"
 }

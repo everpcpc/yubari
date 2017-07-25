@@ -3,14 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"time"
 )
 
 func main() {
 	cfgfile := flag.String("c", "config.json", "Config file")
 	flag.Parse()
 	cfg := ReadConfig(cfgfile)
-	fmt.Println(cfg)
+	Logger.Infof("Starting with config: %+v", cfg)
 
 	/*
 		data := []byte(`{"/laugh": 12, "/cry": 2}`)
@@ -29,13 +28,27 @@ func main() {
 		face := QQface{faceId}
 		fmt.Println(face.String())
 	*/
-
-	qqBot := &QQBot{Id: cfg.BotQQ, Cfg: cfg}
-	err := qqBot.Connect(cfg.BtdServer)
+	var err error
+	qqBot, err = NewQQBot(cfg)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	go qqBot.SendSelfMsg("嗯？")
-	time.Sleep(1 * time.Second)
+	Logger.Infof("Starting qqbot: %+v", qqBot)
+	qqWatch()
+}
+
+func qqWatch() {
+	messages := make(chan map[string]string)
+	go qqBot.Poll(messages)
+	for msg := range messages {
+		switch msg["event"] {
+		case "PrivateMsg":
+			Logger.Infof("[%s]:{%s}", msg["qq"], msg["msg"])
+		case "GroupMsg":
+			Logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
+		default:
+			Logger.Info(msg)
+		}
+	}
 }
