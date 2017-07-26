@@ -19,24 +19,31 @@ type QQface struct {
 }
 
 type QQBot struct {
-	Id        string
-	Cfg       *Config
-	Client    *bt.Conn
-	SendQ     *bt.Tube
-	RecvQ     *bt.TubeSet
-	Connected bool
+	Id         string
+	Cfg        *Config
+	SendQ      *bt.Tube
+	RecvQ      *bt.TubeSet
+	SConnected bool
+	RConnected bool
 }
 
 func NewQQBot(cfg *Config) (*QQBot, error) {
 	q := &QQBot{Id: cfg.QQBot, Cfg: cfg}
+
 	client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
 	if err != nil {
 		return q, err
 	}
-	q.Connected = true
-	q.Client = client
-	q.SendQ = &bt.Tube{Conn: client, Name: fmt.Sprintf("%s(i)", q.Id)}
+	q.RConnected = true
 	q.RecvQ = bt.NewTubeSet(client, fmt.Sprintf("%s(o)", q.Id))
+
+	client, err = bt.Dial("tcp", q.Cfg.BeanstalkAddr)
+	if err != nil {
+		return q, err
+	}
+	q.SConnected = true
+	q.SendQ = &bt.Tube{Conn: client, Name: fmt.Sprintf("%s(i)", q.Id)}
+
 	return q, nil
 }
 
@@ -45,28 +52,40 @@ func (q *QQface) String() string {
 }
 
 func (q *QQBot) Reconnect() {
-	if q.Connected {
-		err := q.Client.Close()
+	if !q.SConnected {
+		client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
 		if err != nil {
-			logger.Warning(err)
+			q.SConnected = false
+			logger.Error(err)
+			time.Sleep(10 * time.Second)
+			return
 		}
+		q.SConnected = true
+		q.SendQ.Conn = client
+		logger.Noticef("SendQ reconnect succeed at: %+v", client)
 	}
-	client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
-	if err != nil {
-		q.Connected = false
-		logger.Error(err)
-		time.Sleep(10 * time.Second)
-		return
+	if !q.RConnected {
+		client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
+		if err != nil {
+			q.RConnected = false
+			logger.Error(err)
+			time.Sleep(10 * time.Second)
+			return
+		}
+		q.RConnected = true
+		q.RecvQ.Conn = client
+		logger.Noticef("RecvQ reconnect succeed at: %+v", client)
 	}
-	q.Connected = true
-	q.Client = client
-	q.SendQ.Conn = client
-	q.RecvQ.Conn = client
-	logger.Notice("Reconnect succeed")
 }
 
 func (q *QQBot) send(msg []byte) error {
+	if !q.SConnected {
+		q.Reconnect()
+	}
 	_, err := q.SendQ.Put(msg, 1, 0, time.Minute)
+	if _, ok := err.(bt.ConnError); ok {
+		q.SConnected = false
+	}
 	return err
 }
 
@@ -113,14 +132,20 @@ func decodeMsg(msg string) (string, error) {
 
 func (q *QQBot) Poll(messages chan map[string]string) {
 	for true {
-		if !q.Connected {
+		if !q.RConnected {
 			q.Reconnect()
+			time.Sleep(1 * time.Second)
 			continue
 		}
 		id, body_, err := q.RecvQ.Reserve(1 * time.Hour)
 		if err != nil {
 			logger.Warning(err)
-			q.Reconnect()
+			if _, ok := err.(bt.ConnError); ok {
+				q.RecvQ.Conn.Close()
+				q.RConnected = false
+			} else {
+				time.Sleep(3 * time.Second)
+			}
 			continue
 		}
 		body := strings.Split(string(body_), " ")
@@ -151,16 +176,24 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 				continue
 			}
 		default:
-			err = q.Client.Bury(id, 0)
+			err = q.RecvQ.Conn.Bury(id, 0)
 			if err != nil {
+				if _, ok := err.(bt.ConnError); ok {
+					q.RecvQ.Conn.Close()
+					q.RConnected = false
+				}
 				logger.Error(err)
 				time.Sleep(3 * time.Second)
 			}
 			continue
 		}
 		messages <- ret
-		err = q.Client.Delete(id)
+		err = q.RecvQ.Conn.Delete(id)
 		if err != nil {
+			if _, ok := err.(bt.ConnError); ok {
+				q.RecvQ.Conn.Close()
+				q.RConnected = false
+			}
 			logger.Error(err)
 			time.Sleep(3 * time.Second)
 		}

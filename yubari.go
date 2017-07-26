@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"time"
 )
 
 func main() {
@@ -20,7 +21,16 @@ func main() {
 		return
 	}
 	logger.Infof("Starting qqbot: %+v", qqBot)
+	go sendSelf()
 	qqWatch()
+}
+
+func sendSelf() {
+	for {
+		qqBot.SendSelfMsg("yes")
+		logger.Info("yes")
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func qqWatch() {
