@@ -93,6 +93,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 		id, body_, err := q.RecvQ.Reserve(1 * time.Hour)
 		if err != nil {
 			logger.Warning(err)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 		body := strings.Split(string(body_), " ")
@@ -106,6 +107,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 			ret["msg"], err = decodeMsg(body[4])
 			if err != nil {
 				logger.Error(err)
+				time.Sleep(3 * time.Second)
 				continue
 			}
 		case "eventGroupMsg":
@@ -118,12 +120,14 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 			ret["msg"], err = decodeMsg(body[6])
 			if err != nil {
 				logger.Error(err)
+				time.Sleep(3 * time.Second)
 				continue
 			}
 		default:
 			err = q.Client.Bury(id, 0)
 			if err != nil {
 				logger.Error(err)
+				time.Sleep(3 * time.Second)
 			}
 			continue
 		}
@@ -131,6 +135,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 		err = q.Client.Delete(id)
 		if err != nil {
 			logger.Error(err)
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
