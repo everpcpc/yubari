@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	logger = GetLogger(LOGALL)
+	logger = GetLogger(LOGSTD)
 
 	cfgfile := flag.String("c", "config.json", "Config file")
 	flag.Parse()
