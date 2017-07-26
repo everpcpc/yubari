@@ -6,30 +6,13 @@ import (
 )
 
 func main() {
-	logger = GetLogger(true, false)
+	logger = GetLogger(LOGALL)
 
 	cfgfile := flag.String("c", "config.json", "Config file")
 	flag.Parse()
 	cfg := ReadConfig(cfgfile)
 	logger.Infof("Starting with config: %+v", cfg)
 
-	/*
-		data := []byte(`{"/laugh": 12, "/cry": 2}`)
-		var objmap map[string]*json.RawMessage
-		err := json.Unmarshal(data, &objmap)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		faceId, err := strconv.Atoi(string(*objmap["/laugh"]))
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		face := QQface{faceId}
-		fmt.Println(face.String())
-	*/
 	var err error
 	qqBot, err = NewQQBot(cfg)
 	if err != nil {
