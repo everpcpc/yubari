@@ -5,17 +5,19 @@ import (
 	"os"
 )
 
+type LogType uint8
+
 const (
-	LOGALL = 0
-	LOGSTD = 1
-	LOGSYS = 2
+	LOGALL LogType = iota
+	LOGSTD
+	LOGSYS
 )
 
 var (
 	logger *logging.Logger
 )
 
-func GetLogger(pos int) *logging.Logger {
+func GetLogger(pos LogType) *logging.Logger {
 	log := logging.MustGetLogger("yubari")
 	stdFormat := logging.MustStringFormatter(
 		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`,
