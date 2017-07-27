@@ -4,5 +4,6 @@
 	"qq_group": "000000000",
 	"qq_ignore": [],
 	"qq_img_path": "",
-	"beanstalk_addr": "localhost:11300"
+	"beanstalk_addr": "localhost:11300",
+	"redis_addr": "localhost:6379"
 }

@@ -1,3 +1,5 @@
 package main
 
-var ()
+var (
+	keyLastCalled = "last_called"
+)

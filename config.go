@@ -13,6 +13,7 @@ type Config struct {
 	QQGroup       string   `json:"qq_group"`
 	QQIgnore      []string `json:"qq_ignore"`
 	BeanstalkAddr string   `json:"beanstalk_addr"`
+	RedisAddr     string   `json:"redis_addr"`
 }
 
 func ReadConfig(cfgfile *string) (cfg *Config) {
