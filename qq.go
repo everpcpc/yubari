@@ -131,7 +131,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 		job, err := conn.Reserve()
 		if err != nil {
 			logger.Warning(err)
-			time.Sleep(3 * time.Second)
+			time.Sleep(time.Duration(i) * time.Second)
 			continue
 		}
 		i = 1
