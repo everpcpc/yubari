@@ -15,11 +15,11 @@ var (
 )
 
 type QQface struct {
-	Id int
+	ID int
 }
 
 type QQBot struct {
-	Id    string
+	ID    string
 	Cfg   *Config
 	Pool  *bt.Pool
 	RecvQ string
@@ -27,7 +27,7 @@ type QQBot struct {
 }
 
 func NewQQBot(cfg *Config) *QQBot {
-	q := &QQBot{Id: cfg.QQBot, Cfg: cfg}
+	q := &QQBot{ID: cfg.QQBot, Cfg: cfg}
 	q.Pool = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
 			return bt.Dial(cfg.BeanstalkAddr)
@@ -39,13 +39,13 @@ func NewQQBot(cfg *Config) *QQBot {
 		Wait:        true,
 	}
 
-	q.RecvQ = fmt.Sprintf("%s(o)", q.Id)
-	q.SendQ = fmt.Sprintf("%s(i)", q.Id)
+	q.RecvQ = fmt.Sprintf("%s(o)", q.ID)
+	q.SendQ = fmt.Sprintf("%s(i)", q.ID)
 	return q
 }
 
 func (q *QQface) String() string {
-	return fmt.Sprintf("[CQ:face,id=%d]", q.Id)
+	return fmt.Sprintf("[CQ:face,id=%d]", q.ID)
 }
 
 func (q *QQBot) send(msg []byte) {

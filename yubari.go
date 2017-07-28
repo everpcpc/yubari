@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"time"
 )
 
 func main() {
@@ -26,25 +25,26 @@ func main() {
 	defer qqBot.Pool.Close()
 	logger.Infof("QQBot: %+v", qqBot)
 
-	go qqWatch()
-	qqSend()
-}
-
-func qqSend() {
-	for {
-		qqBot.SendSelfMsg("哈哈")
-		time.Sleep(10 * time.Second)
-	}
-}
-
-func qqWatch() {
 	messages := make(chan map[string]string)
 	go qqBot.Poll(messages)
+	go qqWatch(messages)
+}
+
+func qqWatch(messages chan map[string]string) {
+	ignoreMap := make(map[string]struct{})
+	for _, q := range qqBot.Cfg.QQIgnore {
+		ignoreMap[q] = struct{}{}
+	}
+
 	for msg := range messages {
 		switch msg["event"] {
 		case "PrivateMsg":
 			logger.Infof("[%s]:{%s}", msg["qq"], msg["msg"])
 		case "GroupMsg":
+			if _, ok := ignoreMap[msg["qq"]]; ok {
+				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
+				continue
+			}
 			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
 		default:
 			logger.Info(msg)
