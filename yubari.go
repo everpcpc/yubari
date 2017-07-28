@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"time"
 )
 
 func main() {
@@ -18,14 +19,22 @@ func main() {
 		logger.Panic(err)
 		return
 	}
+	defer rds.Close()
 	logger.Infof("Redis connected: %+v", rds)
-	qqBot, err = NewQQBot(cfg)
-	if err != nil {
-		logger.Panic(err)
-		return
+
+	qqBot = NewQQBot(cfg)
+	defer qqBot.Pool.Close()
+	logger.Infof("QQBot: %+v", qqBot)
+
+	go qqWatch()
+	qqSend()
+}
+
+func qqSend() {
+	for {
+		qqBot.SendSelfMsg("哈哈")
+		time.Sleep(10 * time.Second)
 	}
-	logger.Infof("Starting qqbot: %+v", qqBot)
-	qqWatch()
 }
 
 func qqWatch() {

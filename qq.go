@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	bt "github.com/kr/beanstalk"
+	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	"strings"
 	"time"
 	// "regexp"
@@ -19,94 +19,83 @@ type QQface struct {
 }
 
 type QQBot struct {
-	Id         string
-	Cfg        *Config
-	SendQ      *bt.Tube
-	RecvQ      *bt.TubeSet
-	SConnected bool
-	RConnected bool
+	Id    string
+	Cfg   *Config
+	Pool  *bt.Pool
+	RecvQ string
+	SendQ string
 }
 
-func NewQQBot(cfg *Config) (*QQBot, error) {
+func NewQQBot(cfg *Config) *QQBot {
 	q := &QQBot{Id: cfg.QQBot, Cfg: cfg}
-
-	client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
-	if err != nil {
-		return q, err
+	q.Pool = &bt.Pool{
+		Dial: func() (*bt.Conn, error) {
+			return bt.Dial(cfg.BeanstalkAddr)
+		},
+		MaxIdle:     10,
+		MaxActive:   100,
+		IdleTimeout: 60 * time.Second,
+		MaxLifetime: 180 * time.Second,
+		Wait:        true,
 	}
-	q.RConnected = true
-	q.RecvQ = bt.NewTubeSet(client, fmt.Sprintf("%s(o)", q.Id))
 
-	client, err = bt.Dial("tcp", q.Cfg.BeanstalkAddr)
-	if err != nil {
-		return q, err
-	}
-	q.SConnected = true
-	q.SendQ = &bt.Tube{Conn: client, Name: fmt.Sprintf("%s(i)", q.Id)}
-
-	return q, nil
+	q.RecvQ = fmt.Sprintf("%s(o)", q.Id)
+	q.SendQ = fmt.Sprintf("%s(i)", q.Id)
+	return q
 }
 
 func (q *QQface) String() string {
 	return fmt.Sprintf("[CQ:face,id=%d]", q.Id)
 }
 
-func (q *QQBot) Reconnect() {
-	if !q.SConnected {
-		client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
-		if err != nil {
-			q.SConnected = false
-			logger.Error(err)
-			time.Sleep(10 * time.Second)
+func (q *QQBot) send(msg []byte) {
+	// wait longer with more errors
+	var (
+		conn *bt.Conn
+		err  error
+	)
+	for i := 1; ; i++ {
+		conn, err = q.Pool.Get()
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+		if i > q.Cfg.QQSendMaxRetry {
+			logger.Error("Send failed:", string(msg))
 			return
 		}
-		q.SConnected = true
-		q.SendQ.Conn = client
-		logger.Noticef("SendQ reconnect succeed at: %+v", client)
 	}
-	if !q.RConnected {
-		client, err := bt.Dial("tcp", q.Cfg.BeanstalkAddr)
-		if err != nil {
-			q.RConnected = false
-			logger.Error(err)
-			time.Sleep(10 * time.Second)
-			return
-		}
-		q.RConnected = true
-		q.RecvQ.Conn = client
-		logger.Noticef("RecvQ reconnect succeed at: %+v", client)
+	conn.Use(q.SendQ)
+	_, err = conn.Put(msg, 1, 0, time.Minute)
+	if err != nil {
+		logger.Error(err)
+		return
 	}
+
+	q.Pool.Release(conn, false)
+	return
 }
 
-func (q *QQBot) send(msg []byte) error {
-	if !q.SConnected {
-		q.Reconnect()
-	}
-	_, err := q.SendQ.Put(msg, 1, 0, time.Minute)
-	if _, ok := err.(bt.ConnError); ok {
-		q.SConnected = false
-	}
-	return err
-}
-
-func (q *QQBot) SendGroupMsg(msg string) error {
+func (q *QQBot) SendGroupMsg(msg string) {
 	fullMsg, err := formMsg("sendGroupMsg", q.Cfg.QQGroup, msg)
 	if err != nil {
-		return err
+		logger.Error(err)
+		return
 	}
-	return q.send(fullMsg)
+	go q.send(fullMsg)
 }
 
-func (q *QQBot) SendPrivateMsg(qq string, msg string) error {
+func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 	fullMsg, err := formMsg("sendPrivateMsg", qq, msg)
 	if err != nil {
-		return err
+		logger.Error(err)
+	} else {
+		go q.send(fullMsg)
 	}
-	return q.send(fullMsg)
 }
 
-func (q *QQBot) SendSelfMsg(msg string) error {
-	return q.SendPrivateMsg(q.Cfg.QQSelf, msg)
+func (q *QQBot) SendSelfMsg(msg string) {
+	q.SendPrivateMsg(q.Cfg.QQSelf, msg)
 }
 
 func formMsg(t string, to string, msg string) ([]byte, error) {
@@ -131,24 +120,22 @@ func decodeMsg(msg string) (string, error) {
 }
 
 func (q *QQBot) Poll(messages chan map[string]string) {
-	for true {
-		if !q.RConnected {
-			q.Reconnect()
-			time.Sleep(1 * time.Second)
+	for i := 1; ; i++ {
+		conn, err := q.Pool.Get()
+		if err != nil {
+			logger.Error(err)
+			time.Sleep(time.Duration(i) * time.Second)
 			continue
 		}
-		id, body_, err := q.RecvQ.Reserve(1 * time.Hour)
+		conn.Watch(q.RecvQ)
+		job, err := conn.Reserve()
 		if err != nil {
 			logger.Warning(err)
-			if _, ok := err.(bt.ConnError); ok {
-				q.RecvQ.Conn.Close()
-				q.RConnected = false
-			} else {
-				time.Sleep(3 * time.Second)
-			}
+			time.Sleep(3 * time.Second)
 			continue
 		}
-		body := strings.Split(string(body_), " ")
+		i = 1
+		body := strings.Split(string(job.Body), " ")
 		ret := make(map[string]string)
 		switch body[0] {
 		case "eventPrivateMsg":
@@ -176,27 +163,20 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 				continue
 			}
 		default:
-			err = q.RecvQ.Conn.Bury(id, 0)
+			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				if _, ok := err.(bt.ConnError); ok {
-					q.RecvQ.Conn.Close()
-					q.RConnected = false
-				}
 				logger.Error(err)
 				time.Sleep(3 * time.Second)
 			}
 			continue
 		}
 		messages <- ret
-		err = q.RecvQ.Conn.Delete(id)
+		err = conn.Delete(job.ID)
 		if err != nil {
-			if _, ok := err.(bt.ConnError); ok {
-				q.RecvQ.Conn.Close()
-				q.RConnected = false
-			}
 			logger.Error(err)
 			time.Sleep(3 * time.Second)
 		}
+		q.Pool.Release(conn, false)
 	}
 }
 
