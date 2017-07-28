@@ -5,5 +5,6 @@ build/
 dist/
 tmp/
 go/
+vendor/
 local_config.py
 config.json

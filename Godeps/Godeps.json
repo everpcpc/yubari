@@ -1,0 +1,66 @@
+{
+	"ImportPath": "github.com/everpcpc/yubari",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/go-redis/redis",
+			"Comment": "v6.5.4-4-g2fb3f0e",
+			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
+		},
+		{
+			"ImportPath": "github.com/go-redis/redis/internal",
+			"Comment": "v6.5.4-4-g2fb3f0e",
+			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
+		},
+		{
+			"ImportPath": "github.com/go-redis/redis/internal/consistenthash",
+			"Comment": "v6.5.4-4-g2fb3f0e",
+			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
+		},
+		{
+			"ImportPath": "github.com/go-redis/redis/internal/hashtag",
+			"Comment": "v6.5.4-4-g2fb3f0e",
+			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
+		},
+		{
+			"ImportPath": "github.com/go-redis/redis/internal/pool",
+			"Comment": "v6.5.4-4-g2fb3f0e",
+			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
+		},
+		{
+			"ImportPath": "github.com/go-redis/redis/internal/proto",
+			"Comment": "v6.5.4-4-g2fb3f0e",
+			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
+		},
+		{
+			"ImportPath": "github.com/ikool-cn/gobeanstalk-connection-pool",
+			"Rev": "6c091c21a74eb35f49b3dcf789620c278a0c114a"
+		},
+		{
+			"ImportPath": "github.com/op/go-logging",
+			"Comment": "v1-7-g970db52",
+			"Rev": "970db520ece77730c7e4724c61121037378659d9"
+		},
+		{
+			"ImportPath": "golang.org/x/text/encoding",
+			"Rev": "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+		},
+		{
+			"ImportPath": "golang.org/x/text/encoding/internal",
+			"Rev": "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+		},
+		{
+			"ImportPath": "golang.org/x/text/encoding/internal/identifier",
+			"Rev": "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+		},
+		{
+			"ImportPath": "golang.org/x/text/encoding/simplifiedchinese",
+			"Rev": "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+		},
+		{
+			"ImportPath": "golang.org/x/text/transform",
+			"Rev": "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+		}
+	]
+}
