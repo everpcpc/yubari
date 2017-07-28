@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	logger = GetLogger(LOGSTD)
+	logger = GetLogger(LOGSYS)
 
 	cfgfile := flag.String("c", "config.json", "Config file")
 	flag.Parse()
@@ -27,7 +27,7 @@ func main() {
 
 	messages := make(chan map[string]string)
 	go qqBot.Poll(messages)
-	go qqWatch(messages)
+	qqWatch(messages)
 }
 
 func qqWatch(messages chan map[string]string) {
