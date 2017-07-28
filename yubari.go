@@ -45,6 +45,8 @@ func qqWatch(messages chan map[string]string) {
 				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
 				continue
 			}
+			go qqBot.NoticeMention(msg["msg"], msg["group"])
+			go qqBot.CheckRepeat(msg["msg"], msg["group"])
 			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
 		default:
 			logger.Info(msg)

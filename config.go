@@ -12,6 +12,7 @@ type Config struct {
 	QQBot          string   `json:"qq_bot"`
 	QQGroup        string   `json:"qq_group"`
 	QQIgnore       []string `json:"qq_ignore"`
+	QQSelfNames    []string `json:"qq_self_names"`
 	QQSendMaxRetry int      `json:"qq_send_max_retry"`
 	BeanstalkAddr  string   `json:"beanstalk_addr"`
 	RedisAddr      string   `json:"redis_addr"`

@@ -3,7 +3,8 @@
 	"qq_bot": "0000000000",
 	"qq_group": "000000000",
 	"qq_ignore": [],
-    "qq_send_max_retry": 10,
+	"qq_self_names": [],
+	"qq_send_max_retry": 10,
 	"qq_img_path": "",
 	"beanstalk_addr": "localhost:11300",
 	"redis_addr": "localhost:6379"

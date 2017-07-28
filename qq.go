@@ -98,25 +98,55 @@ func (q *QQBot) SendSelfMsg(msg string) {
 	q.SendPrivateMsg(q.Cfg.QQSelf, msg)
 }
 
-func formMsg(t string, to string, msg string) ([]byte, error) {
-	gb18030Msg, err := Utf8ToGb18030([]byte(msg))
-	if err != nil {
-		return nil, err
+func (q *QQBot) CheckMention(msg string) bool {
+	for _, s := range q.Cfg.QQSelfNames {
+		if strings.Contains(msg, s) {
+			return true
+		}
 	}
-	base64Msg := base64.StdEncoding.EncodeToString(gb18030Msg)
-	return bytes.Join([][]byte{[]byte(t), []byte(to), []byte(base64Msg)}, []byte(" ")), nil
+	return false
 }
 
-func decodeMsg(msg string) (string, error) {
-	gb18030Msg, err := base64.StdEncoding.DecodeString(msg)
-	if err != nil {
-		return "", err
+func (q *QQBot) NoticeMention(msg string, group string) {
+	if !q.CheckMention(msg) {
+		return
 	}
-	utf8Msg, err := Gb18030ToUtf8(gb18030Msg)
+	key := fmt.Sprintf("%s_mention", q.Cfg.QQSelf)
+	exists, err := rds.Expire(key, 10*time.Minute).Result()
 	if err != nil {
-		return "", err
+		logger.Error(err)
+		return
 	}
-	return string(utf8Msg), nil
+	if exists {
+		logger.Notice("Called in last 10min")
+	} else {
+		_, err := rds.Set(key, 0, 10*time.Minute).Result()
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		q.SendGroupMsg(fmt.Sprintf("呀呀呀，召唤一号机[CQ:at,qq=%s]", q.Cfg.QQSelf))
+	}
+}
+func (q *QQBot) CheckRepeat(msg string, group string) {
+	key := fmt.Sprintf("%s_last", group)
+	defer rds.LPush(key, msg)
+	last_msgs, err := rds.LRange(key, 0, 3).Result()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	i := 0
+	for _, s := range last_msgs {
+		if s == msg {
+			i++
+		}
+	}
+	if i > 1 {
+		rds.Del(key)
+		logger.Infof("Repeat: %s", msg)
+		q.SendGroupMsg(msg)
+	}
 }
 
 func (q *QQBot) Poll(messages chan map[string]string) {
@@ -178,6 +208,27 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 		}
 		q.Pool.Release(conn, false)
 	}
+}
+
+func formMsg(t string, to string, msg string) ([]byte, error) {
+	gb18030Msg, err := Utf8ToGb18030([]byte(msg))
+	if err != nil {
+		return nil, err
+	}
+	base64Msg := base64.StdEncoding.EncodeToString(gb18030Msg)
+	return bytes.Join([][]byte{[]byte(t), []byte(to), []byte(base64Msg)}, []byte(" ")), nil
+}
+
+func decodeMsg(msg string) (string, error) {
+	gb18030Msg, err := base64.StdEncoding.DecodeString(msg)
+	if err != nil {
+		return "", err
+	}
+	utf8Msg, err := Gb18030ToUtf8(gb18030Msg)
+	if err != nil {
+		return "", err
+	}
+	return string(utf8Msg), nil
 }
 
 /*
