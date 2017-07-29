@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	rds *redis.Client
+	redisClient *redis.Client
 )
 
 // NewRedisClient ...

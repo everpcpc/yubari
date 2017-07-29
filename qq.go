@@ -153,7 +153,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 		return
 	}
 	key := fmt.Sprintf("%s_mention", q.Config.QQSelf)
-	exists, err := rds.Expire(key, 10*time.Minute).Result()
+	exists, err := redisClient.Expire(key, 10*time.Minute).Result()
 	if err != nil {
 		logger.Error(err)
 		return
@@ -161,7 +161,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 	if exists {
 		logger.Notice("Called in last 10min")
 	} else {
-		_, err := rds.Set(key, 0, 10*time.Minute).Result()
+		_, err := redisClient.Set(key, 0, 10*time.Minute).Result()
 		if err != nil {
 			logger.Error(err)
 			return
@@ -173,8 +173,8 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 // CheckRepeat ...
 func (q *QQBot) CheckRepeat(msg string, group string) {
 	key := fmt.Sprintf("%s_last", group)
-	defer rds.LPush(key, msg)
-	lastMsgs, err := rds.LRange(key, 0, 3).Result()
+	defer redisClient.LPush(key, msg)
+	lastMsgs, err := redisClient.LRange(key, 0, 3).Result()
 	if err != nil {
 		logger.Error(err)
 		return
@@ -186,7 +186,7 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 		}
 	}
 	if i > 1 {
-		rds.Del(key)
+		redisClient.Del(key)
 		logger.Infof("Repeat: %s", msg)
 		q.SendGroupMsg(msg)
 	}

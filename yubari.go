@@ -16,20 +16,21 @@ func main() {
 	cfg := ReadConfig(flagCfgFile)
 	logger.Noticef("Starting with config: %+v", cfg)
 
-	twitterClient = NewTwitterClient(cfg.Twitter)
-
 	var err error
-	rds, err = NewRedisClient(cfg.Redis)
+	redisClient, err = NewRedisClient(cfg.Redis)
 	if err != nil {
 		logger.Panic(err)
 		return
 	}
-	defer rds.Close()
-	logger.Infof("Redis connected: %+v", rds)
+	defer redisClient.Close()
+	logger.Infof("Redis connected: %+v", redisClient)
 
 	qqBot = NewQQBot(cfg)
 	defer qqBot.Client.Close()
 	logger.Infof("QQBot: %+v", qqBot)
+
+	twitterBot = NewTwitterBot(cfg.Twitter)
+	logger.Infof("TwitterBot: %+v", twitterBot)
 
 	bots := strings.Split(*flagBots, ",")
 	botsLaunched := 0
