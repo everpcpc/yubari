@@ -72,11 +72,14 @@ func proceedTrack(tweet *twitter.Tweet) {
 		trackSendPics(medias)
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["maesanpicture"]:
+		logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
-			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
 		medias := getMedias(tweet)
+		if len(medias) == 0 {
+			return
+		}
 		qqBot.SendGroupMsg(tweet.Text)
 		trackSendPics(medias)
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
@@ -85,10 +88,16 @@ func proceedTrack(tweet *twitter.Tweet) {
 		trackSendPics(medias)
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["Strangestone"]:
+		logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 		if !strings.HasPrefix("月曜日のたわわ", tweet.Text) {
-			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
+		medias := getMedias(tweet)
+		if len(medias) == 0 {
+			return
+		}
+		qqBot.SendGroupMsg(tweet.Text)
+		trackSendPics(medias)
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	default:
 		logger.Debugf("(%s):{%s}", tweet.User.IDStr, tweet.Text)
