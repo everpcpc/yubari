@@ -89,7 +89,7 @@ func (q QQFace) String() string {
 
 // String generate code string for qq image
 func (q QQImage) String() string {
-	return fmt.Sprintf("[CQ:image,id=%s]", q.File)
+	return fmt.Sprintf("[CQ:image,file=%s]", q.File)
 }
 
 func (q *QQBot) send(msg []byte) {

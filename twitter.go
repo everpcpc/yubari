@@ -66,6 +66,10 @@ func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
 }
 
 func proceedTrack(tweet *twitter.Tweet) {
+	if tweet.RetweetedStatus != nil {
+		logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
+		return
+	}
 	switch tweet.User.IDStr {
 	case twitterBot.Follows["KanColle_STAFF"]:
 		medias := getMedias(tweet)
