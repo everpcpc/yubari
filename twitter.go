@@ -86,7 +86,7 @@ func proceedTrack(tweet *twitter.Tweet) {
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["Strangestone"]:
 		medias := getMedias(tweet)
-		if !strings.HasPrefix("月曜日のたわわ", tweet.Text) || len(medias) == 0 {
+		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") || len(medias) == 0 {
 			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
