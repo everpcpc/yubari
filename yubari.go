@@ -2,18 +2,22 @@ package main
 
 import (
 	"flag"
+	"strings"
 )
 
 func main() {
-	logger = GetLogger(LOGSYS)
-
 	cfgfile := flag.String("c", "config.json", "Config file")
+	logto := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
+	bots := flag.String("b", "qw,tt,tp", "Bots to start: qw qqWatch, tt twitterTrack, tp twitterPics")
 	flag.Parse()
+
+	logger = GetLogger(*logto)
+
 	cfg := ReadConfig(cfgfile)
 	logger.Infof("Starting with config: %+v", cfg)
 
 	var err error
-	rds, err = NewRedisClient(cfg)
+	rds, err = NewRedisClient(cfg.RedisCfg)
 	if err != nil {
 		logger.Panic(err)
 		return
@@ -22,12 +26,17 @@ func main() {
 	logger.Infof("Redis connected: %+v", rds)
 
 	qqBot = NewQQBot(cfg)
-	defer qqBot.Pool.Close()
+	defer qqBot.Client.Close()
 	logger.Infof("QQBot: %+v", qqBot)
 
-	messages := make(chan map[string]string)
-	go qqBot.Poll(messages)
-	qqWatch(messages)
+	bs := strings.Split(*bots, ",")
+	for _, b := range bs {
+		if b == "qw" {
+			messages := make(chan map[string]string)
+			go qqBot.Poll(messages)
+			go qqWatch(messages)
+		}
+	}
 }
 
 func qqWatch(messages chan map[string]string) {

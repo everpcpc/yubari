@@ -5,19 +5,21 @@ import (
 	"os"
 )
 
-type LogType uint8
-
 const (
-	LOGALL LogType = iota
-	LOGSTD
-	LOGSYS
+	// LOGALL log to std and syslog
+	LOGALL = 0
+	// LOGSTD log only to std
+	LOGSTD = 1
+	// LOGSYS only log to syslog
+	LOGSYS = 2
 )
 
 var (
 	logger *logging.Logger
 )
 
-func GetLogger(pos LogType) *logging.Logger {
+// GetLogger ...
+func GetLogger(pos int) *logging.Logger {
 	log := logging.MustGetLogger("yubari")
 	stdFormat := logging.MustStringFormatter(
 		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`,
@@ -27,7 +29,8 @@ func GetLogger(pos LogType) *logging.Logger {
 		`%{shortfunc} ▶ %{level:.4s} %{message}`,
 	)
 	_sysLogger, _ := logging.NewSyslogBackend("yubari")
-	sysLogger := logging.NewBackendFormatter(_sysLogger, sysFormat)
+	sysLogger := logging.AddModuleLevel(logging.NewBackendFormatter(_sysLogger, sysFormat))
+	sysLogger.SetLevel(logging.INFO, "")
 
 	switch pos {
 	case LOGALL:
@@ -38,8 +41,6 @@ func GetLogger(pos LogType) *logging.Logger {
 		logging.SetBackend(sysLogger)
 	default:
 	}
-
-	// logging.AddModuleLevel(stdBackend).SetLevel(logging.CRITICAL, "")
 
 	return log
 }

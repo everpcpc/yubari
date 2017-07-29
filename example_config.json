@@ -1,11 +1,17 @@
 {
-	"qq_self": "000000000",
-	"qq_bot": "0000000000",
-	"qq_group": "000000000",
-	"qq_ignore": [],
-	"qq_self_names": [],
-	"qq_send_max_retry": 10,
-	"qq_img_path": "",
-	"beanstalk_addr": "localhost:11300",
-	"redis_addr": "localhost:6379"
+  "redis":{
+    "addr": "localhost:6379",
+    "password": ",
+    "db": 0
+  },
+  "qq":{
+    "qqSelf": "000000000",
+    "qqBot": "0000000000",
+    "qqGroup": "000000000",
+    "qqIgnore": [],
+    "selfNames": [],
+    "sendMaxRetry": 10,
+    "imgPath": ""
+  },
+  "beanstalkAddr": "localhost:11300"
 }

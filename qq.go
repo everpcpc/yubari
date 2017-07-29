@@ -14,21 +14,24 @@ var (
 	qqBot *QQBot
 )
 
-type QQface struct {
+// QQFace ...
+type QQFace struct {
 	ID int
 }
 
+// QQBot ...
 type QQBot struct {
-	ID    string
-	Cfg   *Config
-	Pool  *bt.Pool
-	RecvQ string
-	SendQ string
+	ID     string
+	Cfg    *QQConfig
+	Client *bt.Pool
+	RecvQ  string
+	SendQ  string
 }
 
+// NewQQBot ...
 func NewQQBot(cfg *Config) *QQBot {
-	q := &QQBot{ID: cfg.QQBot, Cfg: cfg}
-	q.Pool = &bt.Pool{
+	q := &QQBot{ID: cfg.QQCfg.QQBot, Cfg: cfg.QQCfg}
+	q.Client = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
 			return bt.Dial(cfg.BeanstalkAddr)
 		},
@@ -44,7 +47,8 @@ func NewQQBot(cfg *Config) *QQBot {
 	return q
 }
 
-func (q *QQface) String() string {
+// String generate code string for qq face
+func (q *QQFace) String() string {
 	return fmt.Sprintf("[CQ:face,id=%d]", q.ID)
 }
 
@@ -55,12 +59,12 @@ func (q *QQBot) send(msg []byte) {
 		err  error
 	)
 	for i := 1; ; i++ {
-		conn, err = q.Pool.Get()
+		conn, err = q.Client.Get()
 		if err == nil {
 			break
 		}
 		time.Sleep(time.Duration(i) * time.Second)
-		if i > q.Cfg.QQSendMaxRetry {
+		if i > q.Cfg.SendMaxRetry {
 			logger.Error("Send failed:", string(msg))
 			return
 		}
@@ -72,10 +76,11 @@ func (q *QQBot) send(msg []byte) {
 		return
 	}
 
-	q.Pool.Release(conn, false)
+	q.Client.Release(conn, false)
 	return
 }
 
+// SendGroupMsg ...
 func (q *QQBot) SendGroupMsg(msg string) {
 	fullMsg, err := formMsg("sendGroupMsg", q.Cfg.QQGroup, msg)
 	if err != nil {
@@ -85,6 +90,7 @@ func (q *QQBot) SendGroupMsg(msg string) {
 	go q.send(fullMsg)
 }
 
+// SendPrivateMsg ...
 func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 	fullMsg, err := formMsg("sendPrivateMsg", qq, msg)
 	if err != nil {
@@ -94,12 +100,14 @@ func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 	}
 }
 
+//SendSelfMsg ...
 func (q *QQBot) SendSelfMsg(msg string) {
 	q.SendPrivateMsg(q.Cfg.QQSelf, msg)
 }
 
+// CheckMention ...
 func (q *QQBot) CheckMention(msg string) bool {
-	for _, s := range q.Cfg.QQSelfNames {
+	for _, s := range q.Cfg.SelfNames {
 		if strings.Contains(msg, s) {
 			return true
 		}
@@ -107,6 +115,7 @@ func (q *QQBot) CheckMention(msg string) bool {
 	return false
 }
 
+// NoticeMention ...
 func (q *QQBot) NoticeMention(msg string, group string) {
 	if !q.CheckMention(msg) {
 		return
@@ -128,16 +137,18 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 		q.SendGroupMsg(fmt.Sprintf("呀呀呀，召唤一号机[CQ:at,qq=%s]", q.Cfg.QQSelf))
 	}
 }
+
+// CheckRepeat ...
 func (q *QQBot) CheckRepeat(msg string, group string) {
 	key := fmt.Sprintf("%s_last", group)
 	defer rds.LPush(key, msg)
-	last_msgs, err := rds.LRange(key, 0, 3).Result()
+	lastMsgs, err := rds.LRange(key, 0, 3).Result()
 	if err != nil {
 		logger.Error(err)
 		return
 	}
 	i := 0
-	for _, s := range last_msgs {
+	for _, s := range lastMsgs {
 		if s == msg {
 			i++
 		}
@@ -149,9 +160,10 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 	}
 }
 
+// Poll reserve msg from beanstalkd
 func (q *QQBot) Poll(messages chan map[string]string) {
 	for i := 1; ; i++ {
-		conn, err := q.Pool.Get()
+		conn, err := q.Client.Get()
 		if err != nil {
 			logger.Error(err)
 			time.Sleep(time.Duration(i) * time.Second)
@@ -206,7 +218,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 			logger.Error(err)
 			time.Sleep(3 * time.Second)
 		}
-		q.Pool.Release(conn, false)
+		q.Client.Release(conn, false)
 	}
 }
 

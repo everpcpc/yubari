@@ -8,11 +8,12 @@ var (
 	rds *redis.Client
 )
 
-func NewRedisClient(cfg *Config) (*redis.Client, error) {
+// NewRedisClient ...
+func NewRedisClient(cfg *RedisConfig) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     cfg.RedisAddr,
-		Password: "", // no password set
-		DB:       0,  // use yubari
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
 	})
 
 	_, err := client.Ping().Result()
