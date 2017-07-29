@@ -6,14 +6,14 @@ import (
 )
 
 func main() {
-	cfgfile := flag.String("c", "config.json", "Config file")
-	logto := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
-	bots := flag.String("b", "qw,tt,tp", "Bots to start: qw qqWatch, tt twitterTrack, tp twitterPics")
+	cfgFile := flag.String("c", "config.json", "Config file")
+	flagLogger := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
+	flagBots := flag.String("b", "qw,tt,tp", "Bots to start: qw qqWatch, tt twitterTrack, tp twitterPics")
 	flag.Parse()
 
-	logger = GetLogger(*logto)
+	logger = GetLogger(*flagLogger)
 
-	cfg := ReadConfig(cfgfile)
+	cfg := ReadConfig(cfgFile)
 	logger.Infof("Starting with config: %+v", cfg)
 
 	var err error
@@ -29,15 +29,29 @@ func main() {
 	defer qqBot.Client.Close()
 	logger.Infof("QQBot: %+v", qqBot)
 
-	bs := strings.Split(*bots, ",")
-	for _, b := range bs {
+	bots := strings.Split(*flagBots, ",")
+	botsLaunched := 0
+	for _, b := range bots {
 		if b == "qw" {
+			logger.Notice("Start bot qqWatch")
 			messages := make(chan map[string]string)
 			go qqBot.Poll(messages)
 			go qqWatch(messages)
+			botsLaunched++
+		} else if b == "tt" {
+			logger.Notice("Start bot twitterTrack")
+			botsLaunched++
+		} else if b == "tp" {
+			logger.Notice("Start bot twitterPics")
+			botsLaunched++
+		} else {
+			logger.Warningf("Bot %s is not supported.", b)
 		}
 	}
-	select {}
+	if botsLaunched > 0 {
+		select {}
+	}
+	logger.Notice("Not bots launched.")
 }
 
 func qqWatch(messages chan map[string]string) {
