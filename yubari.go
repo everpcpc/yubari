@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-	flagCfgFile := flag.String("c", "config.json", "Config file")
+	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
 	flagLogger := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
-	flagBots := flag.String("b", "qw,tt,tp", "Bots to start: qw qqWatch, tt twitterTrack, tp twitterPics")
+	flagBots := flag.String("b", "qw,tt,ts", "Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf")
 	flag.Parse()
 
 	logger = GetLogger(*flagLogger)
@@ -46,9 +46,9 @@ func main() {
 			logger.Notice("Start bot twitterTrack")
 			go twitterTrack()
 			botsLaunched++
-		case "tp":
-			logger.Notice("Start bot twitterPics")
-			go twitterPics()
+		case "ts":
+			logger.Notice("Start bot twitterSelf")
+			go twitterSelf()
 			botsLaunched++
 		default:
 			logger.Warningf("Bot %s is not supported.", b)
