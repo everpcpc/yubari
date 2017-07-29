@@ -4,6 +4,25 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/cenkalti/backoff",
+			"Comment": "v1.0.0-23-g61153c7",
+			"Rev": "61153c768f31ee5f130071d08fc82b85208528de"
+		},
+		{
+			"ImportPath": "github.com/dghubble/go-twitter/twitter",
+			"Rev": "f74be7f0f20b142558537ca43852457f7c52e051"
+		},
+		{
+			"ImportPath": "github.com/dghubble/oauth1",
+			"Comment": "v0.4.0-16-g7d51c10",
+			"Rev": "7d51c10e15ca32917b32ce43f6e25840d6951db4"
+		},
+		{
+			"ImportPath": "github.com/dghubble/sling",
+			"Comment": "v1.1.0-6-g80ec33c",
+			"Rev": "80ec33c6152a53edb5545864ca37567b506c4ca5"
+		},
+		{
 			"ImportPath": "github.com/go-redis/redis",
 			"Comment": "v6.5.4-4-g2fb3f0e",
 			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
@@ -34,6 +53,10 @@
 			"Rev": "2fb3f0e45fb2c55d79dd7e4b06b5281ae437debb"
 		},
 		{
+			"ImportPath": "github.com/google/go-querystring/query",
+			"Rev": "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+		},
+		{
 			"ImportPath": "github.com/ikool-cn/gobeanstalk-connection-pool",
 			"Rev": "6c091c21a74eb35f49b3dcf789620c278a0c114a"
 		},
@@ -41,6 +64,10 @@
 			"ImportPath": "github.com/op/go-logging",
 			"Comment": "v1-7-g970db52",
 			"Rev": "970db520ece77730c7e4724c61121037378659d9"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f"
 		},
 		{
 			"ImportPath": "golang.org/x/text/encoding",
