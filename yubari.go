@@ -37,6 +37,7 @@ func main() {
 			go qqWatch(messages)
 		}
 	}
+	select {}
 }
 
 func qqWatch(messages chan map[string]string) {
