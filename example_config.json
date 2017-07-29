@@ -8,7 +8,8 @@
     "qqSelf": "000000000",
     "qqBot": "0000000000",
     "qqGroup": "000000000",
-    "qqIgnore": [],
+    "qqPrivateIgnore": [],
+    "qqGroupIgnore": [],
     "selfNames": [],
     "sendMaxRetry": 10,
     "imgPath": ""

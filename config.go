@@ -23,12 +23,13 @@ type RedisConfig struct {
 
 // QQConfig ...
 type QQConfig struct {
-	QQSelf       string   `json:"qqSelf"`
-	QQBot        string   `json:"qqBot"`
-	QQGroup      string   `json:"qqGroup"`
-	QQIgnore     []string `json:"qqIgnore"`
-	SelfNames    []string `json:"selfNames"`
-	SendMaxRetry int      `json:"sendMaxRetry"`
+	QQSelf          string   `json:"qqSelf"`
+	QQBot           string   `json:"qqBot"`
+	QQGroup         string   `json:"qqGroup"`
+	QQPrivateIgnore []string `json:"qqPrivateIgnore"`
+	QQGroupIgnore   []string `json:"qqGroupIgnore"`
+	SelfNames       []string `json:"selfNames"`
+	SendMaxRetry    int      `json:"sendMaxRetry"`
 }
 
 // ReadConfig ...
