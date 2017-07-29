@@ -32,7 +32,12 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 	return bot
 }
 
-func proceedTweet(tweet *twitter.Tweet) {
+func logAllTrack(msg interface{}) {
+	logger.Debug(msg)
+}
+
+func proceedTrack(tweet *twitter.Tweet) {
+	logger.Debug(tweet.User.Name, tweet.Text)
 }
 
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
@@ -80,14 +85,15 @@ func twitterTrack() {
 		"2381595966", //maesanpicture
 		"96604067",   //komatan
 		"93332575",   //Strangestone
+		"155298348",  //self
 	}
 
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
-		demux.Tweet = proceedTweet
+		demux.Tweet = proceedTrack
+		demux.Other = logAllTrack
 		filterParams := &twitter.StreamFilterParams{
-			Follow:        follows,
-			StallWarnings: twitter.Bool(true),
+			Follow: follows,
 		}
 		stream, err := twitterBot.Client.Streams.Filter(filterParams)
 		if err != nil {
@@ -103,8 +109,7 @@ func twitterSelf() {
 		demux := twitter.NewSwitchDemux()
 		demux.Event = eventSelf
 		userParams := &twitter.StreamUserParams{
-			With:          twitterBot.ID,
-			StallWarnings: twitter.Bool(true),
+			With: twitterBot.ID,
 		}
 		stream, err := twitterBot.Client.Streams.User(userParams)
 		if err != nil {

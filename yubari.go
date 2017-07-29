@@ -8,7 +8,7 @@ import (
 func main() {
 	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
 	flagLogger := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
-	flagBots := flag.String("b", "qw,tt,ts", "Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf")
+	flagBots := flag.String("b", "qw,ts", "Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf")
 	flag.Parse()
 
 	logger = GetLogger(*flagLogger)
