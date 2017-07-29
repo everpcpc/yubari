@@ -99,11 +99,11 @@ func proceedTrack(tweet *twitter.Tweet) {
 }
 
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
-	medias := tweet.ExtendedEntities.Media
-	if len(medias) == 0 {
-		medias = tweet.Entities.Media
+	ee := tweet.ExtendedEntities
+	if ee != nil {
+		return ee.Media
 	}
-	return medias
+	return tweet.Entities.Media
 }
 
 func selfProceedPics(medias []twitter.MediaEntity, action int) {
