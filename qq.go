@@ -22,7 +22,7 @@ type QQFace struct {
 // QQBot ...
 type QQBot struct {
 	ID     string
-	Cfg    *QQConfig
+	Config *QQConfig
 	Client *bt.Pool
 	RecvQ  string
 	SendQ  string
@@ -30,7 +30,7 @@ type QQBot struct {
 
 // NewQQBot ...
 func NewQQBot(cfg *Config) *QQBot {
-	q := &QQBot{ID: cfg.QQCfg.QQBot, Cfg: cfg.QQCfg}
+	q := &QQBot{ID: cfg.QQ.QQBot, Config: cfg.QQ}
 	q.Client = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
 			return bt.Dial(cfg.BeanstalkAddr)
@@ -45,6 +45,38 @@ func NewQQBot(cfg *Config) *QQBot {
 	q.RecvQ = fmt.Sprintf("%s(o)", q.ID)
 	q.SendQ = fmt.Sprintf("%s(i)", q.ID)
 	return q
+}
+
+func qqWatch(messages chan map[string]string) {
+	groupIgnore := make(map[string]struct{})
+	for _, q := range qqBot.Config.QQGroupIgnore {
+		groupIgnore[q] = struct{}{}
+	}
+	privateIgnore := make(map[string]struct{})
+	for _, q := range qqBot.Config.QQPrivateIgnore {
+		privateIgnore[q] = struct{}{}
+	}
+
+	for msg := range messages {
+		switch msg["event"] {
+		case "PrivateMsg":
+			if _, ok := privateIgnore[msg["qq"]]; ok {
+				logger.Debugf("Ignore [%s]:{%s}", msg["qq"], msg["msg"])
+				continue
+			}
+			logger.Infof("[%s]:{%s}", msg["qq"], msg["msg"])
+		case "GroupMsg":
+			if _, ok := groupIgnore[msg["qq"]]; ok {
+				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
+				continue
+			}
+			go qqBot.NoticeMention(msg["msg"], msg["group"])
+			go qqBot.CheckRepeat(msg["msg"], msg["group"])
+			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], msg["msg"])
+		default:
+			logger.Info(msg)
+		}
+	}
 }
 
 // String generate code string for qq face
@@ -64,7 +96,7 @@ func (q *QQBot) send(msg []byte) {
 			break
 		}
 		time.Sleep(time.Duration(i) * time.Second)
-		if i > q.Cfg.SendMaxRetry {
+		if i > q.Config.SendMaxRetry {
 			logger.Error("Send failed:", string(msg))
 			return
 		}
@@ -82,7 +114,7 @@ func (q *QQBot) send(msg []byte) {
 
 // SendGroupMsg ...
 func (q *QQBot) SendGroupMsg(msg string) {
-	fullMsg, err := formMsg("sendGroupMsg", q.Cfg.QQGroup, msg)
+	fullMsg, err := formMsg("sendGroupMsg", q.Config.QQGroup, msg)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -102,12 +134,12 @@ func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 
 //SendSelfMsg ...
 func (q *QQBot) SendSelfMsg(msg string) {
-	q.SendPrivateMsg(q.Cfg.QQSelf, msg)
+	q.SendPrivateMsg(q.Config.QQSelf, msg)
 }
 
 // CheckMention ...
 func (q *QQBot) CheckMention(msg string) bool {
-	for _, s := range q.Cfg.SelfNames {
+	for _, s := range q.Config.SelfNames {
 		if strings.Contains(msg, s) {
 			return true
 		}
@@ -120,7 +152,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 	if !q.CheckMention(msg) {
 		return
 	}
-	key := fmt.Sprintf("%s_mention", q.Cfg.QQSelf)
+	key := fmt.Sprintf("%s_mention", q.Config.QQSelf)
 	exists, err := rds.Expire(key, 10*time.Minute).Result()
 	if err != nil {
 		logger.Error(err)
@@ -134,7 +166,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 			logger.Error(err)
 			return
 		}
-		q.SendGroupMsg(fmt.Sprintf("呀呀呀，召唤一号机[CQ:at,qq=%s]", q.Cfg.QQSelf))
+		q.SendGroupMsg(fmt.Sprintf("呀呀呀，召唤一号机[CQ:at,qq=%s]", q.Config.QQSelf))
 	}
 }
 

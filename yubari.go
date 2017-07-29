@@ -6,18 +6,20 @@ import (
 )
 
 func main() {
-	cfgFile := flag.String("c", "config.json", "Config file")
+	flagCfgFile := flag.String("c", "config.json", "Config file")
 	flagLogger := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
 	flagBots := flag.String("b", "qw,tt,tp", "Bots to start: qw qqWatch, tt twitterTrack, tp twitterPics")
 	flag.Parse()
 
 	logger = GetLogger(*flagLogger)
 
-	cfg := ReadConfig(cfgFile)
+	cfg := ReadConfig(flagCfgFile)
 	logger.Noticef("Starting with config: %+v", cfg)
 
+	twitterClient = NewTwitterClient(cfg.Twitter)
+
 	var err error
-	rds, err = NewRedisClient(cfg.RedisCfg)
+	rds, err = NewRedisClient(cfg.Redis)
 	if err != nil {
 		logger.Panic(err)
 		return

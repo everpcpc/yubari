@@ -14,5 +14,13 @@
     "sendMaxRetry": 10,
     "imgPath": ""
   },
+  "twitter":{
+    "consumerKey": "",
+    "consumerSecret": "",
+    "accessToken": "",
+    "accessSecret": "",
+    "idSelf": "",
+    "imgPath": ""
+  }
   "beanstalkAddr": "localhost:11300"
 }

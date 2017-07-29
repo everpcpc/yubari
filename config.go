@@ -9,9 +9,10 @@ import (
 // Config ...
 type Config struct {
 	File          string
-	QQCfg         *QQConfig    `json:"qq"`
-	RedisCfg      *RedisConfig `json:"redis"`
-	BeanstalkAddr string       `json:"beanstalkAddr"`
+	BeanstalkAddr string         `json:"beanstalkAddr"`
+	Redis         *RedisConfig   `json:"redis"`
+	QQ            *QQConfig      `json:"qq"`
+	Twitter       *TwitterConfig `json:"twitter"`
 }
 
 // RedisConfig ...
@@ -30,21 +31,33 @@ type QQConfig struct {
 	QQGroupIgnore   []string `json:"qqGroupIgnore"`
 	SelfNames       []string `json:"selfNames"`
 	SendMaxRetry    int      `json:"sendMaxRetry"`
+	ImgPath         string   `json:"imgPath"`
+}
+
+// TwitterConfig ...
+type TwitterConfig struct {
+	ConsumerKey    string `json:"consumerKey"`
+	ConsumerSecret string `json:"consumerSecret"`
+	AccessToken    string `json:"accessToken"`
+	AccessSecret   string `json:"accessSecret"`
+	IDSelf         string `json:"idSelf"`
+	ImgPath        string `json:"imgPath"`
 }
 
 // ReadConfig ...
 func ReadConfig(cfgfile *string) (cfg *Config) {
 	cfg = &Config{
-		File: *cfgfile,
-		QQCfg: &QQConfig{
+		File:          *cfgfile,
+		BeanstalkAddr: "localhost:11300",
+		QQ: &QQConfig{
 			SendMaxRetry: 10,
 		},
-		RedisCfg: &RedisConfig{
+		Redis: &RedisConfig{
 			Addr:     "localhost:6379",
 			Password: "",
 			DB:       0,
 		},
-		BeanstalkAddr: "localhost:11300",
+		Twitter: &TwitterConfig{},
 	}
 	file, e := ioutil.ReadFile(*cfgfile)
 	if e != nil {
