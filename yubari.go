@@ -14,7 +14,7 @@ func main() {
 	logger = GetLogger(*flagLogger)
 
 	cfg := ReadConfig(cfgFile)
-	logger.Notice("Starting with config: %+v", cfg)
+	logger.Noticef("Starting with config: %+v", cfg)
 
 	var err error
 	rds, err = NewRedisClient(cfg.RedisCfg)
