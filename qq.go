@@ -15,8 +15,11 @@ var (
 )
 
 // QQFace ...
-type QQFace struct {
-	ID int
+type QQFace int
+
+// QQImage ...
+type QQImage struct {
+	File string
 }
 
 // QQBot ...
@@ -80,8 +83,13 @@ func qqWatch(messages chan map[string]string) {
 }
 
 // String generate code string for qq face
-func (q *QQFace) String() string {
-	return fmt.Sprintf("[CQ:face,id=%d]", q.ID)
+func (q QQFace) String() string {
+	return fmt.Sprintf("[CQ:face,id=%d]", q)
+}
+
+// String generate code string for qq image
+func (q QQImage) String() string {
+	return fmt.Sprintf("[CQ:image,id=%s]", q.File)
 }
 
 func (q *QQBot) send(msg []byte) {
@@ -274,20 +282,3 @@ func decodeMsg(msg string) (string, error) {
 	}
 	return string(utf8Msg), nil
 }
-
-/*
-	data := []byte(`{"/laugh": 12, "/cry": 2}`)
-	var objmap map[string]*json.RawMessage
-	err := json.Unmarshal(data, &objmap)
-	if err != nil {
-	fmt.Println(err)
-		return
-	}
-	faceId, err := strconv.Atoi(string(*objmap["/laugh"]))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	face := QQface{faceId}
-	fmt.Println(face.String())
-*/

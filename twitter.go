@@ -16,6 +16,7 @@ type TwitterBot struct {
 	ID      string
 	ImgPath string
 	Client  *twitter.Client
+	Follows map[string]string
 }
 
 // NewTwitterBot ...
@@ -28,6 +29,12 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 		ID:      cfg.IDSelf,
 		ImgPath: cfg.ImgPath,
 		Client:  client,
+		Follows: map[string]string{
+			"KanColle_STAFF": "294025417",
+			"maesanpicture":  "2381595966",
+			"komatan":        "96604067",
+			"Strangestone":   "93332575",
+		},
 	}
 	return bot
 }
@@ -36,8 +43,36 @@ func logAllTrack(msg interface{}) {
 	logger.Debug(msg)
 }
 
+func trackSendPics(medias []twitter.MediaEntity) {
+	for _, media := range medias {
+		switch media.Type {
+		case "photo":
+			fileName, err := downloadFile(media.MediaURLHttps, qqBot.Config.ImgPath)
+			if err != nil {
+				continue
+			}
+			qqBot.SendGroupMsg(QQImage{fileName}.String())
+		}
+	}
+}
+
 func proceedTrack(tweet *twitter.Tweet) {
-	logger.Debug(tweet.User.Name, tweet.Text)
+	switch tweet.User.IDStr {
+	case twitterBot.Follows["KanColle_STAFF"]:
+		medias := getMedias(tweet)
+		trackSendPics(medias)
+		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+	case twitterBot.Follows["maesanpicture"]:
+		logger.Infof("(%s):{%s}", tweet.User.Name, tweet.Text)
+	case twitterBot.Follows["komatan"]:
+		medias := getMedias(tweet)
+		trackSendPics(medias)
+		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+	case twitterBot.Follows["Strangestone"]:
+		logger.Infof("(%s):{%s}", tweet.User.Name, tweet.Text)
+	default:
+		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
+	}
 }
 
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
@@ -48,7 +83,7 @@ func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
 	return medias
 }
 
-func proceedPics(medias []twitter.MediaEntity, action int) {
+func selfProceedPics(medias []twitter.MediaEntity, action int) {
 	for _, media := range medias {
 		switch media.Type {
 		case "photo":
@@ -57,9 +92,7 @@ func proceedPics(medias []twitter.MediaEntity, action int) {
 				downloadFile(media.MediaURLHttps, twitterBot.ImgPath)
 			case -1:
 				removeFile(media.MediaURLHttps, twitterBot.ImgPath)
-			default:
 			}
-		default:
 		}
 	}
 }
@@ -69,29 +102,24 @@ func eventSelf(event *twitter.Event) {
 	case "favorite":
 		medias := getMedias(event.TargetObject)
 		logger.Infof("favorite: [%s] %d medias", strings.Replace(event.TargetObject.Text, "\n", " ", -1), len(medias))
-		go proceedPics(medias, 1)
+		go selfProceedPics(medias, 1)
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf("unfavorite: [%s] %d medias", strings.Replace(event.TargetObject.Text, "\n", " ", -1), len(medias))
-		go proceedPics(medias, -1)
+		go selfProceedPics(medias, -1)
 	default:
 		logger.Debug(event.Event)
 	}
 }
 
 func twitterTrack() {
-	follows := []string{
-		"294025417",  //KanColle_STAFF"
-		"2381595966", //maesanpicture
-		"96604067",   //komatan
-		"93332575",   //Strangestone
-		"155298348",  //self
+	follows := []string{}
+	for _, value := range twitterBot.Follows {
+		follows = append(follows, value)
 	}
-
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
 		demux.Tweet = proceedTrack
-		demux.Other = logAllTrack
 		filterParams := &twitter.StreamFilterParams{
 			Follow: follows,
 		}
