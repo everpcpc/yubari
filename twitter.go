@@ -56,6 +56,15 @@ func trackSendPics(medias []twitter.MediaEntity) {
 	}
 }
 
+func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
+	for _, tag := range tags {
+		if s == tag.Text {
+			return true
+		}
+	}
+	return false
+}
+
 func proceedTrack(tweet *twitter.Tweet) {
 	switch tweet.User.IDStr {
 	case twitterBot.Follows["KanColle_STAFF"]:
@@ -63,15 +72,26 @@ func proceedTrack(tweet *twitter.Tweet) {
 		trackSendPics(medias)
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["maesanpicture"]:
-		logger.Infof("(%s):{%s}", tweet.User.Name, tweet.Text)
+		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
+			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			return
+		}
+		medias := getMedias(tweet)
+		qqBot.SendGroupMsg(tweet.Text)
+		trackSendPics(medias)
+		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["komatan"]:
 		medias := getMedias(tweet)
 		trackSendPics(medias)
 		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["Strangestone"]:
-		logger.Infof("(%s):{%s}", tweet.User.Name, tweet.Text)
+		if !strings.HasPrefix("月曜日のたわわ", tweet.Text) {
+			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			return
+		}
+		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	default:
-		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
+		logger.Debugf("(%s):{%s}", tweet.User.IDStr, tweet.Text)
 	}
 }
 
