@@ -70,19 +70,15 @@ func logAllTrack(msg interface{}) {
 	logger.Debug(msg)
 }
 
-func trackTextMedia(tweet *twitter.Tweet) {
+func (t *TwitterBot) trackSendMedias(tweet *twitter.Tweet, withText bool) {
 	medias := getMedias(tweet)
 	if len(medias) == 0 {
 		return
 	}
 	logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-	qqBot.SendGroupMsg(tweet.Text)
-	sendPics(medias)
-}
-
-func trackMedia(tweet *twitter.Tweet) {
-	medias := getMedias(tweet)
-	logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+	if withText {
+		qqBot.SendGroupMsg(tweet.Text)
+	}
 	sendPics(medias)
 }
 
@@ -93,42 +89,42 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	}
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
-		trackMedia(tweet)
+		t.trackSendMedias(tweet, false)
 	case t.Follows["komatan"]:
-		trackMedia(tweet)
+		t.trackSendMedias(tweet, false)
 	case t.Follows["maesanpicture"]:
 		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		trackTextMedia(tweet)
+		t.trackSendMedias(tweet, true)
 	case t.Follows["Strangestone"]:
 		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		trackTextMedia(tweet)
+		t.trackSendMedias(tweet, true)
 	case t.Follows["kazuharukina"]:
-		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
+		if !hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		trackTextMedia(tweet)
+		t.trackSendMedias(tweet, true)
 	default:
 		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
 	}
 }
 
-func selfProceedPics(medias []twitter.MediaEntity, path string, action int) {
+func (t *TwitterBot) selfProceedPics(medias []twitter.MediaEntity, action int) {
 	for _, media := range medias {
 		switch media.Type {
 		case "photo":
 			switch action {
 			case 1:
-				downloadFile(media.MediaURLHttps, path)
+				downloadFile(media.MediaURLHttps, t.ImgPath)
 				go qqBot.SendPics(qqBot.SendSelfMsg, media.MediaURLHttps)
 			case -1:
-				removeFile(media.MediaURLHttps, path)
+				removeFile(media.MediaURLHttps, t.ImgPath)
 			}
 		}
 	}
@@ -143,7 +139,7 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 			event.TargetObject.User.Name,
 			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
 			len(medias))
-		go selfProceedPics(medias, t.ImgPath, 1)
+		go t.selfProceedPics(medias, 1)
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf(
@@ -151,7 +147,7 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 			event.TargetObject.User.Name,
 			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
 			len(medias))
-		go selfProceedPics(medias, t.ImgPath, -1)
+		go t.selfProceedPics(medias, -1)
 	default:
 		logger.Debug(event.Event)
 	}
