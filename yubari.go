@@ -44,11 +44,11 @@ func main() {
 			botsLaunched++
 		case "tt":
 			logger.Notice("Start bot twitterTrack")
-			go twitterTrack()
+			go twitterBot.Track()
 			botsLaunched++
 		case "ts":
 			logger.Notice("Start bot twitterSelf")
-			go twitterSelf()
+			go twitterBot.Self()
 			botsLaunched++
 		default:
 			logger.Warningf("Bot %s is not supported.", b)

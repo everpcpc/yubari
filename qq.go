@@ -98,6 +98,16 @@ func (q *QQBot) SendGroupMsg(msg string) {
 	go q.send(fullMsg)
 }
 
+// SendPics ...
+func (q *QQBot) SendPics(fn func(string), url string) {
+	fileName, err := downloadFile(url, q.Config.ImgPath)
+	if err != nil {
+		return
+	}
+	q.SendGroupMsg(QQImage{fileName}.String())
+
+}
+
 // SendPrivateMsg ...
 func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 	fullMsg, err := formMsg("sendPrivateMsg", qq, msg)

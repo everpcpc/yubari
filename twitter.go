@@ -31,29 +31,13 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 		Client:  client,
 		Follows: map[string]string{
 			"KanColle_STAFF": "294025417",
-			"maesanpicture":  "2381595966",
 			"komatan":        "96604067",
+			"maesanpicture":  "2381595966",
 			"Strangestone":   "93332575",
+			"kazuharukina":   "28787294",
 		},
 	}
 	return bot
-}
-
-func logAllTrack(msg interface{}) {
-	logger.Debug(msg)
-}
-
-func trackSendPics(medias []twitter.MediaEntity) {
-	for _, media := range medias {
-		switch media.Type {
-		case "photo":
-			fileName, err := downloadFile(media.MediaURLHttps, qqBot.Config.ImgPath)
-			if err != nil {
-				continue
-			}
-			qqBot.SendGroupMsg(QQImage{fileName}.String())
-		}
-	}
 }
 
 func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
@@ -65,43 +49,6 @@ func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
 	return false
 }
 
-func trackTweet(tweet *twitter.Tweet) {
-	if tweet.RetweetedStatus != nil {
-		logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
-		return
-	}
-	switch tweet.User.IDStr {
-	case twitterBot.Follows["KanColle_STAFF"]:
-		medias := getMedias(tweet)
-		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-		trackSendPics(medias)
-	case twitterBot.Follows["maesanpicture"]:
-		medias := getMedias(tweet)
-		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) || len(medias) == 0 {
-			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-			return
-		}
-		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-		qqBot.SendGroupMsg(tweet.Text)
-		trackSendPics(medias)
-	case twitterBot.Follows["komatan"]:
-		medias := getMedias(tweet)
-		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-		trackSendPics(medias)
-	case twitterBot.Follows["Strangestone"]:
-		medias := getMedias(tweet)
-		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") || len(medias) == 0 {
-			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-			return
-		}
-		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-		qqBot.SendGroupMsg(tweet.Text)
-		trackSendPics(medias)
-	default:
-		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
-	}
-}
-
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
 	ee := tweet.ExtendedEntities
 	if ee != nil {
@@ -110,21 +57,84 @@ func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
 	return tweet.Entities.Media
 }
 
-func selfProceedPics(medias []twitter.MediaEntity, action int) {
+func sendPics(medias []twitter.MediaEntity) {
+	for _, media := range medias {
+		switch media.Type {
+		case "photo":
+			go qqBot.SendPics(qqBot.SendGroupMsg, media.MediaURLHttps)
+		}
+	}
+}
+
+func logAllTrack(msg interface{}) {
+	logger.Debug(msg)
+}
+
+func trackSendTextPics(tweet *twitter.Tweet) {
+	medias := getMedias(tweet)
+	if len(medias) == 0 {
+		return
+	}
+	logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+	qqBot.SendGroupMsg(tweet.Text)
+	sendPics(medias)
+}
+
+func trackSendPics(tweet *twitter.Tweet) {
+	medias := getMedias(tweet)
+	logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+	sendPics(medias)
+}
+
+func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
+	if tweet.RetweetedStatus != nil {
+		logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
+		return
+	}
+	switch tweet.User.IDStr {
+	case t.Follows["KanColle_STAFF"]:
+		trackSendPics(tweet)
+	case t.Follows["komatan"]:
+		trackSendPics(tweet)
+	case t.Follows["maesanpicture"]:
+		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
+			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			return
+		}
+		trackSendTextPics(tweet)
+	case t.Follows["Strangestone"]:
+		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") {
+			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			return
+		}
+		trackSendTextPics(tweet)
+	case t.Follows["kazuharukina"]:
+		if !strings.HasPrefix(tweet.Text, "毎日JK企画") {
+			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			return
+		}
+		trackSendTextPics(tweet)
+	default:
+		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
+	}
+}
+
+func selfProceedPics(medias []twitter.MediaEntity, path string, action int) {
 	for _, media := range medias {
 		switch media.Type {
 		case "photo":
 			switch action {
 			case 1:
-				downloadFile(media.MediaURLHttps, twitterBot.ImgPath)
+				downloadFile(media.MediaURLHttps, path)
+				go qqBot.SendPics(qqBot.SendSelfMsg, media.MediaURLHttps)
 			case -1:
-				removeFile(media.MediaURLHttps, twitterBot.ImgPath)
+				removeFile(media.MediaURLHttps, path)
 			}
 		}
 	}
 }
 
-func selfEvent(event *twitter.Event) {
+func (t *TwitterBot) selfEvent(event *twitter.Event) {
 	switch event.Event {
 	case "favorite":
 		medias := getMedias(event.TargetObject)
@@ -133,7 +143,7 @@ func selfEvent(event *twitter.Event) {
 			event.TargetObject.User.Name,
 			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
 			len(medias))
-		go selfProceedPics(medias, 1)
+		go selfProceedPics(medias, t.ImgPath, 1)
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf(
@@ -141,24 +151,25 @@ func selfEvent(event *twitter.Event) {
 			event.TargetObject.User.Name,
 			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
 			len(medias))
-		go selfProceedPics(medias, -1)
+		go selfProceedPics(medias, t.ImgPath, -1)
 	default:
 		logger.Debug(event.Event)
 	}
 }
 
-func twitterTrack() {
+// Track ...
+func (t *TwitterBot) Track() {
 	follows := []string{}
-	for _, value := range twitterBot.Follows {
+	for _, value := range t.Follows {
 		follows = append(follows, value)
 	}
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
-		demux.Tweet = trackTweet
+		demux.Tweet = t.trackTweet
 		filterParams := &twitter.StreamFilterParams{
 			Follow: follows,
 		}
-		stream, err := twitterBot.Client.Streams.Filter(filterParams)
+		stream, err := t.Client.Streams.Filter(filterParams)
 		if err != nil {
 			logger.Error(err)
 			time.Sleep(time.Duration(i) * time.Second)
@@ -167,14 +178,15 @@ func twitterTrack() {
 	}
 }
 
-func twitterSelf() {
+// Self ...
+func (t *TwitterBot) Self() {
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
-		demux.Event = selfEvent
+		demux.Event = t.selfEvent
 		userParams := &twitter.StreamUserParams{
-			With: twitterBot.ID,
+			With: t.ID,
 		}
-		stream, err := twitterBot.Client.Streams.User(userParams)
+		stream, err := t.Client.Streams.User(userParams)
 		if err != nil {
 			logger.Error(err)
 			time.Sleep(time.Duration(i) * time.Second)
