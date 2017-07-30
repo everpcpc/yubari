@@ -25,7 +25,7 @@ func downloadFile(url string, path string) (string, error) {
 	}
 	defer output.Close()
 
-	logger.Infof("--> Downloading %s", url)
+	logger.Debugf("--> Downloading %s", url)
 	response, err := http.Get(url)
 	if err != nil {
 		logger.Error(err)
@@ -45,7 +45,7 @@ func downloadFile(url string, path string) (string, error) {
 func removeFile(url string, path string) error {
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
-	logger.Infof("--> Deleting %s", fileName)
+	logger.Debugf("--> Deleting %s", fileName)
 	fullPath := fmt.Sprintf("%s%s%s", path, string(os.PathSeparator), fileName)
 	err := os.Remove(fullPath)
 	if err != nil {

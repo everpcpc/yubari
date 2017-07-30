@@ -131,6 +131,13 @@ func (t *TwitterBot) selfProceedPics(medias []twitter.MediaEntity, action int) {
 }
 
 func (t *TwitterBot) selfEvent(event *twitter.Event) {
+	if event.Source.IDStr != t.ID {
+		logger.Debugf(
+			"favorited: (%s):{%s}",
+			event.Source.Name,
+			strings.Replace(event.TargetObject.Text, "\n", " ", -1))
+		return
+	}
 	switch event.Event {
 	case "favorite":
 		medias := getMedias(event.TargetObject)
