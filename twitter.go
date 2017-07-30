@@ -73,30 +73,30 @@ func trackTweet(tweet *twitter.Tweet) {
 	switch tweet.User.IDStr {
 	case twitterBot.Follows["KanColle_STAFF"]:
 		medias := getMedias(tweet)
+		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 		trackSendPics(medias)
-		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["maesanpicture"]:
 		medias := getMedias(tweet)
 		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) || len(medias) == 0 {
-			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
+		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 		qqBot.SendGroupMsg(tweet.Text)
 		trackSendPics(medias)
-		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["komatan"]:
 		medias := getMedias(tweet)
+		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 		trackSendPics(medias)
-		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	case twitterBot.Follows["Strangestone"]:
 		medias := getMedias(tweet)
 		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") || len(medias) == 0 {
-			logger.Debugf("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
+		logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 		qqBot.SendGroupMsg(tweet.Text)
 		trackSendPics(medias)
-		logger.Infof("%s: {%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	default:
 		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
 	}
@@ -129,7 +129,7 @@ func selfEvent(event *twitter.Event) {
 	case "favorite":
 		medias := getMedias(event.TargetObject)
 		logger.Infof(
-			"favorite: (%s):[%s] %d medias",
+			"favorite: (%s):{%s} %d medias",
 			event.TargetObject.User.Name,
 			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
 			len(medias))
@@ -137,7 +137,7 @@ func selfEvent(event *twitter.Event) {
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf(
-			"unfavorite: (%s):[%s] %d medias",
+			"unfavorite: (%s):{%s} %d medias",
 			event.TargetObject.User.Name,
 			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
 			len(medias))
