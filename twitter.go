@@ -65,7 +65,7 @@ func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
 	return false
 }
 
-func proceedTrack(tweet *twitter.Tweet) {
+func trackTweet(tweet *twitter.Tweet) {
 	if tweet.RetweetedStatus != nil {
 		logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
 		return
@@ -124,15 +124,23 @@ func selfProceedPics(medias []twitter.MediaEntity, action int) {
 	}
 }
 
-func eventSelf(event *twitter.Event) {
+func selfEvent(event *twitter.Event) {
 	switch event.Event {
 	case "favorite":
 		medias := getMedias(event.TargetObject)
-		logger.Infof("favorite: [%s] %d medias", strings.Replace(event.TargetObject.Text, "\n", " ", -1), len(medias))
+		logger.Infof(
+			"favorite: (%s):[%s] %d medias",
+			event.TargetObject.User.Name,
+			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
+			len(medias))
 		go selfProceedPics(medias, 1)
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
-		logger.Debugf("unfavorite: [%s] %d medias", strings.Replace(event.TargetObject.Text, "\n", " ", -1), len(medias))
+		logger.Debugf(
+			"unfavorite: (%s):[%s] %d medias",
+			event.TargetObject.User.Name,
+			strings.Replace(event.TargetObject.Text, "\n", " ", -1),
+			len(medias))
 		go selfProceedPics(medias, -1)
 	default:
 		logger.Debug(event.Event)
@@ -146,7 +154,7 @@ func twitterTrack() {
 	}
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
-		demux.Tweet = proceedTrack
+		demux.Tweet = trackTweet
 		filterParams := &twitter.StreamFilterParams{
 			Follow: follows,
 		}
@@ -162,7 +170,7 @@ func twitterTrack() {
 func twitterSelf() {
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
-		demux.Event = eventSelf
+		demux.Event = selfEvent
 		userParams := &twitter.StreamUserParams{
 			With: twitterBot.ID,
 		}
