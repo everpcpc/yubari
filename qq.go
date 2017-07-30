@@ -104,7 +104,7 @@ func (q *QQBot) SendPics(fn func(string), url string) {
 	if err != nil {
 		return
 	}
-	q.SendGroupMsg(QQImage{fileName}.String())
+	fn(QQImage{fileName}.String())
 
 }
 
