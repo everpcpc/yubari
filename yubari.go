@@ -23,31 +23,31 @@ func main() {
 		return
 	}
 	defer redisClient.Close()
-	logger.Infof("Redis connected: %+v", redisClient)
+	logger.Debugf("Redis connected: %+v", redisClient)
 
 	qqBot = NewQQBot(cfg)
 	defer qqBot.Client.Close()
-	logger.Infof("QQBot: %+v", qqBot)
+	logger.Debugf("QQBot: %+v", qqBot)
 
 	twitterBot = NewTwitterBot(cfg.Twitter)
-	logger.Infof("TwitterBot: %+v", twitterBot)
+	logger.Debugf("TwitterBot: %+v", twitterBot)
 
 	bots := strings.Split(*flagBots, ",")
 	botsLaunched := 0
 	for _, b := range bots {
 		switch b {
 		case "qw":
-			logger.Notice("Start bot qqWatch")
+			logger.Notice("Bot: qqWatch")
 			messages := make(chan map[string]string)
 			go qqBot.Poll(messages)
 			go qqWatch(messages)
 			botsLaunched++
 		case "tt":
-			logger.Notice("Start bot twitterTrack")
+			logger.Notice("Bot: twitterTrack")
 			go twitterBot.Track()
 			botsLaunched++
 		case "ts":
-			logger.Notice("Start bot twitterSelf")
+			logger.Notice("Bot: twitterSelf")
 			go twitterBot.Self()
 			botsLaunched++
 		default:
