@@ -70,7 +70,7 @@ func logAllTrack(msg interface{}) {
 	logger.Debug(msg)
 }
 
-func trackSendTextPics(tweet *twitter.Tweet) {
+func trackTextMedia(tweet *twitter.Tweet) {
 	medias := getMedias(tweet)
 	if len(medias) == 0 {
 		return
@@ -80,7 +80,7 @@ func trackSendTextPics(tweet *twitter.Tweet) {
 	sendPics(medias)
 }
 
-func trackSendPics(tweet *twitter.Tweet) {
+func trackMedia(tweet *twitter.Tweet) {
 	medias := getMedias(tweet)
 	logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	sendPics(medias)
@@ -93,27 +93,27 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	}
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
-		trackSendPics(tweet)
+		trackMedia(tweet)
 	case t.Follows["komatan"]:
-		trackSendPics(tweet)
+		trackMedia(tweet)
 	case t.Follows["maesanpicture"]:
 		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		trackSendTextPics(tweet)
+		trackTextMedia(tweet)
 	case t.Follows["Strangestone"]:
 		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		trackSendTextPics(tweet)
+		trackTextMedia(tweet)
 	case t.Follows["kazuharukina"]:
-		if !strings.HasPrefix(tweet.Text, "毎日JK企画") {
+		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		trackSendTextPics(tweet)
+		trackTextMedia(tweet)
 	default:
 		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
 	}
@@ -157,6 +157,16 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 	}
 }
 
+func (t *TwitterBot) selfTweet(tweet *twitter.Tweet) {
+	if qqBot.Config.NameGroup != "" {
+		if hasHashTags(qqBot.Config.NameGroup, tweet.Entities.Hashtags) {
+			medias := getMedias(tweet)
+			logger.Infof("(%s):{%s}", qqBot.Config.NameGroup, strings.Replace(tweet.Text, "\n", " ", -1))
+			sendPics(medias)
+		}
+	}
+}
+
 // Track ...
 func (t *TwitterBot) Track() {
 	follows := []string{}
@@ -183,6 +193,7 @@ func (t *TwitterBot) Self() {
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
 		demux.Event = t.selfEvent
+		demux.Tweet = t.selfTweet
 		userParams := &twitter.StreamUserParams{
 			With: t.ID,
 		}

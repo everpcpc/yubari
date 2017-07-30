@@ -105,7 +105,6 @@ func (q *QQBot) SendPics(fn func(string), url string) {
 		return
 	}
 	fn(QQImage{fileName}.String())
-
 }
 
 // SendPrivateMsg ...

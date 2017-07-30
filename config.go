@@ -27,6 +27,7 @@ type QQConfig struct {
 	QQSelf          string   `json:"qqSelf"`
 	QQBot           string   `json:"qqBot"`
 	QQGroup         string   `json:"qqGroup"`
+	NameGroup       string   `json:"nameGroup"`
 	QQPrivateIgnore []string `json:"qqPrivateIgnore"`
 	QQGroupIgnore   []string `json:"qqGroupIgnore"`
 	SelfNames       []string `json:"selfNames"`
