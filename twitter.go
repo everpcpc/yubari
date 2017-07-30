@@ -160,9 +160,9 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 func (t *TwitterBot) selfTweet(tweet *twitter.Tweet) {
 	if qqBot.Config.NameGroup != "" {
 		if hasHashTags(qqBot.Config.NameGroup, tweet.Entities.Hashtags) {
-			if tweet.RetweetedStatus != nil {
-				logger.Infof("(%s):{%s}", qqBot.Config.NameGroup, strings.Replace(tweet.RetweetedStatus.Text, "\n", " ", -1))
-				sendPics(getMedias(tweet.RetweetedStatus))
+			if tweet.QuotedStatus != nil {
+				logger.Infof("(%s):{%s}", qqBot.Config.NameGroup, strings.Replace(tweet.QuotedStatus.Text, "\n", " ", -1))
+				sendPics(getMedias(tweet.QuotedStatus))
 			} else {
 				logger.Infof("(%s):{%s}", qqBot.Config.NameGroup, strings.Replace(tweet.Text, "\n", " ", -1))
 				sendPics(getMedias(tweet))
