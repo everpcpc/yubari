@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -11,7 +10,7 @@ import (
 func downloadFile(url string, path string) (string, error) {
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
-	fullPath := fmt.Sprintf("%s%s%s", path, string(os.PathSeparator), fileName)
+	fullPath := path + string(os.PathSeparator) + fileName
 
 	if _, err := os.Stat(fullPath); err == nil {
 		logger.Noticef("%s exists", fileName)
@@ -46,7 +45,7 @@ func removeFile(url string, path string) error {
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
 	logger.Debugf("--> Deleting %s", fileName)
-	fullPath := fmt.Sprintf("%s%s%s", path, string(os.PathSeparator), fileName)
+	fullPath := path + string(os.PathSeparator) + fileName
 	err := os.Remove(fullPath)
 	if err != nil {
 		logger.Error(err)

@@ -17,9 +17,14 @@ var (
 // QQFace ...
 type QQFace int
 
+// QQAt ...
+type QQAt struct {
+	qq string
+}
+
 // QQImage ...
 type QQImage struct {
-	File string
+	file string
 }
 
 // QQBot ...
@@ -45,8 +50,8 @@ func NewQQBot(cfg *Config) *QQBot {
 		Wait:        true,
 	}
 
-	q.RecvQ = fmt.Sprintf("%s(o)", q.ID)
-	q.SendQ = fmt.Sprintf("%s(i)", q.ID)
+	q.RecvQ = q.ID + "(o)"
+	q.SendQ = q.ID + "(i)"
 	return q
 }
 
@@ -57,7 +62,12 @@ func (q QQFace) String() string {
 
 // String generate code string for qq image
 func (q QQImage) String() string {
-	return fmt.Sprintf("[CQ:image,file=%s]", q.File)
+	return fmt.Sprintf("[CQ:image,file=%s]", q.file)
+}
+
+// String generate code string for qq qt msg
+func (q QQAt) String() string {
+	return fmt.Sprintf("[CQ:at,qq=%s]", q.qq)
 }
 
 func (q *QQBot) send(msg []byte) {
@@ -137,7 +147,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 	if !q.CheckMention(msg) {
 		return
 	}
-	key := fmt.Sprintf("%s_mention", q.Config.QQSelf)
+	key := q.Config.QQSelf + "_mention"
 	exists, err := redisClient.Expire(key, 10*time.Minute).Result()
 	if err != nil {
 		logger.Error(err)
@@ -151,13 +161,13 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 			logger.Error(err)
 			return
 		}
-		q.SendGroupMsg(fmt.Sprintf("呀呀呀，召唤一号机[CQ:at,qq=%s]", q.Config.QQSelf))
+		q.SendGroupMsg("呀呀呀，召唤一号机" + QQAt{q.Config.QQSelf}.String())
 	}
 }
 
 // CheckRepeat ...
 func (q *QQBot) CheckRepeat(msg string, group string) {
-	key := fmt.Sprintf("%s_last", group)
+	key := group + "_last"
 	defer redisClient.LPush(key, msg)
 	lastMsgs, err := redisClient.LRange(key, 0, 3).Result()
 	if err != nil {
