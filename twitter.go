@@ -84,7 +84,7 @@ func (t *TwitterBot) trackSendMedias(tweet *twitter.Tweet, withText bool) {
 
 func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	if tweet.RetweetedStatus != nil {
-		logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
+		// logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
 		return
 	}
 	switch tweet.User.IDStr {
