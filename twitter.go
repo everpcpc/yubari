@@ -117,7 +117,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		sendPics(medias)
 
 	default:
-		logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
+		// logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 	}
 }
 
