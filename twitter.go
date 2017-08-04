@@ -70,53 +70,54 @@ func logAllTrack(msg interface{}) {
 	logger.Debug(msg)
 }
 
-func (t *TwitterBot) trackSendMedias(tweet *twitter.Tweet, withText bool) {
-	medias := getMedias(tweet)
-	if len(medias) == 0 {
-		return
-	}
-	logger.Infof("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
-	if withText {
-		qqBot.SendGroupMsg(tweet.Text)
-	}
-	sendPics(medias)
-}
-
 func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	if tweet.RetweetedStatus != nil {
 		// logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
 		return
 	}
+	flattenedText := strings.Replace(tweet.Text, "\n", " ", -1)
+	medias := getMedias(tweet)
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
 		msg := tweet.Text
 		if tweet.Truncated {
 			msg = tweet.FullText
 		}
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tweet.CreatedAt + "\n" + msg)
-		t.trackSendMedias(tweet, false)
+		sendPics(medias)
+
 	case t.Follows["komatan"]:
-		t.trackSendMedias(tweet, false)
+		sendPics(medias)
+
 	case t.Follows["maesanpicture"]:
-		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
-			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) || (len(medias) == 0) {
+			logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 			return
 		}
-		t.trackSendMedias(tweet, true)
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		qqBot.SendGroupMsg(tweet.Text)
+		sendPics(medias)
+
 	case t.Follows["Strangestone"]:
-		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") {
-			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
+		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") || (len(medias) == 0) {
+			logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 			return
 		}
-		t.trackSendMedias(tweet, true)
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		qqBot.SendGroupMsg(tweet.Text)
+		sendPics(medias)
+
 	case t.Follows["kazuharukina"]:
-		if !hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) {
+		if !hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) || (len(medias) == 0) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 			return
 		}
-		t.trackSendMedias(tweet, true)
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		sendPics(medias)
+
 	default:
-		logger.Debugf("(%s):{%s}", tweet.User.Name, tweet.Text)
+		logger.Debugf("(%s):{%s}", tweet.User.Name, strings.Replace(tweet.Text, "\n", " ", -1))
 	}
 }
 
