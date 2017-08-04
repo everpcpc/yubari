@@ -89,6 +89,11 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	}
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
+		msg := tweet.Text
+		if tweet.Truncated {
+			msg = tweet.FullText
+		}
+		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tweet.CreatedAt + "\n" + msg)
 		t.trackSendMedias(tweet, false)
 	case t.Follows["komatan"]:
 		t.trackSendMedias(tweet, false)
