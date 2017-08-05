@@ -91,14 +91,15 @@ func bgmTrack(id string, ttl int) {
 			if id <= last {
 				break
 			}
-			logger.Info(item.Title)
 			emoji := emojiBangumi[string([]rune(item.Title)[0:2])]
 			des := strings.Split(item.Description, `"`)
 			var desURL string
 			if len(des) > 2 {
 				desURL = des[1]
 			}
-			go twitterBot.Client.Statuses.Update(emoji+" "+item.Title+" "+desURL+" #Bangumi", nil)
+			text := emoji + " " + item.Title + " " + desURL + " #Bangumi"
+			logger.Info(text)
+			go twitterBot.Client.Statuses.Update(text, nil)
 		}
 		if redisClient.Set(keyLast, latest, 0).Err() != nil {
 			logger.Error("set last", err)
