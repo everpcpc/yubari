@@ -13,7 +13,7 @@ func downloadFile(url string, path string) (string, error) {
 	fullPath := path + string(os.PathSeparator) + fileName
 
 	if _, err := os.Stat(fullPath); err == nil {
-		logger.Noticef("%s exists", fileName)
+		logger.Noticef("%s exists", fullPath)
 		return fileName, nil
 	}
 

@@ -99,7 +99,10 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		sendPics(medias)
 
 	case t.Follows["maesanpicture"]:
-		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) || (len(medias) == 0) {
+		if len(medias) == 0 {
+			return
+		}
+		if !hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 			return
 		}
@@ -108,7 +111,10 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		sendPics(medias)
 
 	case t.Follows["Strangestone"]:
-		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") || (len(medias) == 0) {
+		if len(medias) == 0 {
+			return
+		}
+		if !strings.HasPrefix(tweet.Text, "月曜日のたわわ") {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 			return
 		}
@@ -117,7 +123,10 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		sendPics(medias)
 
 	case t.Follows["kazuharukina"]:
-		if !hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) || (len(medias) == 0) {
+		if len(medias) == 0 {
+			return
+		}
+		if !hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) {
 			logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 			return
 		}
