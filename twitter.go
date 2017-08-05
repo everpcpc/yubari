@@ -161,17 +161,18 @@ func (t *TwitterBot) selfProceedPics(medias []twitter.MediaEntity, action int) {
 }
 
 func (t *TwitterBot) selfEvent(event *twitter.Event) {
-	flattenedText := strings.Replace(event.TargetObject.Text, "\n", `\n`, -1)
 	if event.Source.IDStr != t.ID {
 		logger.Debugf("%s: (%s):{%s}", event.Event, event.Source.Name, flattenedText)
 		return
 	}
 	switch event.Event {
 	case "favorite":
+		flattenedText := strings.Replace(event.TargetObject.Text, "\n", `\n`, -1)
 		medias := getMedias(event.TargetObject)
 		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, flattenedText, len(medias))
 		go t.selfProceedPics(medias, 1)
 	case "unfavorite":
+		flattenedText := strings.Replace(event.TargetObject.Text, "\n", `\n`, -1)
 		medias := getMedias(event.TargetObject)
 		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, flattenedText, len(medias))
 		go t.selfProceedPics(medias, -1)
