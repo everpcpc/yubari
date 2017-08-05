@@ -38,7 +38,7 @@ type QQBot struct {
 
 // NewQQBot ...
 func NewQQBot(cfg *Config) *QQBot {
-	q := &QQBot{ID: cfg.QQ.QQBot, Config: cfg.QQ}
+	q := &QQBot{ID: cfg.QQ.BotID, Config: cfg.QQ}
 	q.Client = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
 			return bt.Dial(cfg.BeanstalkAddr)
@@ -101,7 +101,7 @@ func (q *QQBot) send(msg []byte) {
 // SendGroupMsg ...
 func (q *QQBot) SendGroupMsg(msg string) {
 	logger.Debugf(msg)
-	fullMsg, err := formMsg("sendGroupMsg", q.Config.QQGroup, msg)
+	fullMsg, err := formMsg("sendGroupMsg", q.Config.GroupID, msg)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -131,7 +131,7 @@ func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 
 //SendSelfMsg ...
 func (q *QQBot) SendSelfMsg(msg string) {
-	q.SendPrivateMsg(q.Config.QQSelf, msg)
+	q.SendPrivateMsg(q.Config.SelfID, msg)
 }
 
 // CheckMention ...
@@ -149,7 +149,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 	if !q.CheckMention(msg) {
 		return
 	}
-	key := q.Config.QQSelf + "_mention"
+	key := q.Config.SelfID + "_mention"
 	exists, err := redisClient.Expire(key, 10*time.Minute).Result()
 	if err != nil {
 		logger.Error(err)
@@ -163,7 +163,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 			logger.Error(err)
 			return
 		}
-		q.SendGroupMsg("呀呀呀，召唤一号机" + QQAt{q.Config.QQSelf}.String())
+		q.SendGroupMsg("呀呀呀，召唤一号机" + QQAt{q.Config.SelfID}.String())
 	}
 }
 

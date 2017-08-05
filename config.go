@@ -13,6 +13,7 @@ type Config struct {
 	Redis         *RedisConfig   `json:"redis"`
 	QQ            *QQConfig      `json:"qq"`
 	Twitter       *TwitterConfig `json:"twitter"`
+	BgmID         string         `json:"bgmID"`
 }
 
 // RedisConfig ...
@@ -24,10 +25,10 @@ type RedisConfig struct {
 
 // QQConfig ...
 type QQConfig struct {
-	QQSelf          string   `json:"qqSelf"`
-	QQBot           string   `json:"qqBot"`
-	QQGroup         string   `json:"qqGroup"`
-	NameGroup       string   `json:"nameGroup"`
+	SelfID          string   `json:"selfID"`
+	BotID           string   `json:"botID"`
+	GroupID         string   `json:"groupID"`
+	GroupName       string   `json:"groupName"`
 	QQPrivateIgnore []string `json:"qqPrivateIgnore"`
 	QQGroupIgnore   []string `json:"qqGroupIgnore"`
 	SelfNames       []string `json:"selfNames"`
@@ -41,7 +42,7 @@ type TwitterConfig struct {
 	ConsumerSecret string `json:"consumerSecret"`
 	AccessToken    string `json:"accessToken"`
 	AccessSecret   string `json:"accessSecret"`
-	IDSelf         string `json:"idSelf"`
+	SelfID         string `json:"selfID"`
 	ImgPath        string `json:"imgPath"`
 }
 

@@ -26,7 +26,7 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 	httpClient := config.Client(oauth1.NoContext, token)
 	client := twitter.NewClient(httpClient)
 	bot := &TwitterBot{
-		ID:      cfg.IDSelf,
+		ID:      cfg.SelfID,
 		ImgPath: cfg.ImgPath,
 		Client:  client,
 		Follows: map[string]string{
@@ -182,13 +182,13 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 }
 
 func (t *TwitterBot) selfTweet(tweet *twitter.Tweet) {
-	if qqBot.Config.NameGroup != "" {
-		if hasHashTags(qqBot.Config.NameGroup, tweet.Entities.Hashtags) {
+	if qqBot.Config.GroupName != "" {
+		if hasHashTags(qqBot.Config.GroupName, tweet.Entities.Hashtags) {
 			if tweet.QuotedStatus != nil {
-				logger.Infof("(%s):{%s}", qqBot.Config.NameGroup, strings.Replace(tweet.QuotedStatus.Text, "\n", `\n`, -1))
+				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strings.Replace(tweet.QuotedStatus.Text, "\n", `\n`, -1))
 				sendPics(getMedias(tweet.QuotedStatus))
 			} else {
-				logger.Infof("(%s):{%s}", qqBot.Config.NameGroup, strings.Replace(tweet.Text, "\n", `\n`, -1))
+				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strings.Replace(tweet.Text, "\n", `\n`, -1))
 				sendPics(getMedias(tweet))
 			}
 		}

@@ -5,10 +5,10 @@
     "db": 0
   },
   "qq":{
-    "qqSelf": "000000000",
-    "qqBot": "0000000000",
-    "qqGroup": "000000000",
-    "nameGroup": "",
+    "selfID": "000000000",
+    "botID": "0000000000",
+    "groupID": "000000000",
+    "groupName": "",
     "qqPrivateIgnore": [],
     "qqGroupIgnore": [],
     "selfNames": [],
@@ -16,12 +16,13 @@
     "imgPath": ""
   },
   "twitter":{
+    "selfID": "",
     "consumerKey": "",
     "consumerSecret": "",
     "accessToken": "",
     "accessSecret": "",
-    "idSelf": "",
     "imgPath": ""
   }
-  "beanstalkAddr": "localhost:11300"
+  "beanstalkAddr": "localhost:11300",
+  "bgmID": ""
 }

@@ -7,8 +7,8 @@ import (
 
 func main() {
 	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
-	flagLogger := flag.Int("l", 2, "0 all, 1 std, 2 syslog")
-	flagBots := flag.String("b", "qw,tt,ts,rss", "Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, fr feedRead")
+	flagLogger := flag.Int("l", 1, "0 all, 1 std, 2 syslog")
+	flagBots := flag.String("b", "qw,tt,ts,bgm", "Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, bgm bgmTrack")
 	flag.Parse()
 
 	logger = GetLogger(*flagLogger)
@@ -49,6 +49,10 @@ func main() {
 		case "ts":
 			logger.Notice("Bot: twitterSelf")
 			go twitterBot.Self()
+			botsLaunched++
+		case "bgm":
+			logger.Notice("Bot: bgmTrack")
+			go bgmTrack(cfg.BgmID, 10)
 			botsLaunched++
 		default:
 			logger.Warningf("Bot %s is not supported.", b)
