@@ -37,7 +37,7 @@ func downloadFile(url string, path string) (string, error) {
 		logger.Error(err)
 		return "", err
 	}
-	logger.Debugf("%s: %d bytes", fileName, n)
+	logger.Debugf("%s: %d bytes", fullPath, n)
 	return fileName, nil
 }
 
@@ -51,6 +51,6 @@ func removeFile(url string, path string) error {
 		logger.Error(err)
 		return err
 	}
-	logger.Debugf("--> Deleted %s", fileName)
+	logger.Debugf("--> Deleted %s", fullPath)
 	return nil
 }
