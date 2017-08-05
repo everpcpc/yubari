@@ -93,7 +93,12 @@ func bgmTrack(id string, ttl int) {
 			}
 			logger.Info(item.Title)
 			emoji := emojiBangumi[string([]rune(item.Title)[0:2])]
-			go twitterBot.Client.Statuses.Update(emoji+item.Title+" #Bangumi", nil)
+			des := strings.Split(item.Description, `"`)
+			var desURL string
+			if len(des) > 2 {
+				desURL = des[1]
+			}
+			go twitterBot.Client.Statuses.Update(emoji+" "+item.Title+" "+desURL+" #Bangumi", nil)
 		}
 		if redisClient.Set(keyLast, latest, 0).Err() != nil {
 			logger.Error("set last", err)
