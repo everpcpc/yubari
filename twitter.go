@@ -84,7 +84,15 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			msg = tweet.FullText
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
-		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tweet.CreatedAt + "\n" + msg)
+		t := tweet.CreatedAt
+		ct, err := tweet.CreatedAtTime()
+		if err == nil {
+			tz, err := time.LoadLocation("Asia/Tokyo")
+			if err == nil {
+				t = ct.In(tz).String()
+			}
+		}
+		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
 		sendPics(medias)
 
 	case t.Follows["komatan"]:
