@@ -162,7 +162,7 @@ func (t *TwitterBot) selfProceedPics(medias []twitter.MediaEntity, action int) {
 
 func (t *TwitterBot) selfEvent(event *twitter.Event) {
 	if event.Source.IDStr != t.ID {
-		logger.Debugf("%s: (%s):{%s}", event.Event, event.Source.Name, flattenedText)
+		logger.Debugf("%s: (%s)", event.Event, event.Source.Name)
 		return
 	}
 	switch event.Event {
