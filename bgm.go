@@ -45,6 +45,7 @@ func bgmTrack(id string, ttl int) {
 		err := redisClient.Get(keyLock).Err()
 		if err == nil {
 			i = 1
+			time.Sleep(1 * time.Second)
 			continue
 		} else if err != nil && err != redis.Nil {
 			logger.Error("get lock", err)
