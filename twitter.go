@@ -79,11 +79,17 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	medias := getMedias(tweet)
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		err := redisClient.Get("forward_kancolle").Err()
+		if err != nil {
+			sendPics(medias)
+			return
+		}
+
 		msg := tweet.Text
 		if tweet.Truncated {
 			msg = tweet.FullText
 		}
-		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		t := tweet.CreatedAt
 		ct, err := tweet.CreatedAtTime()
 		if err == nil {
@@ -93,7 +99,6 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			}
 		}
 		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
-		sendPics(medias)
 
 	case t.Follows["komatan"]:
 		if len(medias) == 0 {
