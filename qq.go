@@ -100,7 +100,7 @@ func (q *QQBot) send(msg []byte) {
 
 // SendGroupMsg ...
 func (q *QQBot) SendGroupMsg(msg string) {
-	logger.Debugf(msg)
+	logger.Infof(msg)
 	fullMsg, err := formMsg("sendGroupMsg", q.Config.GroupID, msg)
 	if err != nil {
 		logger.Error(err)
@@ -120,7 +120,7 @@ func (q *QQBot) SendPics(fn func(string), url string) {
 
 // SendPrivateMsg ...
 func (q *QQBot) SendPrivateMsg(qq string, msg string) {
-	logger.Debugf("TO:" + qq + ":" + msg)
+	logger.Infof("TO:" + qq + ":" + msg)
 	fullMsg, err := formMsg("sendPrivateMsg", qq, msg)
 	if err != nil {
 		logger.Error(err)
