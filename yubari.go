@@ -37,21 +37,21 @@ func main() {
 	for _, b := range bots {
 		switch b {
 		case "qw":
-			logger.Notice("Bot: qqWatch")
+			logger.Debug("Bot: qqWatch")
 			messages := make(chan map[string]string)
 			go qqBot.Poll(messages)
 			go qqWatch(messages)
 			botsLaunched++
 		case "tt":
-			logger.Notice("Bot: twitterTrack")
+			logger.Debug("Bot: twitterTrack")
 			go twitterBot.Track()
 			botsLaunched++
 		case "ts":
-			logger.Notice("Bot: twitterSelf")
+			logger.Debug("Bot: twitterSelf")
 			go twitterBot.Self()
 			botsLaunched++
 		case "bgm":
-			logger.Notice("Bot: bgmTrack")
+			logger.Debug("Bot: bgmTrack")
 			go bgmTrack(cfg.BgmID, 10)
 			botsLaunched++
 		default:
