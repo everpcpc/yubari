@@ -180,7 +180,7 @@ func (t *TwitterBot) selfTweet(tweet *twitter.Tweet) {
 	if qqBot.Config.GroupName != "" {
 		if hasHashTags(qqBot.Config.GroupName, tweet.Entities.Hashtags) {
 			if tweet.QuotedStatus != nil {
-				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Quote(event.QuotedStatus.Text))
+				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Quote(tweet.QuotedStatus.Text))
 				sendPics(getMedias(tweet.QuotedStatus))
 			} else {
 				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Quote(tweet.Text))
