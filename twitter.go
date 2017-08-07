@@ -141,15 +141,6 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	}
 }
 
-func (t *TwitterBot) trackEvent(event *twitter.Event) {
-	switch event.Source.IDStr {
-	case t.Follows["KanColle_STAFF"]:
-		flattenedText := strings.Replace(event.TargetObject.Text, "\n", `\n`, -1)
-		logger.Debugf("%s: (%s):{%s}", event.Event, event.Source.Name, flattenedText)
-	default:
-	}
-}
-
 func (t *TwitterBot) selfProceedPics(medias []twitter.MediaEntity, action int) {
 	for _, media := range medias {
 		switch media.Type {
@@ -209,7 +200,6 @@ func (t *TwitterBot) Track() {
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
 		demux.Tweet = t.trackTweet
-		demux.Event = t.trackEvent
 		filterParams := &twitter.StreamFilterParams{
 			Follow: follows,
 		}
