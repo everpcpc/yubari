@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -75,7 +76,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		// logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
 		return
 	}
-	flattenedText := strings.Replace(tweet.Text, "\n", `\n`, -1)
+	flattenedText := strconv.Qoute(tweet.Text)
 	medias := getMedias(tweet)
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
@@ -163,14 +164,12 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 	}
 	switch event.Event {
 	case "favorite":
-		flattenedText := strings.Replace(event.TargetObject.Text, "\n", `\n`, -1)
 		medias := getMedias(event.TargetObject)
-		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, flattenedText, len(medias))
+		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Qoute(event.TargetObject.Text), len(medias))
 		go t.selfProceedPics(medias, 1)
 	case "unfavorite":
-		flattenedText := strings.Replace(event.TargetObject.Text, "\n", `\n`, -1)
 		medias := getMedias(event.TargetObject)
-		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, flattenedText, len(medias))
+		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Qoute(event.TargetObject.Text), len(medias))
 		go t.selfProceedPics(medias, -1)
 	default:
 		logger.Debug(event.Event)
@@ -181,10 +180,10 @@ func (t *TwitterBot) selfTweet(tweet *twitter.Tweet) {
 	if qqBot.Config.GroupName != "" {
 		if hasHashTags(qqBot.Config.GroupName, tweet.Entities.Hashtags) {
 			if tweet.QuotedStatus != nil {
-				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strings.Replace(tweet.QuotedStatus.Text, "\n", `\n`, -1))
+				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Qoute(event.TargetObject.Text))
 				sendPics(getMedias(tweet.QuotedStatus))
 			} else {
-				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strings.Replace(tweet.Text, "\n", `\n`, -1))
+				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Qoute(tweet.Text))
 				sendPics(getMedias(tweet))
 			}
 		}
