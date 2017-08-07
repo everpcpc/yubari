@@ -287,18 +287,18 @@ func qqWatch(messages chan map[string]string) {
 		switch msg["event"] {
 		case "PrivateMsg":
 			if _, ok := privateIgnore[msg["qq"]]; ok {
-				// logger.Debugf("Ignore [%s]:{%s}", msg["qq"], strconv.Qoute(msg["msg"]))
+				// logger.Debugf("Ignore [%s]:{%s}", msg["qq"], strconv.Quote(msg["msg"]))
 				continue
 			}
-			logger.Infof("[%s]:{%s}", msg["qq"], strconv.Qoute(msg["msg"]))
+			logger.Infof("[%s]:{%s}", msg["qq"], strconv.Quote(msg["msg"]))
 		case "GroupMsg":
 			if _, ok := groupIgnore[msg["qq"]]; ok {
-				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Qoute(msg["msg"]))
+				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
 				continue
 			}
 			go qqBot.NoticeMention(msg["msg"], msg["group"])
 			go qqBot.CheckRepeat(msg["msg"], msg["group"])
-			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Qoute(msg["msg"]))
+			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
 		default:
 			logger.Info(msg)
 		}
