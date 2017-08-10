@@ -171,15 +171,16 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 // CheckRepeat ...
 func (q *QQBot) CheckRepeat(msg string, group string) {
 	key := group + "_last"
-	defer redisClient.LPush(key, msg)
-	lastMsgs, err := redisClient.LRange(key, 0, 3).Result()
+	flattendMsg := strings.TrimSpace(msg)
+	defer redisClient.LPush(key, flattendMsg)
+	lastMsgs, err := redisClient.LRange(key, 0, 5).Result()
 	if err != nil {
 		logger.Error(err)
 		return
 	}
 	i := 0
 	for _, s := range lastMsgs {
-		if s == msg {
+		if s == flattendMsg {
 			i++
 		}
 	}
