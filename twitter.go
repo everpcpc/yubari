@@ -76,21 +76,23 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		// logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
 		return
 	}
-	flattenedText := strconv.Quote(tweet.Text)
+	msg := tweet.Text
+	if tweet.Truncated {
+		msg = tweet.FullText
+	}
+	flattenedText := strconv.Quote(msg)
+
 	medias := getMedias(tweet)
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
-		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
+
 		err := redisClient.Get("forward_kancolle").Err()
 		if err != nil {
 			sendPics(medias)
 			return
 		}
 
-		msg := tweet.Text
-		if tweet.Truncated {
-			msg = tweet.FullText
-		}
 		t := tweet.CreatedAt
 		ct, err := tweet.CreatedAtTime()
 		if err == nil {
@@ -114,7 +116,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		if hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
-			qqBot.SendGroupMsg(tweet.Text)
+			qqBot.SendGroupMsg(msg)
 			sendPics(medias)
 		}
 
@@ -123,8 +125,8 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			return
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
-		if strings.HasPrefix(tweet.Text, "月曜日のたわわ") {
-			qqBot.SendGroupMsg(tweet.Text)
+		if strings.HasPrefix(msg, "月曜日のたわわ") {
+			qqBot.SendGroupMsg(msg)
 			sendPics(medias)
 		}
 
