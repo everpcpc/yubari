@@ -22,7 +22,7 @@
     "accessToken": "",
     "accessSecret": "",
     "imgPath": ""
-  }
+  },
   "beanstalkAddr": "localhost:11300",
   "bgmID": ""
 }
