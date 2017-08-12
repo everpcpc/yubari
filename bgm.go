@@ -41,7 +41,7 @@ func bgmTrack(id string, ttl int) {
 		}
 		last, err := redisClient.Get(keyLast).Int64()
 		if err != nil {
-			logger.Error("get last", err)
+			logger.Warning("get last", err)
 			last = 0
 		}
 		var latest int64
