@@ -1,36 +1,13 @@
 package main
 
 import (
-	"errors"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/go-redis/redis"
-	"github.com/mmcdole/gofeed/rss"
-	"net/http"
+	"github.com/mmcdole/gofeed"
 	"strconv"
 	"strings"
 	"time"
 )
-
-func parseRssURL(url string) (*rss.Feed, error) {
-	fp := rss.Parser{}
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	if resp != nil {
-		defer func() {
-			ce := resp.Body.Close()
-			if ce != nil {
-				err = ce
-			}
-		}()
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, errors.New(resp.Status)
-	}
-
-	return fp.Parse(resp.Body)
-}
 
 func bgmTrack(id string, ttl int) {
 	rssURL := "https://bgm.tv/feed/user/" + id + "/timeline"
@@ -40,17 +17,14 @@ func bgmTrack(id string, ttl int) {
 	logger.Debug(rssURL, ttl)
 	keyLock := "bgm_" + id + "_lock"
 	keyLast := "bgm_" + id + "_last"
-	i := 1
 	for {
 		err := redisClient.Get(keyLock).Err()
 		if err == nil {
-			i = 1
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Second)
 			continue
 		} else if err != nil && err != redis.Nil {
 			logger.Error("get lock", err)
-			time.Sleep(time.Duration(i) * time.Second)
-			i += int(i/2.0) + 1
+			time.Sleep(time.Second)
 			continue
 		}
 
@@ -58,11 +32,11 @@ func bgmTrack(id string, ttl int) {
 			logger.Error("set lock first", err)
 		}
 
-		rss, err := parseRssURL(rssURL)
+		fp := gofeed.NewParser()
+		feed, err := fp.ParseURL(rssURL)
 		if err != nil {
 			logger.Error(err)
-			time.Sleep(time.Duration(i) * time.Second)
-			i += int(i/2.0) + 1
+			time.Sleep(time.Second)
 			continue
 		}
 		last, err := redisClient.Get(keyLast).Int64()
@@ -71,15 +45,16 @@ func bgmTrack(id string, ttl int) {
 			last = 0
 		}
 		var latest int64
-		for _, item := range rss.Items {
-			if item.GUID == nil {
+		for _, item := range feed.Items {
+			if item.GUID == "" {
+				logger.Error("guid not found for", item.Title)
 				continue
 			}
-			tokens := strings.Split(item.GUID.Value, "/")
+			tokens := strings.Split(item.GUID, "/")
 			guid := tokens[len(tokens)-1]
 			id, err := strconv.ParseInt(guid, 10, 64)
 			if err != nil {
-				logger.Error("guid:", item.GUID.Value)
+				logger.Error("guid:", item.GUID)
 				continue
 			}
 			if id > latest {
@@ -92,13 +67,12 @@ func bgmTrack(id string, ttl int) {
 			if id <= last {
 				break
 			}
-			emoji := emojiBangumi[string([]rune(item.Title)[0:2])]
 			des := strings.Split(item.Description, `"`)
-			var desURL string
-			if len(des) > 2 {
-				desURL = des[1]
+			if len(des) < 2 {
+				logger.Info("could not get url:", strconv.Quote(item.Description))
+				continue
 			}
-			text := emoji + " " + item.Title + " " + desURL + " #Bangumi"
+			text := getBangumiUpdate(item.Title, des[1])
 			logger.Info(text)
 			go twitterBot.Client.Statuses.Update(text, nil)
 		}
@@ -110,4 +84,32 @@ func bgmTrack(id string, ttl int) {
 		}
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func getBangumiUpdate(title, url string) string {
+	_title := []rune(title)
+	action := string(_title[0:2])
+	content := string(_title[2:])
+	emoji := emojiBangumi[action]
+
+	subject := getSubjectFromEP(url)
+	if subject == "" {
+		return emoji + " " + title + " " + url + " #Bangumi"
+	}
+	return emoji + " " + action + "「" + subject + "」" + content + " " + url + " #Bangumi"
+}
+
+func getSubjectFromEP(url string) string {
+	tokens := strings.Split(url, "/")
+	t := tokens[len(tokens)-2]
+	if t != "ep" {
+		return ""
+	}
+	doc, err := goquery.NewDocument(url)
+	if err != nil {
+		logger.Error(err)
+		return ""
+	}
+	return doc.Find("div#headerSubject h1.nameSingle a").Text()
+
 }

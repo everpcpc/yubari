@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
 )
@@ -10,21 +10,17 @@ import (
 func TestQQFace(t *testing.T) {
 	data := []byte(`{"/laugh": 12, "/cry": 2}`)
 	var objmap map[string]*json.RawMessage
+
 	err := json.Unmarshal(data, &objmap)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	assert.Nil(t, err)
+
 	faceID, err := strconv.Atoi(string(*objmap["/laugh"]))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	assert.Nil(t, err)
 	face := QQFace(faceID)
-	fmt.Println(face)
+	assert.Equal(t, "[CQ:face,id=12]", face.String())
 }
 
 func TestQQImage(t *testing.T) {
 	img := QQImage{"t.jpg"}
-	fmt.Println(img)
+	assert.Equal(t, "[CQ:image,file=t.jpg]", img.String())
 }

@@ -4,9 +4,23 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/PuerkitoBio/goquery",
+			"Comment": "v1.1.0-6-g8806ada",
+			"Rev": "8806ada2a4ab225c06e9106f9631be80932db7ce"
+		},
+		{
+			"ImportPath": "github.com/andybalholm/cascadia",
+			"Rev": "349dd0209470eabd9514242c688c403c0926d266"
+		},
+		{
 			"ImportPath": "github.com/cenkalti/backoff",
 			"Comment": "v1.0.0-23-g61153c7",
 			"Rev": "61153c768f31ee5f130071d08fc82b85208528de"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.0-6-gadab964",
+			"Rev": "adab96458c51a58dc1783b3335dcce5461522e75"
 		},
 		{
 			"ImportPath": "github.com/dghubble/go-twitter/twitter",
@@ -61,6 +75,16 @@
 			"Rev": "6c091c21a74eb35f49b3dcf789620c278a0c114a"
 		},
 		{
+			"ImportPath": "github.com/mmcdole/gofeed",
+			"Comment": "v1.0.0-beta-23-g042c0a9",
+			"Rev": "042c0a9121581210fc8ef106d8ad1b0bdf931ae2"
+		},
+		{
+			"ImportPath": "github.com/mmcdole/gofeed/atom",
+			"Comment": "v1.0.0-beta-23-g042c0a9",
+			"Rev": "042c0a9121581210fc8ef106d8ad1b0bdf931ae2"
+		},
+		{
 			"ImportPath": "github.com/mmcdole/gofeed/extensions",
 			"Comment": "v1.0.0-beta-23-g042c0a9",
 			"Rev": "042c0a9121581210fc8ef106d8ad1b0bdf931ae2"
@@ -83,6 +107,16 @@
 			"ImportPath": "github.com/op/go-logging",
 			"Comment": "v1-7-g970db52",
 			"Rev": "970db520ece77730c7e4724c61121037378659d9"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-71-g890a5c3",
+			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
