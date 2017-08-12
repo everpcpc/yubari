@@ -29,7 +29,7 @@ func bgmTrack(id string, ttl int) {
 		}
 
 		if redisClient.Set(keyLock, 0, 10*time.Second).Err() != nil {
-			logger.Error("set lock first", err)
+			logger.Warning("lock before", err)
 		}
 
 		fp := gofeed.NewParser()
@@ -69,7 +69,7 @@ func bgmTrack(id string, ttl int) {
 			}
 			des := strings.Split(item.Description, `"`)
 			if len(des) < 2 {
-				logger.Info("could not get url:", strconv.Quote(item.Description))
+				logger.Warning("could not get url:", strconv.Quote(item.Description))
 				continue
 			}
 			text := getBangumiUpdate(item.Title, des[1])
@@ -80,7 +80,7 @@ func bgmTrack(id string, ttl int) {
 			logger.Error("set last", err)
 		}
 		if redisClient.Set(keyLock, 0, time.Duration(ttl)*time.Second).Err() != nil {
-			logger.Error("set lock", err)
+			logger.Warning("lock after", err)
 		}
 		time.Sleep(1 * time.Second)
 	}
