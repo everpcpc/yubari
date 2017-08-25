@@ -193,21 +193,21 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 
 // Poll reserve msg from beanstalkd
 func (q *QQBot) Poll(messages chan map[string]string) {
-	for i := 1; ; i++ {
+	for {
 		conn, err := q.Client.Get()
 		if err != nil {
 			logger.Error(err)
-			time.Sleep(time.Duration(i) * time.Second)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 		conn.Watch(q.RecvQ)
 		job, err := conn.Reserve()
 		if err != nil {
 			logger.Warning(err)
-			time.Sleep(time.Duration(i) * time.Second)
+			time.Sleep(3 * time.Second)
 			continue
 		}
-		i = 1
+		logger.Debug("get msg:", string(job.Body))
 		body := strings.Split(string(job.Body), " ")
 		ret := make(map[string]string)
 		switch body[0] {
@@ -218,7 +218,13 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 			ret["qq"] = body[3]
 			ret["msg"], err = decodeMsg(body[4])
 			if err != nil {
-				logger.Error(err)
+				if body[4] == "0" {
+					logger.Warning("empty msg")
+					err = conn.Bury(job.ID, 0)
+				}
+				if err != nil {
+					logger.Error(err)
+				}
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -231,7 +237,13 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 			ret["anonymous"] = body[5]
 			ret["msg"], err = decodeMsg(body[6])
 			if err != nil {
-				logger.Error(err)
+				if body[6] == "0" {
+					logger.Warning("empty msg")
+					err = conn.Bury(job.ID, 0)
+				}
+				if err != nil {
+					logger.Error(err)
+				}
 				time.Sleep(3 * time.Second)
 				continue
 			}
