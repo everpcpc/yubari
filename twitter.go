@@ -51,9 +51,8 @@ func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
 }
 
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
-	ee := tweet.ExtendedEntities
-	if ee != nil {
-		return ee.Media
+	if tweet.Truncated {
+		return tweet.ExtendedEntities.Media
 	}
 	return tweet.Entities.Media
 }
@@ -78,7 +77,10 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	}
 	msg := tweet.Text
 	if tweet.Truncated {
-		msg = tweet.FullText
+		if tweet.ExtendedTweet != nil {
+			msg = tweet.ExtendedTweet.FullText
+		}
+		logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
 	flattenedText := strconv.Quote(msg)
 
