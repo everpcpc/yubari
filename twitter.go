@@ -51,7 +51,7 @@ func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
 }
 
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
-	if tweet.Truncated {
+	if tweet.ExtendedEntities != nil {
 		return tweet.ExtendedEntities.Media
 	}
 	return tweet.Entities.Media
@@ -76,15 +76,16 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		return
 	}
 	msg := tweet.Text
+	medias := getMedias(tweet)
 	if tweet.Truncated {
 		if tweet.ExtendedTweet != nil {
 			msg = tweet.ExtendedTweet.FullText
+			medias := getMedias(tweet.ExtendedTweet)
 		}
 		logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
 	flattenedText := strconv.Quote(msg)
 
-	medias := getMedias(tweet)
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
