@@ -57,6 +57,13 @@ func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
 	return tweet.Entities.Media
 }
 
+func getExtendedMedias(tweet *twitter.ExtendedTweet) []twitter.MediaEntity {
+	if tweet.ExtendedEntities != nil {
+		return tweet.ExtendedEntities.Media
+	}
+	return tweet.Entities.Media
+}
+
 func sendPics(medias []twitter.MediaEntity) {
 	for _, media := range medias {
 		switch media.Type {
@@ -80,7 +87,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	if tweet.Truncated {
 		if tweet.ExtendedTweet != nil {
 			msg = tweet.ExtendedTweet.FullText
-			medias := getMedias(tweet.ExtendedTweet)
+			medias = getExtendedMedias(tweet.ExtendedTweet)
 		}
 		logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
