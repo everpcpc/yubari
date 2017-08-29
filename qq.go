@@ -5,14 +5,15 @@ import (
 	"encoding/base64"
 	"fmt"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	// "regexp"
 )
 
 var (
 	qqBot *QQBot
+	reCQ  = regexp.MustCompile(`\[CQ:(image|at|face),(file|qq|id)\=([\w\.]+)\]`)
 )
 
 // QQFace ...
@@ -192,6 +193,19 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 	}
 }
 
+// CheckAt ...
+func (q *QQBot) CheckAt(msg string) bool {
+	ss := reCQ.FindAllStringSubmatch(msg, -1)
+	for _, s := range ss {
+		if s[1] == "at" {
+			if s[3] == q.Config.BotID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Poll reserve msg from beanstalkd
 func (q *QQBot) Poll(messages chan map[string]string) {
 	for {
@@ -312,7 +326,13 @@ func qqWatch(messages chan map[string]string) {
 			}
 			go qqBot.NoticeMention(msg["msg"], msg["group"])
 			go qqBot.CheckRepeat(msg["msg"], msg["group"])
-			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
+			if qqBot.CheckAt(msg["msg"]) {
+				cleanMsg := reCQ.ReplaceAllString(msg["msg"], "")
+				logger.Infof("at: (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(cleanMsg))
+				qqBot.SendGroupMsg("不要随便 @ 人家啦>_<")
+			} else {
+				logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
+			}
 		default:
 			logger.Info(msg)
 		}
