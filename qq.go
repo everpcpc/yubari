@@ -301,6 +301,28 @@ func decodeMsg(msg string) (string, error) {
 	return string(utf8Msg), nil
 }
 
+func checkKancolleMsg(msg string) {
+	s := strings.Split(msg, "\r\n")
+	if len(s) < 3 {
+		return
+	}
+	if s[0] != "「艦これ」開発/運営" {
+		return
+	}
+	tz, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	t, err := time.ParseInLocation("2006-01-02 15:04:05 MST", s[1], tz)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	key := "kancolle_" + strconv.FormatInt(t.Unix(), 10)
+	redisClient.Set(key, 0, 10*time.Second)
+}
+
 func qqWatch(messages chan map[string]string) {
 	groupIgnore := make(map[string]struct{})
 	for _, q := range qqBot.Config.QQGroupIgnore {
@@ -322,6 +344,7 @@ func qqWatch(messages chan map[string]string) {
 		case "GroupMsg":
 			if _, ok := groupIgnore[msg["qq"]]; ok {
 				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
+				go checkKancolleMsg(msg["msg"])
 				continue
 			}
 			go qqBot.NoticeMention(msg["msg"], msg["group"])

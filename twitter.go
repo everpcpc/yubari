@@ -77,6 +77,32 @@ func logAllTrack(msg interface{}) {
 	logger.Debug(msg)
 }
 
+func checkSendKancolle(tweet *twitter.Tweet, msg string) {
+	t := tweet.CreatedAt
+	ct, err := tweet.CreatedAtTime()
+	if err == nil {
+		tz, err := time.LoadLocation("Asia/Tokyo")
+		if err == nil {
+			t = ct.In(tz).String()
+		}
+	}
+	// sleep 5s to wait for other bot
+	time.Sleep(5 * time.Second)
+
+	key := "kancolle_" + strconv.FormatInt(ct.Unix(), 10)
+	exists, err := redisClient.Expire(key, 5*time.Second).Result()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	if exists {
+		logger.Notice("other bot has sent")
+		return
+	}
+
+	qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
+}
+
 func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	if tweet.RetweetedStatus != nil {
 		// logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
@@ -89,29 +115,15 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			msg = tweet.ExtendedTweet.FullText
 			medias = getExtendedMedias(tweet.ExtendedTweet)
 		}
-		logger.Debugf("no ExtendedTweet: %+v", tweet)
+		// logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
 	flattenedText := strconv.Quote(msg)
 
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-
-		err := redisClient.Get("forward_kancolle").Err()
-		if err != nil {
-			sendPics(medias)
-			return
-		}
-
-		t := tweet.CreatedAt
-		ct, err := tweet.CreatedAtTime()
-		if err == nil {
-			tz, err := time.LoadLocation("Asia/Tokyo")
-			if err == nil {
-				t = ct.In(tz).String()
-			}
-		}
-		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
+		sendPics(medias)
+		go checkSendKancolle(tweet, msg)
 
 	case t.Follows["komatan"]:
 		if len(medias) == 0 {
@@ -140,14 +152,14 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			sendPics(medias)
 		}
 
-	case t.Follows["kazuharukina"]:
-		if len(medias) == 0 {
-			return
-		}
-		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
-		if hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) {
-			sendPics(medias)
-		}
+	// case t.Follows["kazuharukina"]:
+	// if len(medias) == 0 {
+	// return
+	// }
+	// logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+	// if hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) {
+	// sendPics(medias)
+	// }
 
 	default:
 		// logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
