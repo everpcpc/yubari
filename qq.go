@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
@@ -352,7 +353,10 @@ func qqWatch(messages chan map[string]string) {
 			if qqBot.CheckAt(msg["msg"]) {
 				cleanMsg := reCQ.ReplaceAllString(msg["msg"], "")
 				logger.Infof("at: (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(cleanMsg))
-				qqBot.SendGroupMsg("不要随便 @ 人家啦>_<")
+				rand.Seed(time.Now().UnixNano())
+				if rand.Intn(100) > 90 {
+					qqBot.SendGroupMsg("不要随便 @ 人家啦 >_<")
+				}
 			} else {
 				logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
 			}
