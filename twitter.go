@@ -36,6 +36,7 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 			"maesanpicture":  "2381595966",
 			"Strangestone":   "93332575",
 			"kazuharukina":   "28787294",
+			"sinoalice_jp":   "818752826025181184",
 		},
 	}
 	return bot
@@ -51,13 +52,13 @@ func hasHashTags(s string, tags []twitter.HashtagEntity) bool {
 }
 
 func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
-	if tweet.ExtendedEntities != nil {
-		return tweet.ExtendedEntities.Media
+	if tweet.ExtendedTweet != nil {
+		if tweet.ExtendedTweet.ExtendedEntities != nil {
+			return tweet.ExtendedTweet.ExtendedEntities.Media
+		}
+		return tweet.ExtendedTweet.Entities.Media
 	}
-	return tweet.Entities.Media
-}
 
-func getExtendedMedias(tweet *twitter.ExtendedTweet) []twitter.MediaEntity {
 	if tweet.ExtendedEntities != nil {
 		return tweet.ExtendedEntities.Media
 	}
@@ -77,18 +78,27 @@ func logAllTrack(msg interface{}) {
 	logger.Debug(msg)
 }
 
-func checkSendKancolle(tweet *twitter.Tweet, msg string) {
+func getTweetTime(zone string, tweet *twitter.Tweet) string {
 	t := tweet.CreatedAt
 	ct, err := tweet.CreatedAtTime()
 	if err == nil {
-		tz, err := time.LoadLocation("Asia/Tokyo")
+		tz, err := time.LoadLocation(zone)
 		if err == nil {
 			t = ct.In(tz).String()
 		}
 	}
+	return t
+}
+
+func checkSendKancolle(tweet *twitter.Tweet, msg string) {
 	// sleep 5s to wait for other bot
 	time.Sleep(5 * time.Second)
 
+	ct, err := tweet.CreatedAtTime()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
 	key := "kancolle_" + strconv.FormatInt(ct.Unix(), 10)
 	exists, err := redisClient.Expire(key, 5*time.Second).Result()
 	if err != nil {
@@ -99,6 +109,8 @@ func checkSendKancolle(tweet *twitter.Tweet, msg string) {
 		logger.Notice("other bot has sent")
 		return
 	}
+
+	t := getTweetTime("Asia/Tokyo", tweet)
 
 	qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
 }
@@ -113,7 +125,6 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	if tweet.Truncated {
 		if tweet.ExtendedTweet != nil {
 			msg = tweet.ExtendedTweet.FullText
-			medias = getExtendedMedias(tweet.ExtendedTweet)
 		}
 		// logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
@@ -124,6 +135,12 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
 		sendPics(medias)
 		go checkSendKancolle(tweet, msg)
+
+	case t.Follows["sinoalice_jp"]:
+		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
+		t := getTweetTime("Asia/Tokyo", tweet)
+		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
+		sendPics(medias)
 
 	case t.Follows["komatan"]:
 		if len(medias) == 0 {
