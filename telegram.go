@@ -78,11 +78,11 @@ func (t *TelegramBot) tgBot() {
 		switch update.Message.Command() {
 		case "test":
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "呀呀呀")
+			msg.ReplyToMessageID = update.Message.MessageID
 			t.Client.Send(msg)
 		default:
 
 		}
 
-		// msg.ReplyToMessageID = update.Message.MessageID
 	}
 }
