@@ -8,7 +8,9 @@ import (
 func main() {
 	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
 	flagLogger := flag.Int("l", 1, "0 all, 1 std, 2 syslog")
-	flagBots := flag.String("b", "qw,tt,ts,bgm", "Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, bgm bgmTrack")
+	flagBots := flag.String(
+		"b", "qw,tt,ts,tg,bgm",
+		"Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, tg telegram, bgm bgmTrack")
 	flag.Parse()
 
 	logger = GetLogger(*flagLogger)
@@ -32,6 +34,9 @@ func main() {
 	twitterBot = NewTwitterBot(cfg.Twitter)
 	logger.Debugf("TwitterBot: %+v", twitterBot)
 
+	telegramBot = NewTelegramBot(cfg.Telegram)
+	logger.Debugf("TelegramBot: %+v", telegramBot)
+
 	bots := strings.Split(*flagBots, ",")
 	botsLaunched := 0
 	for _, b := range bots {
@@ -49,6 +54,10 @@ func main() {
 		case "ts":
 			logger.Debug("Bot: twitterSelf")
 			go twitterBot.Self()
+			botsLaunched++
+		case "tg":
+			logger.Debug("Bot: telegram")
+			go telegramBot.tgBot()
 			botsLaunched++
 		case "bgm":
 			logger.Debug("Bot: bgmTrack")

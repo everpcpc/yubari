@@ -23,6 +23,9 @@
     "accessSecret": "",
     "imgPath": ""
   },
+  "telegram":{
+    "token":""
+  },
   "beanstalkAddr": "localhost:11300",
   "bgmID": ""
 }

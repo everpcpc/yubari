@@ -9,11 +9,12 @@ import (
 // Config ...
 type Config struct {
 	File          string
-	BeanstalkAddr string         `json:"beanstalkAddr"`
-	Redis         *RedisConfig   `json:"redis"`
-	QQ            *QQConfig      `json:"qq"`
-	Twitter       *TwitterConfig `json:"twitter"`
-	BgmID         string         `json:"bgmID"`
+	BeanstalkAddr string          `json:"beanstalkAddr"`
+	Redis         *RedisConfig    `json:"redis"`
+	QQ            *QQConfig       `json:"qq"`
+	Twitter       *TwitterConfig  `json:"twitter"`
+	Telegram      *TelegramConfig `json:"telegram"`
+	BgmID         string          `json:"bgmID"`
 }
 
 // RedisConfig ...
@@ -46,6 +47,12 @@ type TwitterConfig struct {
 	ImgPath        string `json:"imgPath"`
 }
 
+// TelegramConfig ...
+type TelegramConfig struct {
+	Token  string `json:"token"`
+	SelfID string `json:"selfID"`
+}
+
 // ReadConfig ...
 func ReadConfig(cfgfile *string) (cfg *Config) {
 	cfg = &Config{
@@ -59,7 +66,8 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 			Password: "",
 			DB:       0,
 		},
-		Twitter: &TwitterConfig{},
+		Twitter:  &TwitterConfig{},
+		Telegram: &TelegramConfig{},
 	}
 	file, e := ioutil.ReadFile(*cfgfile)
 	if e != nil {
