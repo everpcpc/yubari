@@ -68,7 +68,7 @@ func (t *TelegramBot) tgBot() {
 		if update.Message.Chat.IsGroup() {
 			logger.Infof(
 				"[%s](%s){%s}",
-				update.Message.Chat.UserName,
+				update.Message.From.UserName,
 				update.Message.Chat.Title,
 				strconv.Quote(update.Message.Text))
 		} else {
