@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+func getFileName(file string) string {
+	tokens := strings.Split(file, string(os.PathSeparator))
+	return tokens[len(tokens)-1]
+}
+
 func downloadFile(url string, path string) (string, error) {
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
@@ -14,7 +19,7 @@ func downloadFile(url string, path string) (string, error) {
 
 	if _, err := os.Stat(fullPath); err == nil {
 		logger.Noticef("%s exists", fullPath)
-		return fileName, nil
+		return fullPath, nil
 	}
 
 	output, err := os.Create(fullPath)
@@ -38,7 +43,7 @@ func downloadFile(url string, path string) (string, error) {
 		return "", err
 	}
 	logger.Debugf("%s: %d bytes", fullPath, n)
-	return fileName, nil
+	return fullPath, nil
 }
 
 func removeFile(url string, path string) error {

@@ -24,7 +24,8 @@
     "imgPath": ""
   },
   "telegram":{
-    "token":""
+    "token": "",
+    "selfChatID": 0
   },
   "beanstalkAddr": "localhost:11300",
   "bgmID": ""

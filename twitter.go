@@ -36,7 +36,7 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 			"komatan":        "96604067",
 			"maesanpicture":  "2381595966",
 			"Strangestone":   "93332575",
-			"kazuharukina":   "28787294",
+			// "kazuharukina":   "28787294",
 			// "sinoalice_jp":   "818752826025181184",
 			"imascg_stage": "3220191374",
 		},
@@ -72,6 +72,8 @@ func sendPics(medias []twitter.MediaEntity) {
 		switch media.Type {
 		case "photo":
 			go qqBot.SendPics(qqBot.SendGroupMsg, media.MediaURLHttps)
+		default:
+			logger.Notice("media type ignored:", media.Type)
 		}
 	}
 }
@@ -171,31 +173,50 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			sendPics(medias)
 		}
 
-	// case t.Follows["kazuharukina"]:
-	// if len(medias) == 0 {
-	// return
-	// }
-	// logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
-	// if hasHashTags("和遥キナ毎日JK企画", tweet.Entities.Hashtags) {
-	// sendPics(medias)
-	// }
-
 	default:
 		// logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
 	}
 }
 
-func (t *TwitterBot) selfProceedPics(medias []twitter.MediaEntity, action int) {
+func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int) {
 	for _, media := range medias {
 		switch media.Type {
 		case "photo":
 			switch action {
 			case 1:
-				downloadFile(media.MediaURLHttps, t.ImgPath)
-				go qqBot.SendPics(qqBot.SendSelfMsg, media.MediaURLHttps)
+				file, err := downloadFile(media.MediaURLHttps, t.ImgPath)
+				if err != nil {
+					continue
+				}
+				telegramBot.sendPhoto(telegramBot.SelfChatID, file)
 			case -1:
 				removeFile(media.MediaURLHttps, t.ImgPath)
 			}
+
+		case "video":
+			var url string
+			vs := media.VideoInfo.Variants
+			vsLen := len(vs)
+			for i := range vs {
+				if vs[vsLen-i-1].ContentType == "video/mp4" {
+					url = vs[vsLen-i-1].URL
+					break
+				}
+
+			}
+			switch action {
+			case 1:
+				file, err := downloadFile(url, t.ImgPath)
+				if err != nil {
+					continue
+				}
+				telegramBot.sendVideo(telegramBot.SelfChatID, file)
+			case -1:
+				removeFile(url, t.ImgPath)
+			}
+
+		default:
+			logger.Notice("media type ignored:", media.Type)
 		}
 	}
 }
@@ -209,11 +230,11 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 	case "favorite":
 		medias := getMedias(event.TargetObject)
 		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
-		go t.selfProceedPics(medias, 1)
+		go t.selfProceedMedias(medias, 1)
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
-		go t.selfProceedPics(medias, -1)
+		go t.selfProceedMedias(medias, -1)
 	default:
 		logger.Debug(event.Event)
 	}

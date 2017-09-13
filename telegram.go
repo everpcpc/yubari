@@ -10,8 +10,9 @@ var (
 
 // TelegramBot ...
 type TelegramBot struct {
-	Name   string
-	Client *tgbotapi.BotAPI
+	Name       string
+	SelfChatID int64
+	Client     *tgbotapi.BotAPI
 }
 
 // NewTelegramBot ...
@@ -21,10 +22,28 @@ func NewTelegramBot(cfg *TelegramConfig) (t *TelegramBot) {
 		logger.Panic("tg bot init failed:", err)
 	}
 	t = &TelegramBot{
-		Name:   bot.Self.UserName,
-		Client: bot,
+		Name:       bot.Self.UserName,
+		SelfChatID: cfg.SelfChatID,
+		Client:     bot,
 	}
 	return
+}
+
+func (t *TelegramBot) sendVideo(chat int64, file string) {
+	logger.Infof("[%d]%s", chat, file)
+	msg := tgbotapi.NewVideoUpload(chat, file)
+	_, err := t.Client.Send(msg)
+	if err != nil {
+		logger.Error(err)
+	}
+}
+func (t *TelegramBot) sendPhoto(chat int64, file string) {
+	logger.Infof("[%d]%s", chat, file)
+	msg := tgbotapi.NewPhotoUpload(chat, file)
+	_, err := t.Client.Send(msg)
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
 func (t *TelegramBot) tgBot() {
@@ -41,7 +60,7 @@ func (t *TelegramBot) tgBot() {
 			continue
 		}
 
-		logger.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		logger.Infof("[%s]{%d} %s", update.Message.From.UserName, update.Message.Chat.ID, update.Message.Text)
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 		msg.ReplyToMessageID = update.Message.MessageID

@@ -49,8 +49,8 @@ type TwitterConfig struct {
 
 // TelegramConfig ...
 type TelegramConfig struct {
-	Token  string `json:"token"`
-	SelfID string `json:"selfID"`
+	Token      string `json:"token"`
+	SelfChatID int64  `json:"selfChatID"`
 }
 
 // ReadConfig ...

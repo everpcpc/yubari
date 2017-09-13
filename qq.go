@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 )
 
 var (
@@ -114,11 +115,12 @@ func (q *QQBot) SendGroupMsg(msg string) {
 
 // SendPics ...
 func (q *QQBot) SendPics(fn func(string), url string) {
-	fileName, err := downloadFile(url, q.Config.ImgPath)
+	file, err := downloadFile(url, q.Config.ImgPath)
 	if err != nil {
 		return
 	}
-	fn(QQImage{fileName}.String())
+
+	fn(QQImage{getFileName(file)}.String())
 }
 
 // SendPrivateMsg ...
