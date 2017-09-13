@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"gopkg.in/telegram-bot-api.v4"
 )
 
@@ -59,12 +61,28 @@ func (t *TelegramBot) tgBot() {
 		if update.Message == nil {
 			continue
 		}
+		if !update.Message.IsCommand() {
+			continue
+		}
 
-		logger.Infof("[%s]{%d} %s", update.Message.From.UserName, update.Message.Chat.ID, update.Message.Text)
+		if update.Message.Chat.IsGroup() {
+			logger.Infof(
+				"[%s](%s){%s}",
+				update.Message.Chat.UserName,
+				update.Message.Chat.Title,
+				strconv.Quote(update.Message.Text))
+		} else {
+			logger.Infof("[%s]{%s}", update.Message.From.UserName, strconv.Quote(update.Message.Text))
+		}
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		msg.ReplyToMessageID = update.Message.MessageID
+		switch update.Message.Command() {
+		case "test":
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "呀呀呀")
+			t.Client.Send(msg)
+		default:
 
-		t.Client.Send(msg)
+		}
+
+		// msg.ReplyToMessageID = update.Message.MessageID
 	}
 }
