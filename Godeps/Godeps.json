@@ -119,6 +119,11 @@
 			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
 		},
 		{
+			"ImportPath": "github.com/technoweenie/multipartstreamer",
+			"Comment": "v1.0.1",
+			"Rev": "a90a01d73ae432e2611d178c18367fbaa13e0154"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f"
 		},
@@ -193,6 +198,11 @@
 		{
 			"ImportPath": "golang.org/x/text/transform",
 			"Rev": "3bd178b88a8180be2df394a1fbb81313916f0e7b"
+		},
+		{
+			"ImportPath": "gopkg.in/telegram-bot-api.v4",
+			"Comment": "v4.6",
+			"Rev": "0a57807db79efce7f6719fbb2c0e0f83fda79aec"
 		}
 	]
 }
