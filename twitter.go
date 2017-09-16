@@ -215,7 +215,7 @@ func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int)
 			if err != nil {
 				continue
 			}
-			telegramBot.sendVideo(telegramBot.SelfChatID, file)
+			telegramBot.sendFile(telegramBot.SelfChatID, file, media.Type)
 		case -1:
 			removeFile(url, t.ImgPath)
 		}
