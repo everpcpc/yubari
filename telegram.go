@@ -74,7 +74,7 @@ func (t *TelegramBot) putQueue(msg []byte) {
 }
 
 func (t *TelegramBot) sendFile(chat int64, file string, mediaType string) {
-	logger.Infof("[%d]%s", chat, file)
+	logger.Debugf("send:[%d]%s", chat, file)
 	var err error
 	switch mediaType {
 	case "photo":
@@ -121,7 +121,16 @@ func (t *TelegramBot) delMessage() {
 			ChatID:    msg.Chat.ID,
 			MessageID: msg.MessageID,
 		}
-		logger.Infof(":[%d]{%s}", msg.Chat.ID, strconv.Quote(msg.Text))
+		if msg.Chat.IsGroup() {
+			logger.Infof(":(%s){%s}", msg.Chat.Title, strconv.Quote(msg.Text))
+		} else {
+			if msg.Chat.UserName != "" {
+				logger.Infof(":[%s]{%s}", msg.Chat.UserName, strconv.Quote(msg.Text))
+			} else {
+				logger.Infof(":[%s]{%s}", msg.Chat.FirstName+msg.Chat.LastName, strconv.Quote(msg.Text))
+			}
+		}
+
 		_, err = t.Client.DeleteMessage(delMsg)
 		if err != nil {
 			logger.Error(err)
@@ -144,43 +153,51 @@ func (t *TelegramBot) delMessage() {
 func (t *TelegramBot) tgBot() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-
-	updates, err := t.Client.GetUpdatesChan(u)
-	if err != nil {
-		logger.Error(err)
-	}
-
-	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-		if !update.Message.IsCommand() {
+	for {
+		updates, err := t.Client.GetUpdatesChan(u)
+		if err != nil {
+			logger.Error(err)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 
-		if update.Message.Chat.IsGroup() {
-			logger.Infof(
-				"[%s](%s){%s}",
-				update.Message.From.UserName,
-				update.Message.Chat.Title,
-				strconv.Quote(update.Message.Text))
-		} else {
-			logger.Infof("[%s]{%s}", update.Message.From.String(), strconv.Quote(update.Message.Text))
+		for update := range updates {
+			if update.Message == nil {
+				continue
+			}
+			if !update.Message.IsCommand() {
+				continue
+			}
+
+			if update.Message.Chat.IsGroup() {
+				logger.Infof(
+					"recv:[%s](%s){%s}",
+					update.Message.From.String(),
+					update.Message.Chat.Title,
+					strconv.Quote(update.Message.Text))
+			} else {
+				logger.Infof(
+					"recv:[%s]{%s}",
+					update.Message.From.String(),
+					strconv.Quote(update.Message.Text),
+				)
+			}
+
+			switch update.Message.Command() {
+			case "start":
+				go onStart(t, &update)
+			case "comic":
+				go onComic(t, &update)
+			case "pic":
+				go onPic(t, &update)
+			default:
+				logger.Info("ignore unkown cmd:", update.Message.Command())
+				continue
+
+			}
 		}
-
-		switch update.Message.Command() {
-		case "start":
-			go onStart(t, &update)
-		case "comic":
-			go onComic(t, &update)
-		case "pic":
-			go onPic(t, &update)
-		default:
-			logger.Info("ignore unkown cmd:", update.Message.Command())
-			continue
-
-		}
-
+		logger.Warning("tg bot restarted.")
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -225,5 +242,10 @@ func onPic(t *TelegramBot, update *tgbotapi.Update) {
 	}
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
-	t.sendFile(update.Message.Chat.ID, file, "photo")
+	logger.Infof("send:[%s](%s){%s}", update.Message.Chat.UserName, update.Message.Chat.Title, file)
+	if strings.HasSuffix(file, ".mp4") {
+		t.sendFile(update.Message.Chat.ID, file, "video")
+	} else {
+		t.sendFile(update.Message.Chat.ID, file, "photo")
+	}
 }
