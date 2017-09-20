@@ -74,7 +74,7 @@ func (t *TelegramBot) putQueue(msg []byte) {
 }
 
 func (t *TelegramBot) sendFile(chat int64, file string, mediaType string) {
-	logger.Debugf("send:[%d]%s", chat, file)
+	logger.Debugf("[%d]%s", chat, file)
 	var err error
 	switch mediaType {
 	case "photo":
@@ -121,15 +121,7 @@ func (t *TelegramBot) delMessage() {
 			ChatID:    msg.Chat.ID,
 			MessageID: msg.MessageID,
 		}
-		if msg.Chat.IsGroup() {
-			logger.Infof(":(%s){%s}", msg.Chat.Title, strconv.Quote(msg.Text))
-		} else {
-			if msg.Chat.UserName != "" {
-				logger.Infof(":[%s]{%s}", msg.Chat.UserName, strconv.Quote(msg.Text))
-			} else {
-				logger.Infof(":[%s]{%s}", msg.Chat.FirstName+msg.Chat.LastName, strconv.Quote(msg.Text))
-			}
-		}
+		logger.Infof(":[%s]{%s}", getMsgTarget(msg), strconv.Quote(msg.Text))
 
 		_, err = t.Client.DeleteMessage(delMsg)
 		if err != nil {
@@ -242,10 +234,21 @@ func onPic(t *TelegramBot, update *tgbotapi.Update) {
 	}
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
-	logger.Infof("send:[%s](%s){%s}", update.Message.Chat.UserName, update.Message.Chat.Title, file)
+
+	logger.Infof("send:[%s]{%s}", getMsgTarget(update.Message), file)
 	if strings.HasSuffix(file, ".mp4") {
 		t.sendFile(update.Message.Chat.ID, file, "video")
 	} else {
 		t.sendFile(update.Message.Chat.ID, file, "photo")
 	}
+}
+
+func getMsgTarget(m *tgbotapi.Message) string {
+	if m.Chat.IsGroup() {
+		return m.Chat.Title
+	}
+	if m.Chat.UserName != "" {
+		return m.Chat.UserName
+	}
+	return m.Chat.FirstName + m.Chat.LastName
 }
