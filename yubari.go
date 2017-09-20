@@ -9,7 +9,7 @@ func main() {
 	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
 	flagLogger := flag.Int("l", 1, "0 all, 1 std, 2 syslog")
 	flagBots := flag.String(
-		"b", "qw,tt,ts,bgm",
+		"b", "qw,tt,ts,tg,bgm",
 		"Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, tg telegram, bgm bgmTrack")
 	flag.Parse()
 
