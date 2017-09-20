@@ -67,18 +67,19 @@ func (t *TelegramBot) putQueue(msg []byte) {
 	}
 }
 
-func (t *TelegramBot) sendVideo(chat int64, file string) {
+func (t *TelegramBot) sendFile(chat int64, file string, mediaType string) {
 	logger.Infof("[%d]%s", chat, file)
-	msg := tgbotapi.NewVideoUpload(chat, file)
-	_, err := t.Client.Send(msg)
-	if err != nil {
-		logger.Error(err)
+	var err error
+	switch mediaType {
+	case "photo":
+		_, err = t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
+	case "video":
+		_, err = t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
+	case "animated_gif":
+		_, err = t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
+	default:
+		logger.Notice("media type ignored:", mediaType)
 	}
-}
-func (t *TelegramBot) sendPhoto(chat int64, file string) {
-	logger.Infof("[%d]%s", chat, file)
-	msg := tgbotapi.NewPhotoUpload(chat, file)
-	_, err := t.Client.Send(msg)
 	if err != nil {
 		logger.Error(err)
 	}

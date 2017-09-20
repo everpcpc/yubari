@@ -179,22 +179,13 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 }
 
 func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int) {
+	var url string
 	for _, media := range medias {
 		switch media.Type {
 		case "photo":
-			switch action {
-			case 1:
-				file, err := downloadFile(media.MediaURLHttps, t.ImgPath)
-				if err != nil {
-					continue
-				}
-				telegramBot.sendPhoto(telegramBot.SelfChatID, file)
-			case -1:
-				removeFile(media.MediaURLHttps, t.ImgPath)
-			}
+			url = media.MediaURLHttps
 
 		case "video":
-			var url string
 			vs := media.VideoInfo.Variants
 			vsLen := len(vs)
 			for i := range vs {
@@ -202,21 +193,31 @@ func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int)
 					url = vs[vsLen-i-1].URL
 					break
 				}
-
 			}
-			switch action {
-			case 1:
-				file, err := downloadFile(url, t.ImgPath)
-				if err != nil {
-					continue
+		case "animated_gif":
+			vs := media.VideoInfo.Variants
+			vsLen := len(vs)
+			for i := range vs {
+				if vs[vsLen-i-1].ContentType == "video/mp4" {
+					url = vs[vsLen-i-1].URL
+					break
 				}
-				telegramBot.sendVideo(telegramBot.SelfChatID, file)
-			case -1:
-				removeFile(url, t.ImgPath)
 			}
 
 		default:
 			logger.Notice("media type ignored:", media.Type)
+			continue
+		}
+
+		switch action {
+		case 1:
+			file, err := downloadFile(url, t.ImgPath)
+			if err != nil {
+				continue
+			}
+			telegramBot.sendFile(telegramBot.SelfChatID, file, media.Type)
+		case -1:
+			removeFile(url, t.ImgPath)
 		}
 	}
 }
