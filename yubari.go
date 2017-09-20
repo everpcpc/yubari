@@ -34,7 +34,7 @@ func main() {
 	twitterBot = NewTwitterBot(cfg.Twitter)
 	logger.Debugf("TwitterBot: %+v", twitterBot)
 
-	telegramBot = NewTelegramBot(cfg.Telegram)
+	telegramBot = NewTelegramBot(cfg.Telegram, cfg.BeanstalkAddr)
 	logger.Debugf("TelegramBot: %+v", telegramBot)
 
 	bots := strings.Split(*flagBots, ",")

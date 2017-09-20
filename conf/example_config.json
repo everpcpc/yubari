@@ -25,7 +25,9 @@
   },
   "telegram":{
     "token": "",
-    "selfChatID": 0
+    "selfChatID": 0,
+    "comicPath": "",
+    "deleteDelay": 60
   },
   "beanstalkAddr": "localhost:11300",
   "bgmID": ""

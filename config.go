@@ -49,8 +49,10 @@ type TwitterConfig struct {
 
 // TelegramConfig ...
 type TelegramConfig struct {
-	Token      string `json:"token"`
-	SelfChatID int64  `json:"selfChatID"`
+	Token       string `json:"token"`
+	SelfChatID  int64  `json:"selfChatID"`
+	ComicPath   string `json:"comicPath"`
+	DeleteDelay int    `json:"deleteDelay"`
 }
 
 // ReadConfig ...
