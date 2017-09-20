@@ -235,7 +235,7 @@ func onPic(t *TelegramBot, update *tgbotapi.Update) {
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
 
-	logger.Infof("send:[%s]{%s}", getMsgTarget(update.Message), file)
+	logger.Infof("send:[%s]{%s}", getMsgTarget(update.Message), strconv.Quote(file))
 	if strings.HasSuffix(file, ".mp4") {
 		t.sendFile(update.Message.Chat.ID, file, "video")
 	} else {
