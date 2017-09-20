@@ -52,7 +52,7 @@ type TelegramConfig struct {
 	Token       string `json:"token"`
 	SelfChatID  int64  `json:"selfChatID"`
 	ComicPath   string `json:"comicPath"`
-	DeleteDelay int    `json:"deleteDelay"`
+	DeleteDelay string `json:"deleteDelay"`
 }
 
 // ReadConfig ...

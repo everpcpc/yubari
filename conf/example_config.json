@@ -27,7 +27,7 @@
     "token": "",
     "selfChatID": 0,
     "comicPath": "",
-    "deleteDelay": 60
+    "deleteDelay": "10s"
   },
   "beanstalkAddr": "localhost:11300",
   "bgmID": ""

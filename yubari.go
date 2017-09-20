@@ -58,6 +58,7 @@ func main() {
 		case "tg":
 			logger.Debug("Bot: telegram")
 			go telegramBot.tgBot()
+			go telegramBot.delMessage()
 			botsLaunched++
 		case "bgm":
 			logger.Debug("Bot: bgmTrack")

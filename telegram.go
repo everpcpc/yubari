@@ -8,9 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
-
-	"gopkg.in/telegram-bot-api.v4"
 )
 
 var (
@@ -25,6 +24,7 @@ type TelegramBot struct {
 	DeleteDelay time.Duration
 	Client      *tgbotapi.BotAPI
 	Queue       *bt.Pool
+	Tube        string
 }
 
 // NewTelegramBot ...
@@ -33,12 +33,18 @@ func NewTelegramBot(cfg *TelegramConfig, btdAddr string) (t *TelegramBot) {
 	if err != nil {
 		logger.Panic("tg bot init failed:", err)
 	}
+	delay, err := time.ParseDuration(cfg.DeleteDelay)
+	if err != nil {
+		logger.Panic("delete delay error:", err)
+	}
+
 	t = &TelegramBot{
 		Name:        bot.Self.UserName,
 		SelfChatID:  cfg.SelfChatID,
 		ComicPath:   cfg.ComicPath,
-		DeleteDelay: time.Duration(cfg.DeleteDelay),
+		DeleteDelay: delay,
 		Client:      bot,
+		Tube:        "tg",
 	}
 	t.Queue = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
@@ -59,7 +65,7 @@ func (t *TelegramBot) putQueue(msg []byte) {
 		logger.Error(err, msg)
 		return
 	}
-	conn.Use("tg")
+	conn.Use(t.Tube)
 	_, err = conn.Put(msg, 1, t.DeleteDelay, time.Minute)
 	if err != nil {
 		logger.Error(err)
@@ -82,6 +88,56 @@ func (t *TelegramBot) sendFile(chat int64, file string, mediaType string) {
 	}
 	if err != nil {
 		logger.Error(err)
+	}
+}
+
+func (t *TelegramBot) delMessage() {
+	for {
+		conn, err := t.Queue.Get()
+		if err != nil {
+			logger.Error(err)
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		conn.Watch(t.Tube)
+		job, err := conn.Reserve()
+		if err != nil {
+			logger.Warning(err)
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		msg := &tgbotapi.Message{}
+		err = json.Unmarshal(job.Body, msg)
+		if err != nil {
+			logger.Error(err)
+			err = conn.Bury(job.ID, 0)
+			if err != nil {
+				logger.Error(err)
+			}
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		delMsg := tgbotapi.DeleteMessageConfig{
+			ChatID:    msg.Chat.ID,
+			MessageID: msg.MessageID,
+		}
+		logger.Infof(":[%d]{%s}", msg.Chat.ID, strconv.Quote(msg.Text))
+		_, err = t.Client.DeleteMessage(delMsg)
+		if err != nil {
+			logger.Error(err)
+			err = conn.Bury(job.ID, 0)
+			if err != nil {
+				logger.Error(err)
+			}
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		err = conn.Delete(job.ID)
+		if err != nil {
+			logger.Error(err)
+			time.Sleep(3 * time.Second)
+		}
+		t.Queue.Release(conn, false)
 	}
 }
 
@@ -109,7 +165,7 @@ func (t *TelegramBot) tgBot() {
 				update.Message.Chat.Title,
 				strconv.Quote(update.Message.Text))
 		} else {
-			logger.Infof("[%s]{%s}", update.Message.From.UserName, strconv.Quote(update.Message.Text))
+			logger.Infof("[%s]{%s}", update.Message.From.String(), strconv.Quote(update.Message.Text))
 		}
 
 		switch update.Message.Command() {
@@ -144,7 +200,6 @@ func onComic(t *TelegramBot, update *tgbotapi.Update) {
 	file := files[rand.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "https://nhentai.net/g/"+number)
-	msg.ReplyToMessageID = update.Message.MessageID
 
 	message, err := t.Client.Send(msg)
 	if err != nil {
@@ -160,9 +215,15 @@ func onComic(t *TelegramBot, update *tgbotapi.Update) {
 }
 
 func onPic(t *TelegramBot, update *tgbotapi.Update) {
-	_, err := filepath.Glob(twitterBot.ImgPath + "/")
+	files, err := filepath.Glob(twitterBot.ImgPath + "/*")
 	if err != nil {
 		logger.Error(err)
 		return
 	}
+	if files == nil {
+		logger.Error("find no pics")
+	}
+	rand.Seed(time.Now().Unix())
+	file := files[rand.Intn(len(files))]
+	t.sendFile(update.Message.Chat.ID, file, "photo")
 }
