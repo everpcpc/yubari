@@ -73,22 +73,13 @@ func (t *TelegramBot) putQueue(msg []byte) {
 	}
 }
 
-func (t *TelegramBot) sendFile(chat int64, file string, mediaType string) {
+func (t *TelegramBot) sendFile(chat int64, file string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, file)
-	var err error
-	switch mediaType {
-	case "photo":
-		_, err = t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
-	case "video":
-		_, err = t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
-	case "animated_gif":
-		_, err = t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
-	default:
-		logger.Notice("media type ignored:", mediaType)
+	if strings.HasSuffix(file, ".mp4") {
+		return t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
 	}
-	if err != nil {
-		logger.Error(err)
-	}
+	return t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
+
 }
 
 func (t *TelegramBot) delMessage() {
@@ -236,11 +227,17 @@ func onPic(t *TelegramBot, update *tgbotapi.Update) {
 	file := files[rand.Intn(len(files))]
 
 	logger.Infof("send:[%s]{%s}", getMsgTarget(update.Message), strconv.Quote(file))
-	if strings.HasSuffix(file, ".mp4") {
-		t.sendFile(update.Message.Chat.ID, file, "video")
-	} else {
-		t.sendFile(update.Message.Chat.ID, file, "photo")
+	message, err := t.sendFile(update.Message.Chat.ID, file)
+	if err != nil {
+		logger.Error(err)
+		return
 	}
+	data, err := json.Marshal(message)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	t.putQueue(data)
 }
 
 func getMsgTarget(m *tgbotapi.Message) string {
