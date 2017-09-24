@@ -67,6 +67,11 @@
 			"Rev": "a8ee44122a3b1763b94fed7d665be56fa0a71080"
 		},
 		{
+			"ImportPath": "github.com/go-telegram-bot-api/telegram-bot-api",
+			"Comment": "v4.6-54-g9dda67c",
+			"Rev": "9dda67c714e5e2cba837b28a0172cca2ed54f078"
+		},
+		{
 			"ImportPath": "github.com/google/go-querystring/query",
 			"Rev": "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
 		},
@@ -198,11 +203,6 @@
 		{
 			"ImportPath": "golang.org/x/text/transform",
 			"Rev": "3bd178b88a8180be2df394a1fbb81313916f0e7b"
-		},
-		{
-			"ImportPath": "gopkg.in/telegram-bot-api.v4",
-			"Comment": "v4.6",
-			"Rev": "0a57807db79efce7f6719fbb2c0e0f83fda79aec"
 		}
 	]
 }
