@@ -22,7 +22,7 @@ var (
 func GetLogger(pos int) *logging.Logger {
 	log := logging.MustGetLogger("yubari")
 	stdFormat := logging.MustStringFormatter(
-		`%{color}%{time:15:04:05.000} %{level:.4s} ▶ %{shortfunc}%{color:reset} %{message}`,
+		`%{color}%{time:15:04:05.000} %{level:.4s} ▶ %{shortfunc} %{message}%{color:reset}`,
 	)
 	stdLogger := logging.NewBackendFormatter(logging.NewLogBackend(os.Stdout, "", 0), stdFormat)
 	sysFormat := logging.MustStringFormatter(

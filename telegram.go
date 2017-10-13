@@ -145,18 +145,14 @@ func (t *TelegramBot) tgBot() {
 		}
 
 		for update := range updates {
-			if update.Message == nil {
+			if (update.Message == nil) && (update.EditedMessage == nil) {
 				continue
 			}
-			if !update.Message.IsCommand() {
-				continue
-			}
-
 			if update.Message.Chat.IsGroup() {
 				logger.Infof(
-					"recv:[%s](%s){%s}",
-					update.Message.From.String(),
+					"recv:(%s)[%s]{%s}",
 					update.Message.Chat.Title,
+					update.Message.From.String(),
 					strconv.Quote(update.Message.Text))
 			} else {
 				logger.Infof(
@@ -166,17 +162,18 @@ func (t *TelegramBot) tgBot() {
 				)
 			}
 
-			switch update.Message.Command() {
-			case "start":
-				go onStart(t, &update)
-			case "comic":
-				go onComic(t, &update)
-			case "pic":
-				go onPic(t, &update)
-			default:
-				logger.Info("ignore unkown cmd:", update.Message.Command())
-				continue
-
+			if update.Message.IsCommand() {
+				switch update.Message.Command() {
+				case "start":
+					go onStart(t, &update)
+				case "comic":
+					go onComic(t, &update)
+				case "pic":
+					go onPic(t, &update)
+				default:
+					logger.Info("ignore unkown cmd:", update.Message.Command())
+					continue
+				}
 			}
 		}
 		logger.Warning("tg bot restarted.")
