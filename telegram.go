@@ -143,37 +143,47 @@ func (t *TelegramBot) tgBot() {
 			time.Sleep(3 * time.Second)
 			continue
 		}
-
+		var message *tgbotapi.Message
 		for update := range updates {
-			if (update.Message == nil) && (update.EditedMessage == nil) {
+			if update.Message != nil {
+				message = update.Message
+			} else if update.EditedMessage != nil {
+				message = update.EditedMessage
+			} else {
+				// unkown msg type
 				continue
 			}
-			if update.Message.Chat.IsGroup() {
+			if message.Chat.IsGroup() {
 				logger.Infof(
 					"recv:(%s)[%s]{%s}",
-					update.Message.Chat.Title,
-					update.Message.From.String(),
-					strconv.Quote(update.Message.Text))
+					message.Chat.Title,
+					message.From.String(),
+					strconv.Quote(message.Text))
 			} else {
 				logger.Infof(
 					"recv:[%s]{%s}",
-					update.Message.From.String(),
-					strconv.Quote(update.Message.Text),
+					message.From.String(),
+					strconv.Quote(message.Text),
 				)
 			}
 
-			if update.Message.IsCommand() {
-				switch update.Message.Command() {
+			if message.IsCommand() {
+				switch message.Command() {
 				case "start":
-					go onStart(t, &update)
+					go onStart(t, message)
 				case "comic":
-					go onComic(t, &update)
+					go onComic(t, message)
 				case "pic":
-					go onPic(t, &update)
+					go onPic(t, message)
 				default:
-					logger.Info("ignore unkown cmd:", update.Message.Command())
+					logger.Info("ignore unkown cmd:", message.Command())
 					continue
 				}
+			} else {
+				if message.Text == "" {
+					continue
+				}
+				checkRepeat(t, message)
 			}
 		}
 		logger.Warning("tg bot restarted.")
@@ -181,13 +191,38 @@ func (t *TelegramBot) tgBot() {
 	}
 }
 
-func onStart(t *TelegramBot, update *tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "呀呀呀")
-	msg.ReplyToMessageID = update.Message.MessageID
+func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
+	key := "tg_" + message.From.String() + "_last"
+	flattendMsg := strings.TrimSpace(message.Text)
+	defer redisClient.LTrim(key, 0, 10)
+	defer redisClient.LPush(key, flattendMsg)
+
+	lastMsgs, err := redisClient.LRange(key, 0, 5).Result()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	i := 0
+	for _, s := range lastMsgs {
+		if s == flattendMsg {
+			i++
+		}
+	}
+	if i > 1 {
+		redisClient.Del(key)
+		logger.Infof("repeat: %s", strconv.Quote(message.Text))
+		msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
+		t.Client.Send(msg)
+	}
+}
+
+func onStart(t *TelegramBot, message *tgbotapi.Message) {
+	msg := tgbotapi.NewMessage(message.Chat.ID, "呀呀呀")
+	msg.ReplyToMessageID = message.MessageID
 	t.Client.Send(msg)
 }
 
-func onComic(t *TelegramBot, update *tgbotapi.Update) {
+func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	files, err := filepath.Glob(t.ComicPath)
 	if err != nil {
 		logger.Error(err)
@@ -196,14 +231,15 @@ func onComic(t *TelegramBot, update *tgbotapi.Update) {
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "https://nhentai.net/g/"+number)
+	msg := tgbotapi.NewMessage(message.Chat.ID, "https://nhentai.net/g/"+number)
 
-	message, err := t.Client.Send(msg)
+	logger.Infof("send:[%s]{%s}", getMsgTarget(message), strconv.Quote(file))
+	msgSent, err := t.Client.Send(msg)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	data, err := json.Marshal(message)
+	data, err := json.Marshal(msgSent)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -211,7 +247,7 @@ func onComic(t *TelegramBot, update *tgbotapi.Update) {
 	t.putQueue(data)
 }
 
-func onPic(t *TelegramBot, update *tgbotapi.Update) {
+func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	files, err := filepath.Glob(twitterBot.ImgPath + "/*")
 	if err != nil {
 		logger.Error(err)
@@ -223,13 +259,13 @@ func onPic(t *TelegramBot, update *tgbotapi.Update) {
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
 
-	logger.Infof("send:[%s]{%s}", getMsgTarget(update.Message), strconv.Quote(file))
-	message, err := t.sendFile(update.Message.Chat.ID, file)
+	logger.Infof("send:[%s]{%s}", getMsgTarget(message), strconv.Quote(file))
+	msgSent, err := t.sendFile(message.Chat.ID, file)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	data, err := json.Marshal(message)
+	data, err := json.Marshal(msgSent)
 	if err != nil {
 		logger.Error(err)
 		return
