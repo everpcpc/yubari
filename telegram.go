@@ -112,7 +112,7 @@ func (t *TelegramBot) delMessage() {
 			ChatID:    msg.Chat.ID,
 			MessageID: msg.MessageID,
 		}
-		logger.Infof(":[%s]{%s}", getMsgTarget(msg), strconv.Quote(msg.Text))
+		logger.Infof(":[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
 
 		_, err = t.Client.DeleteMessage(delMsg)
 		if err != nil {
@@ -192,12 +192,12 @@ func (t *TelegramBot) tgBot() {
 }
 
 func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
-	key := "tg_" + message.From.String() + "_last"
+	key := "tg_" + getMsgTitle(message) + "_last"
 	flattendMsg := strings.TrimSpace(message.Text)
 	defer redisClient.LTrim(key, 0, 10)
 	defer redisClient.LPush(key, flattendMsg)
 
-	lastMsgs, err := redisClient.LRange(key, 0, 5).Result()
+	lastMsgs, err := redisClient.LRange(key, 0, 6).Result()
 	if err != nil {
 		logger.Error(err)
 		return
@@ -233,7 +233,7 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "https://nhentai.net/g/"+number)
 
-	logger.Infof("send:[%s]{%s}", getMsgTarget(message), strconv.Quote(file))
+	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := t.Client.Send(msg)
 	if err != nil {
 		logger.Error(err)
@@ -259,7 +259,7 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
 
-	logger.Infof("send:[%s]{%s}", getMsgTarget(message), strconv.Quote(file))
+	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := t.sendFile(message.Chat.ID, file)
 	if err != nil {
 		logger.Error(err)
@@ -273,12 +273,9 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	t.putQueue(data)
 }
 
-func getMsgTarget(m *tgbotapi.Message) string {
+func getMsgTitle(m *tgbotapi.Message) string {
 	if m.Chat.IsGroup() {
 		return m.Chat.Title
 	}
-	if m.Chat.UserName != "" {
-		return m.Chat.UserName
-	}
-	return m.Chat.FirstName + m.Chat.LastName
+	return m.From.String()
 }
