@@ -134,6 +134,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		// logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
 	flattenedText := strconv.Quote(msg)
+	tt := getTweetTime("Asia/Tokyo", tweet)
 
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
@@ -143,13 +144,12 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 
 	case t.Follows["imascg_stage"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		t := getTweetTime("Asia/Tokyo", tweet)
-		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
+		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tt + "\n\n" + msg)
 		sendPics(medias)
 
 	case t.Follows["fgoproject"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
+		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tt + "\n\n" + msg)
 		sendPics(medias)
 
 	case t.Follows["komatan"]:
