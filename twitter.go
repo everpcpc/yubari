@@ -39,6 +39,7 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 			// "kazuharukina":   "28787294",
 			// "sinoalice_jp":   "818752826025181184",
 			"imascg_stage": "3220191374",
+			"fgoproject":   "2968069742",
 		},
 	}
 	return bot
@@ -143,6 +144,11 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	case t.Follows["imascg_stage"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
 		t := getTweetTime("Asia/Tokyo", tweet)
+		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
+		sendPics(medias)
+
+	case t.Follows["fgoproject"]:
+		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
 		qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
 		sendPics(medias)
 
