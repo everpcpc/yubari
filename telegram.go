@@ -75,10 +75,11 @@ func (t *TelegramBot) putQueue(msg []byte) {
 
 func (t *TelegramBot) sendFile(chat int64, file string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, file)
-	if strings.HasSuffix(file, ".mp4") {
-		return t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
-	}
-	return t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
+	return t.Client.Send(tgbotapi.NewDocumentUpload(chat, file))
+	// if strings.HasSuffix(file, ".mp4") {
+	// return t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
+	// }
+	// return t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
 
 }
 
