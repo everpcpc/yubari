@@ -87,14 +87,14 @@ func (q *QQBot) send(msg []byte) {
 		}
 		time.Sleep(time.Duration(i) * time.Second)
 		if i > q.Config.SendMaxRetry {
-			logger.Error("Send failed:", string(msg))
+			logger.Errorf("Send failed: %s", string(msg))
 			return
 		}
 	}
 	conn.Use(q.SendQ)
 	_, err = conn.Put(msg, 1, 0, time.Minute)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 
@@ -104,10 +104,10 @@ func (q *QQBot) send(msg []byte) {
 
 // SendGroupMsg ...
 func (q *QQBot) SendGroupMsg(msg string) {
-	logger.Infof(strconv.Quote(msg))
+	logger.Info(strconv.Quote(msg))
 	fullMsg, err := formMsg("sendGroupMsg", q.Config.GroupID, msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	go q.send(fullMsg)
@@ -125,10 +125,10 @@ func (q *QQBot) SendPics(fn func(string), url string) {
 
 // SendPrivateMsg ...
 func (q *QQBot) SendPrivateMsg(qq string, msg string) {
-	logger.Infof("TO:" + qq + ":" + strconv.Quote(msg))
+	logger.Infof("TO: %s:%s", qq, strconv.Quote(msg))
 	fullMsg, err := formMsg("sendPrivateMsg", qq, msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 	} else {
 		go q.send(fullMsg)
 	}
@@ -157,7 +157,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 	key := q.Config.SelfID + "_mention"
 	exists, err := redisClient.Expire(key, 10*time.Minute).Result()
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	if exists {
@@ -165,7 +165,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 	} else {
 		_, err := redisClient.Set(key, 0, 10*time.Minute).Result()
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			return
 		}
 		q.SendGroupMsg("呀呀呀，召唤一号机" + QQAt{q.Config.SelfID}.String())
@@ -180,7 +180,7 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 	defer redisClient.LPush(key, flattendMsg)
 	lastMsgs, err := redisClient.LRange(key, 0, 5).Result()
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	i := 0
@@ -214,18 +214,18 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 	for {
 		conn, err := q.Client.Get()
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		conn.Watch(q.RecvQ)
 		job, err := conn.Reserve()
 		if err != nil {
-			logger.Warning(err)
+			logger.Warningf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		logger.Debug("get msg:", string(job.Body))
+		logger.Debugf("get msg: %s", string(job.Body))
 		body := strings.Split(string(job.Body), " ")
 		ret := make(map[string]string)
 		switch body[0] {
@@ -241,7 +241,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 					err = conn.Bury(job.ID, 0)
 				}
 				if err != nil {
-					logger.Error(err)
+					logger.Errorf("%+v", err)
 				}
 				time.Sleep(3 * time.Second)
 				continue
@@ -260,7 +260,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 					err = conn.Bury(job.ID, 0)
 				}
 				if err != nil {
-					logger.Error(err)
+					logger.Errorf("%+v", err)
 				}
 				time.Sleep(3 * time.Second)
 				continue
@@ -268,7 +268,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 		default:
 			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("%+v", err)
 				time.Sleep(3 * time.Second)
 			}
 			continue
@@ -276,7 +276,7 @@ func (q *QQBot) Poll(messages chan map[string]string) {
 		messages <- ret
 		err = conn.Delete(job.ID)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 		}
 		q.Client.Release(conn, false)
@@ -314,12 +314,12 @@ func checkKancolleMsg(msg string) {
 	}
 	tz, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	t, err := time.ParseInLocation("2006-01-02 15:04:05 MST", s[1], tz)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	key := "kancolle_" + strconv.FormatInt(t.Unix(), 10)
@@ -363,7 +363,7 @@ func qqWatch(messages chan map[string]string) {
 				logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
 			}
 		default:
-			logger.Info(msg)
+			logger.Infof("%+v", msg)
 		}
 	}
 }

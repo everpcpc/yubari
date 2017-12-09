@@ -31,11 +31,11 @@ type TelegramBot struct {
 func NewTelegramBot(cfg *TelegramConfig, btdAddr string) (t *TelegramBot) {
 	bot, err := tgbotapi.NewBotAPI(cfg.Token)
 	if err != nil {
-		logger.Panic("tg bot init failed:", err)
+		logger.Panicf("tg bot init failed: %+v", err)
 	}
 	delay, err := time.ParseDuration(cfg.DeleteDelay)
 	if err != nil {
-		logger.Panic("delete delay error:", err)
+		logger.Panicf("delete delay error: %+v", err)
 	}
 
 	t = &TelegramBot{
@@ -62,13 +62,13 @@ func NewTelegramBot(cfg *TelegramConfig, btdAddr string) (t *TelegramBot) {
 func (t *TelegramBot) putQueue(msg []byte) {
 	conn, err := t.Queue.Get()
 	if err != nil {
-		logger.Error(err, msg)
+		logger.Errorf("%+v: %s", err, string(msg))
 		return
 	}
 	conn.Use(t.Tube)
 	_, err = conn.Put(msg, 1, t.DeleteDelay, time.Minute)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 }
@@ -87,24 +87,24 @@ func (t *TelegramBot) delMessage() {
 	for {
 		conn, err := t.Queue.Get()
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		conn.Watch(t.Tube)
 		job, err := conn.Reserve()
 		if err != nil {
-			logger.Warning(err)
+			logger.Warningf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		msg := &tgbotapi.Message{}
 		err = json.Unmarshal(job.Body, msg)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("%+v", err)
 			}
 			time.Sleep(3 * time.Second)
 			continue
@@ -117,17 +117,17 @@ func (t *TelegramBot) delMessage() {
 
 		_, err = t.Client.DeleteMessage(delMsg)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("%+v", err)
 			}
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		err = conn.Delete(job.ID)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 		}
 		t.Queue.Release(conn, false)
@@ -140,7 +140,7 @@ func (t *TelegramBot) tgBot() {
 	for {
 		updates, err := t.Client.GetUpdatesChan(u)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -177,7 +177,7 @@ func (t *TelegramBot) tgBot() {
 				case "pic":
 					go onPic(t, message)
 				default:
-					logger.Info("ignore unkown cmd:", message.Command())
+					logger.Infof("ignore unkown cmd: %+v", message.Command())
 					continue
 				}
 			} else {
@@ -200,7 +200,7 @@ func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
 
 	lastMsgs, err := redisClient.LRange(key, 0, 6).Result()
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	i := 0
@@ -226,7 +226,7 @@ func onStart(t *TelegramBot, message *tgbotapi.Message) {
 func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	files, err := filepath.Glob(t.ComicPath)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	rand.Seed(time.Now().Unix())
@@ -237,12 +237,12 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := t.Client.Send(msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	data, err := json.Marshal(msgSent)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	t.putQueue(data)
@@ -251,7 +251,7 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	files, err := filepath.Glob(twitterBot.ImgPath + "/*")
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	if files == nil {
@@ -263,12 +263,12 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := t.sendFile(message.Chat.ID, file)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	data, err := json.Marshal(msgSent)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	t.putQueue(data)

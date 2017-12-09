@@ -24,7 +24,7 @@ func downloadFile(url string, path string) (string, error) {
 
 	output, err := os.Create(fullPath)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return "", err
 	}
 	defer output.Close()
@@ -32,14 +32,14 @@ func downloadFile(url string, path string) (string, error) {
 	logger.Debugf("--> Downloading %s", url)
 	response, err := http.Get(url)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return "", err
 	}
 	defer response.Body.Close()
 
 	n, err := io.Copy(output, response.Body)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return "", err
 	}
 	logger.Debugf("%s: %d bytes", fullPath, n)
@@ -53,7 +53,7 @@ func removeFile(url string, path string) error {
 	fullPath := path + string(os.PathSeparator) + fileName
 	err := os.Remove(fullPath)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return err
 	}
 	logger.Debugf("--> Deleted %s", fullPath)

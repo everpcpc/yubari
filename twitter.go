@@ -74,13 +74,13 @@ func sendPics(medias []twitter.MediaEntity) {
 		case "photo":
 			go qqBot.SendPics(qqBot.SendGroupMsg, media.MediaURLHttps)
 		default:
-			logger.Notice("media type ignored:", media.Type)
+			logger.Noticef("media type ignored: %+v", media.Type)
 		}
 	}
 }
 
 func logAllTrack(msg interface{}) {
-	logger.Debug(msg)
+	logger.Debugf("%+v", msg)
 }
 
 func getTweetTime(zone string, tweet *twitter.Tweet) string {
@@ -101,13 +101,13 @@ func checkSendKancolle(tweet *twitter.Tweet, msg string) {
 
 	ct, err := tweet.CreatedAtTime()
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	key := "kancolle_" + strconv.FormatInt(ct.Unix(), 10)
 	exists, err := redisClient.Expire(key, 5*time.Second).Result()
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("%+v", err)
 		return
 	}
 	if exists {
@@ -211,7 +211,7 @@ func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int)
 			}
 
 		default:
-			logger.Notice("media type ignored:", media.Type)
+			logger.Noticef("media type ignored: %+v", media.Type)
 			continue
 		}
 
@@ -243,7 +243,7 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
 		go t.selfProceedMedias(medias, -1)
 	default:
-		logger.Debug(event.Event)
+		logger.Debugf("%+v", event.Event)
 	}
 }
 
@@ -275,7 +275,7 @@ func (t *TwitterBot) Track() {
 		}
 		stream, err := t.Client.Streams.Filter(filterParams)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(time.Duration(i) * time.Second)
 		}
 		demux.HandleChan(stream.Messages)
@@ -293,7 +293,7 @@ func (t *TwitterBot) Self() {
 		}
 		stream, err := t.Client.Streams.User(userParams)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("%+v", err)
 			time.Sleep(time.Duration(i) * time.Second)
 		}
 		demux.HandleChan(stream.Messages)
