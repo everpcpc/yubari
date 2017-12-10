@@ -142,10 +142,10 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		sendPics(medias)
 		go checkSendKancolle(tweet, msg)
 
-	case t.Follows["imascg_stage"]:
-		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tt + "\n\n" + msg)
-		sendPics(medias)
+	// case t.Follows["imascg_stage"]:
+	// logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
+	// qqBot.SendGroupMsg(tweet.User.Name + "\n" + tt + "\n\n" + msg)
+	// sendPics(medias)
 
 	case t.Follows["fgoproject"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
