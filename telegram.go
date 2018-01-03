@@ -18,13 +18,14 @@ var (
 
 // TelegramBot ...
 type TelegramBot struct {
-	Name        string
-	SelfChatID  int64
-	ComicPath   string
-	DeleteDelay time.Duration
-	Client      *tgbotapi.BotAPI
-	Queue       *bt.Pool
-	Tube        string
+	Name          string
+	SelfChatID    int64
+	ChannelChatID int64
+	ComicPath     string
+	DeleteDelay   time.Duration
+	Client        *tgbotapi.BotAPI
+	Queue         *bt.Pool
+	Tube          string
 }
 
 // NewTelegramBot ...
@@ -39,12 +40,13 @@ func NewTelegramBot(cfg *TelegramConfig, btdAddr string) (t *TelegramBot) {
 	}
 
 	t = &TelegramBot{
-		Name:        bot.Self.UserName,
-		SelfChatID:  cfg.SelfChatID,
-		ComicPath:   cfg.ComicPath,
-		DeleteDelay: delay,
-		Client:      bot,
-		Tube:        "tg",
+		Name:          bot.Self.UserName,
+		SelfChatID:    cfg.SelfChatID,
+		ChannelChatID: cfg.ChannelChatID,
+		ComicPath:     cfg.ComicPath,
+		DeleteDelay:   delay,
+		Client:        bot,
+		Tube:          "tg",
 	}
 	t.Queue = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
@@ -76,11 +78,18 @@ func (t *TelegramBot) putQueue(msg []byte) {
 func (t *TelegramBot) sendFile(chat int64, file string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, file)
 	return t.Client.Send(tgbotapi.NewDocumentUpload(chat, file))
-	// if strings.HasSuffix(file, ".mp4") {
-	// return t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
-	// }
-	// return t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
+}
+func (t *TelegramBot) sendPic(chat int64, file string) (tgbotapi.Message, error) {
+	logger.Debugf("[%d]%s", chat, file)
+	if strings.HasSuffix(file, ".mp4") {
+		return t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
+	}
+	return t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
+}
 
+func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
+	logger.Debugf("[%d]%s", chat, msg)
+	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
 }
 
 func (t *TelegramBot) delMessage() {

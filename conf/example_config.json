@@ -26,6 +26,7 @@
   "telegram":{
     "token": "",
     "selfChatID": 0,
+    "channelChatID": 0,
     "comicPath": "",
     "deleteDelay": "1h"
   },

@@ -95,6 +95,10 @@ func getTweetTime(zone string, tweet *twitter.Tweet) string {
 	return t
 }
 
+func getFullLink(tweet *twitter.Tweet) string {
+	return "https://twitter.com/" + tweet.User.IDStr + "/status/" + tweet.IDStr
+}
+
 func checkSendKancolle(tweet *twitter.Tweet, msg string) {
 	// sleep 5s to wait for other bot
 	time.Sleep(5 * time.Second)
@@ -142,10 +146,9 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		sendPics(medias)
 		go checkSendKancolle(tweet, msg)
 
-	// case t.Follows["imascg_stage"]:
-	// logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-	// qqBot.SendGroupMsg(tweet.User.Name + "\n" + tt + "\n\n" + msg)
-	// sendPics(medias)
+	case t.Follows["imascg_stage"]:
+		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
+		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 
 	case t.Follows["fgoproject"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
@@ -217,11 +220,7 @@ func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int)
 
 		switch action {
 		case 1:
-			file, err := downloadFile(url, t.ImgPath)
-			if err != nil {
-				continue
-			}
-			telegramBot.sendFile(telegramBot.SelfChatID, file)
+			downloadFile(url, t.ImgPath)
 		case -1:
 			removeFile(url, t.ImgPath)
 		}
@@ -238,6 +237,7 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 		medias := getMedias(event.TargetObject)
 		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
 		go t.selfProceedMedias(medias, 1)
+		go telegramBot.send(telegramBot.ChannelChatID, getFullLink(event.TargetObject))
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
