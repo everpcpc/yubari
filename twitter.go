@@ -160,6 +160,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 			return
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 		sendPics(medias)
 
 	case t.Follows["maesanpicture"]:
@@ -168,8 +169,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		if hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
-			qqBot.SendGroupMsg(msg)
-			sendPics(medias)
+			telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 		}
 
 	case t.Follows["Strangestone"]:
@@ -178,8 +178,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		if strings.HasPrefix(msg, "月曜日のたわわ") {
-			qqBot.SendGroupMsg(msg)
-			sendPics(medias)
+			telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 		}
 
 	default:
