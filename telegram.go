@@ -270,16 +270,16 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	file := files[rand.Intn(len(files))]
 
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
-	msgSent, err := t.sendFile(message.Chat.ID, file)
+	_, err = t.sendFile(message.Chat.ID, file)
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
 	}
-	data, err := json.Marshal(msgSent)
-	if err != nil {
-		logger.Errorf("%+v", err)
-		return
-	}
+	// data, err := json.Marshal(msgSent)
+	// if err != nil {
+	// logger.Errorf("%+v", err)
+	// return
+	// }
 	// t.putQueue(data)
 }
 
