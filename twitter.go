@@ -33,13 +33,22 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 		Client:  client,
 		Follows: map[string]string{
 			"KanColle_STAFF": "294025417",
-			"komatan":        "96604067",
-			"maesanpicture":  "2381595966",
-			"Strangestone":   "93332575",
-			// "kazuharukina":   "28787294",
+			"imascg_stage":   "3220191374",
+			"fgoproject":     "2968069742",
 			// "sinoalice_jp":   "818752826025181184",
-			"imascg_stage": "3220191374",
-			"fgoproject":   "2968069742",
+			// "kazuharukina":   "28787294",
+			"komatan":       "96604067",
+			"RailgunKy":     "1269027794",
+			"bison1bison":   "1557577188",
+			"kentauloss":    "344418162",
+			"tomo_3":        "69314676",
+			"infinote":      "81257783",
+			"hi_mi_tsu_2":   "803529026333642752",
+			"caidychenkd":   "843223963",
+			"amamitsuki12":  "958290270",
+			"sakimori_st30": "718736267056263168",
+			"maesanpicture": "2381595966",
+			"Strangestone":  "93332575",
 		},
 	}
 	return bot
@@ -91,19 +100,11 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	flattenedText := strconv.Quote(msg)
 
 	switch tweet.User.IDStr {
-	case t.Follows["KanColle_STAFF"]:
+	case t.Follows["KanColle_STAFF"], t.Follows["imascg_stage"], t.Follows["fgoproject"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
 		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 
-	case t.Follows["imascg_stage"]:
-		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
-
-	case t.Follows["fgoproject"]:
-		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
-
-	case t.Follows["komatan"]:
+	case t.Follows["komatan"], t.Follows["RailgunKy"], t.Follows["bison1bison"], t.Follows["kentauloss"], t.Follows["tomo_3"], t.Follows["infinote"], t.Follows["hi_mi_tsu_2"], t.Follows["caidychenkd"], t.Follows["amamitsuki12"], t.Follows["sakimori_st30"]:
 		if len(medias) == 0 {
 			return
 		}
