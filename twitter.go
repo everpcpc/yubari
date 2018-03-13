@@ -68,60 +68,12 @@ func getMedias(tweet *twitter.Tweet) []twitter.MediaEntity {
 	return tweet.Entities.Media
 }
 
-func sendPics(medias []twitter.MediaEntity) {
-	for _, media := range medias {
-		switch media.Type {
-		case "photo":
-			go qqBot.SendPics(qqBot.SendGroupMsg, media.MediaURLHttps)
-		default:
-			logger.Noticef("media type ignored: %+v", media.Type)
-		}
-	}
-}
-
 func logAllTrack(msg interface{}) {
 	logger.Debugf("%+v", msg)
 }
 
-func getTweetTime(zone string, tweet *twitter.Tweet) string {
-	t := tweet.CreatedAt
-	ct, err := tweet.CreatedAtTime()
-	if err == nil {
-		tz, err := time.LoadLocation(zone)
-		if err == nil {
-			t = ct.In(tz).String()
-		}
-	}
-	return t
-}
-
 func getFullLink(tweet *twitter.Tweet) string {
 	return "https://twitter.com/" + tweet.User.IDStr + "/status/" + tweet.IDStr
-}
-
-func checkSendKancolle(tweet *twitter.Tweet, msg string) {
-	// sleep 5s to wait for other bot
-	time.Sleep(5 * time.Second)
-
-	ct, err := tweet.CreatedAtTime()
-	if err != nil {
-		logger.Errorf("%+v", err)
-		return
-	}
-	key := "kancolle_" + strconv.FormatInt(ct.Unix(), 10)
-	exists, err := redisClient.Expire(key, 5*time.Second).Result()
-	if err != nil {
-		logger.Errorf("%+v", err)
-		return
-	}
-	if exists {
-		logger.Notice("other bot has sent")
-		return
-	}
-
-	t := getTweetTime("Asia/Tokyo", tweet)
-
-	qqBot.SendGroupMsg(tweet.User.Name + "\n" + t + "\n\n" + msg)
 }
 
 func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
@@ -135,16 +87,13 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		if tweet.ExtendedTweet != nil {
 			msg = tweet.ExtendedTweet.FullText
 		}
-		// logger.Debugf("no ExtendedTweet: %+v", tweet)
 	}
 	flattenedText := strconv.Quote(msg)
-	tt := getTweetTime("Asia/Tokyo", tweet)
 
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		sendPics(medias)
-		go checkSendKancolle(tweet, msg)
+		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 
 	case t.Follows["imascg_stage"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
@@ -152,8 +101,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 
 	case t.Follows["fgoproject"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		qqBot.SendGroupMsg(tweet.User.Name + "\n" + tt + "\n\n" + msg)
-		sendPics(medias)
+		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
 
 	case t.Follows["komatan"]:
 		if len(medias) == 0 {
@@ -161,7 +109,6 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
-		sendPics(medias)
 
 	case t.Follows["maesanpicture"]:
 		if len(medias) == 0 {
@@ -246,20 +193,6 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 	}
 }
 
-func (t *TwitterBot) selfTweet(tweet *twitter.Tweet) {
-	if qqBot.Config.GroupName != "" {
-		if hasHashTags(qqBot.Config.GroupName, tweet.Entities.Hashtags) {
-			if tweet.QuotedStatus != nil {
-				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Quote(tweet.QuotedStatus.Text))
-				sendPics(getMedias(tweet.QuotedStatus))
-			} else {
-				logger.Infof("(%s):{%s}", qqBot.Config.GroupName, strconv.Quote(tweet.Text))
-				sendPics(getMedias(tweet))
-			}
-		}
-	}
-}
-
 // Track ...
 func (t *TwitterBot) Track() {
 	follows := []string{}
@@ -286,7 +219,6 @@ func (t *TwitterBot) Self() {
 	for i := 1; ; i++ {
 		demux := twitter.NewSwitchDemux()
 		demux.Event = t.selfEvent
-		demux.Tweet = t.selfTweet
 		userParams := &twitter.StreamUserParams{
 			With: t.ID,
 		}

@@ -9,7 +9,7 @@ func main() {
 	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
 	flagLogger := flag.Int("l", 1, "0 all, 1 std, 2 syslog")
 	flagBots := flag.String(
-		"b", "qw,tt,ts,tg,bgm",
+		"b", "tt,ts,tg,bgm",
 		"Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, tg telegram, bgm bgmTrack")
 	flag.Parse()
 
@@ -27,9 +27,9 @@ func main() {
 	defer redisClient.Close()
 	logger.Debugf("Redis connected: %+v", redisClient)
 
-	qqBot = NewQQBot(cfg)
-	defer qqBot.Client.Close()
-	logger.Debugf("QQBot: %+v", qqBot)
+	// qqBot = NewQQBot(cfg)
+	// defer qqBot.Client.Close()
+	// logger.Debugf("QQBot: %+v", qqBot)
 
 	twitterBot = NewTwitterBot(cfg.Twitter)
 	logger.Debugf("TwitterBot: %+v", twitterBot)
@@ -41,12 +41,12 @@ func main() {
 	botsLaunched := 0
 	for _, b := range bots {
 		switch b {
-		case "qw":
-			logger.Debug("Bot: qqWatch")
-			messages := make(chan map[string]string)
-			go qqBot.Poll(messages)
-			go qqWatch(messages)
-			botsLaunched++
+		// case "qw":
+		// logger.Debug("Bot: qqWatch")
+		// messages := make(chan map[string]string)
+		// go qqBot.Poll(messages)
+		// go qqWatch(messages)
+		// botsLaunched++
 		case "tt":
 			logger.Debug("Bot: twitterTrack")
 			go twitterBot.Track()
