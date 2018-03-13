@@ -280,7 +280,7 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 		logger.Errorf("%+v", err)
 		return
 	}
-	t.putQueue(data)
+	// t.putQueue(data)
 }
 
 func getMsgTitle(m *tgbotapi.Message) string {
