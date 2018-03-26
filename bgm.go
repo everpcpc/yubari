@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/PuerkitoBio/goquery"
-	"github.com/go-redis/redis"
-	"github.com/mmcdole/gofeed"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/go-redis/redis"
+	"github.com/mmcdole/gofeed"
 )
 
 func bgmTrack(id string, ttl int) {
@@ -92,24 +93,25 @@ func getBangumiUpdate(title, url string) string {
 	content := string(_title[2:])
 	emoji := emojiBangumi[action]
 
-	subject := getSubjectFromEP(url)
-	if subject == "" {
+	tokens := strings.Split(url, "/")
+	t := tokens[len(tokens)-2]
+	switch t {
+	case "ep":
+		subject := getSubjectFromEP(url)
+		return emoji + " " + action + "「" + subject + "」" + content + " " + url + " #Bangumi"
+	case "subject":
+		return emoji + " " + action + "「" + strings.TrimSpace(content) + "」" + url + " #Bangumi"
+	default:
 		return emoji + " " + title + " " + url + " #Bangumi"
 	}
-	return emoji + " " + action + "「" + subject + "」" + content + " " + url + " #Bangumi"
+
 }
 
 func getSubjectFromEP(url string) string {
-	tokens := strings.Split(url, "/")
-	t := tokens[len(tokens)-2]
-	if t != "ep" {
-		return ""
-	}
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return ""
 	}
 	return doc.Find("div#headerSubject h1.nameSingle a").Text()
-
 }
