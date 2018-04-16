@@ -32,9 +32,9 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 		ImgPath: cfg.ImgPath,
 		Client:  client,
 		Follows: map[string]string{
-			"KanColle_STAFF": "294025417",
-			"imascg_stage":   "3220191374",
-			"fgoproject":     "2968069742",
+			// "KanColle_STAFF": "294025417",
+			// "imascg_stage":   "3220191374",
+			// "fgoproject":     "2968069742",
 			// "sinoalice_jp":   "818752826025181184",
 			// "kazuharukina":   "28787294",
 			"komatan":       "96604067",
