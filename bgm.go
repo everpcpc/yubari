@@ -88,13 +88,14 @@ func bgmTrack(id string, ttl int) {
 }
 
 func getBangumiUpdate(title, url string) string {
-	_title := []rune(title)
-	action := string(_title[0:2])
-	content := string(_title[2:])
+	tokensTitle := strings.SplitN(title, " ", 2)
+
+	action := tokensTitle[0]
+	content := tokensTitle[1]
 	emoji := emojiBangumi[action]
 
-	tokens := strings.Split(url, "/")
-	t := tokens[len(tokens)-2]
+	tokensURL := strings.Split(url, "/")
+	t := tokensURL[len(tokensURL)-2]
 	switch t {
 	case "ep":
 		subject := getSubjectFromEP(url)
