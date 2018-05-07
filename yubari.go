@@ -6,14 +6,19 @@ import (
 )
 
 func main() {
-	flagCfgFile := flag.String("c", "conf/config.json", "Config file")
-	flagLogger := flag.Int("l", 1, "0 all, 1 std, 2 syslog")
+	flagCfgFile := flag.String("config", "conf/config.json", "Config file")
+	flagSyslog := flag.Bool("syslog", false, "also log to syslog")
+	flagLogLevel := flag.String("loglevel", "debug", "debug, info, notice, warning, error")
 	flagBots := flag.String(
-		"b", "tt,ts,tg,bgm",
+		"bots", "tt,ts,tg,bgm",
 		"Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, tg telegram, bgm bgmTrack")
 	flag.Parse()
 
-	logger = GetLogger(*flagLogger)
+	var logFlags byte
+	if *flagSyslog {
+		logFlags = logFlags | LOGSYS
+	}
+	logger = GetLogger("yubari", *flagLogLevel, logFlags|LOGCOLOR)
 
 	cfg := ReadConfig(flagCfgFile)
 	logger.Debugf("Starting with config: %+v", cfg)
