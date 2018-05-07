@@ -87,28 +87,30 @@ func bgmTrack(id string, ttl int) {
 	}
 }
 
-func getBangumiUpdate(title, url string) string {
-	tokensTitle := strings.SplitN(title, " ", 2)
+func getBangumiUpdate(content, url string) string {
+	tokensContent := strings.SplitN(content, " ", 2)
 
-	action := tokensTitle[0]
-	content := tokensTitle[1]
+	action := tokensContent[0]
+	update := tokensContent[1]
 	emoji := emojiBangumi[action]
 
 	tokensURL := strings.Split(url, "/")
 	t := tokensURL[len(tokensURL)-2]
 	switch t {
-	case "ep":
-		subject := getSubjectFromEP(url)
-		return emoji + " " + action + "「" + subject + "」" + content + " " + url + " #Bangumi"
-	case "subject":
-		return emoji + " " + action + "「" + strings.TrimSpace(content) + "」" + url + " #Bangumi"
+	case "ep", "subject":
+		title := getSubjectTitleFromURL(url)
+		if !strings.HasPrefix(update, title) {
+			return emoji + " " + action + "「" + title + "」" + update + " " + url + " #Bangumi"
+		}
+		ext := strings.TrimSpace(strings.TrimPrefix(update, title))
+		return emoji + " " + action + "「" + title + "」" + ext + " " + url + " #Bangumi"
 	default:
-		return emoji + " " + title + " " + url + " #Bangumi"
+		return emoji + " " + content + " " + url + " #Bangumi"
 	}
 
 }
 
-func getSubjectFromEP(url string) string {
+func getSubjectTitleFromURL(url string) string {
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		logger.Errorf("%+v", err)
