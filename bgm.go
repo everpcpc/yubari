@@ -90,14 +90,13 @@ func bgmTrack(id string, ttl int) {
 func getBangumiUpdate(content, url string) string {
 	tokensContent := strings.SplitN(content, " ", 2)
 
-	action := tokensContent[0]
-	update := tokensContent[1]
-	emoji := emojiBangumi[action]
-
 	tokensURL := strings.Split(url, "/")
 	t := tokensURL[len(tokensURL)-2]
 	switch t {
 	case "ep", "subject":
+		action := tokensContent[0]
+		update := tokensContent[1]
+		emoji := emojiBangumi[action]
 		title := getSubjectTitleFromURL(url)
 		if !strings.HasPrefix(update, title) {
 			return emoji + " " + action + "「" + title + "」" + update + " " + url + " #Bangumi"
@@ -105,7 +104,7 @@ func getBangumiUpdate(content, url string) string {
 		ext := strings.TrimSpace(strings.TrimPrefix(update, title))
 		return emoji + " " + action + "「" + title + "」" + ext + " " + url + " #Bangumi"
 	default:
-		return emoji + " " + content + " " + url + " #Bangumi"
+		return content + " " + url + " #Bangumi"
 	}
 
 }
