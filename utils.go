@@ -15,6 +15,15 @@ func getFileName(file string) string {
 func downloadFile(url string, path string) (string, error) {
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
+	// support for twitter https://pbs.twimg.com/media/DdFIBS0VQAMhpmv.png:orig
+	if subToken := strings.Split(fileName, ":"); len(subToken) == 2 {
+		fileName = subToken[0]
+	}
+	// support for twitter https://pbs.twimg.com/media/xxxx.mp4?tag=3
+	if subToken := strings.Split(fileName, "?"); len(subToken) == 2 {
+		fileName = subToken[0]
+	}
+
 	fullPath := path + string(os.PathSeparator) + fileName
 
 	if _, err := os.Stat(fullPath); err == nil {

@@ -139,7 +139,7 @@ func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int)
 	for _, media := range medias {
 		switch media.Type {
 		case "photo":
-			url = media.MediaURLHttps
+			url = media.MediaURLHttps + ":orig"
 
 		case "video":
 			vs := media.VideoInfo.Variants
