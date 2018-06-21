@@ -203,7 +203,7 @@ func (t *TelegramBot) tgBot() {
 }
 
 func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
-	key := "tg_last_" + getMsgTitle(message)
+	key := "tg_last_" + strconv.FormatInt(message.Chat.ID, 10)
 	flattendMsg := strings.TrimSpace(message.Text)
 	defer redisClient.LTrim(key, 0, 10)
 	defer redisClient.LPush(key, flattendMsg)
