@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"path/filepath"
 	"strconv"
@@ -154,13 +155,11 @@ func (t *TelegramBot) tgBot() {
 					update.CallbackQuery.From.String(),
 					update.CallbackQuery.Data,
 				)
-				_type := strings.SplitN(update.CallbackQuery.Data, ":", 1)[0]
-				switch _type {
-				case "comic":
-				case "pic":
-				default:
+				data := strings.SplitN(update.CallbackQuery.Data, ":", 2)
+				switch data[0] {
+				case "comic", "pic":
+					go onReaction(t, update.CallbackQuery)
 				}
-
 				continue
 			} else {
 				continue
@@ -281,14 +280,24 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	_, err = t.Client.Send(msg)
 	if err != nil {
 		logger.Errorf("%+v", err)
+	}
+}
+
+func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
+	_type, _id, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
+	if err != nil {
+		logger.Errorf("%+v", err)
 		return
 	}
-	// data, err := json.Marshal(msgSent)
-	// if err != nil {
-	// logger.Errorf("%+v", err)
-	// return
-	// }
-	// t.putQueue(data)
+	msg := tgbotapi.NewEditMessageReplyMarkup(
+		callbackQuery.Message.Chat.ID,
+		callbackQuery.Message.MessageID,
+		buildInlineKeyboardMarkup(_type, _id),
+	)
+	_, err = t.Client.Send(msg)
+	if err != nil {
+		logger.Errorf("%+v", err)
+	}
 }
 
 func getMsgTitle(m *tgbotapi.Message) string {
@@ -298,10 +307,54 @@ func getMsgTitle(m *tgbotapi.Message) string {
 	return m.From.String()
 }
 
-func buildInlineKeyboardMarkup(_type, id string) tgbotapi.InlineKeyboardMarkup {
+func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup {
+
+	likeKey := _type + ":" + _id + ":like"
+	dissKey := _type + ":" + _id + ":diss"
+
+	likeCount, _ := redisClient.SCard("tg_reaction_" + likeKey).Result()
+	dissCount, _ := redisClient.SCard("tg_reaction_" + dissKey).Result()
+
+	likeText := "❤️"
+	if likeCount > 0 {
+		likeText = likeText + " " + strconv.FormatInt(likeCount, 10)
+	}
+	dissText := "💔"
+	if dissCount > 0 {
+		dissText = dissText + " " + strconv.FormatInt(dissCount, 10)
+	}
+
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("❤️", _type+":"+id+":like"),
-		tgbotapi.NewInlineKeyboardButtonData("💔", _type+":"+id+":diss"),
+		tgbotapi.NewInlineKeyboardButtonData(likeText, likeKey),
+		tgbotapi.NewInlineKeyboardButtonData(dissText, dissKey),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
+}
+
+func saveReaction(key string, user int) (_type, _id string, err error) {
+	token := strings.Split(key, ":")
+	if len(token) != 3 {
+		err = fmt.Errorf("react data error: %s", key)
+		return
+	}
+	_type = token[0]
+	_id = token[1]
+
+	likeKey := "tg_reaction_" + _type + ":" + _id + ":" + ":like"
+	dissKey := "tg_reaction_" + _type + ":" + _id + ":" + ":diss"
+
+	pipe := redisClient.Pipeline()
+	switch token[2] {
+	case "like":
+		pipe.SAdd(likeKey, strconv.Itoa(user))
+		pipe.SRem(dissKey, strconv.Itoa(user))
+		_, err = pipe.Exec()
+	case "diss":
+		pipe.SAdd(likeKey, strconv.Itoa(user))
+		pipe.SRem(dissKey, strconv.Itoa(user))
+		_, err = pipe.Exec()
+	default:
+		err = fmt.Errorf("react type error: %s", key)
+	}
+	return
 }
