@@ -287,16 +287,15 @@ func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 	var callbackText string
 
 	_type, _id, reaction, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
-	if err != nil {
-		logger.Errorf("%+v", err)
-		return
+	if err == nil {
+		msg := tgbotapi.NewEditMessageReplyMarkup(
+			callbackQuery.Message.Chat.ID,
+			callbackQuery.Message.MessageID,
+			buildInlineKeyboardMarkup(_type, _id),
+		)
+		_, err = t.Client.Send(msg)
 	}
-	msg := tgbotapi.NewEditMessageReplyMarkup(
-		callbackQuery.Message.Chat.ID,
-		callbackQuery.Message.MessageID,
-		buildInlineKeyboardMarkup(_type, _id),
-	)
-	_, err = t.Client.Send(msg)
+
 	if err != nil {
 		logger.Errorf("%+v", err)
 		callbackText = err.Error()
@@ -359,13 +358,23 @@ func saveReaction(key string, user int) (_type, _id, reaction string, err error)
 	pipe := redisClient.Pipeline()
 	switch reaction {
 	case "like":
-		pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
-		pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
+		likeCount := pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
 		_, err = pipe.Exec()
+		if err == nil {
+			if likeCount.Val()+dissCount.Val() == 0 {
+				err = fmt.Errorf("not modified")
+			}
+		}
 	case "diss":
-		pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
-		pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		dissCount := pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
+		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
 		_, err = pipe.Exec()
+		if err == nil {
+			if likeCount.Val()+dissCount.Val() == 0 {
+				err = fmt.Errorf("not modified")
+			}
+		}
 	default:
 		err = fmt.Errorf("react type error: %s", key)
 	}
