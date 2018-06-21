@@ -160,11 +160,8 @@ func (t *TelegramBot) tgBot() {
 			} else if update.EditedMessage != nil {
 				message = update.EditedMessage
 			} else if update.CallbackQuery != nil {
-				message = update.CallbackQuery.Message
-				logger.Debug("recv callback:(%s)[%s]{%s}",
-					message.Chat.Title,
-					message.From.String(),
-					update.CallbackQuery.Data,
+				logger.Debug("recv callback: %+v",
+					update.CallbackQuery,
 				)
 				continue
 			} else {
