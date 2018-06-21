@@ -16,8 +16,8 @@ func bgmTrack(id string, ttl int) {
 		ttl = 10
 	}
 	logger.Debugf("%s: %d", rssURL, ttl)
-	keyLock := "bgm_" + id + "_lock"
-	keyLast := "bgm_" + id + "_last"
+	keyLock := "bgm_lock_" + id
+	keyLast := "bgm_last_" + id
 	for {
 		err := redisClient.Get(keyLock).Err()
 		if err == nil {
