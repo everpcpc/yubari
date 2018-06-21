@@ -174,7 +174,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 
 // CheckRepeat ...
 func (q *QQBot) CheckRepeat(msg string, group string) {
-	key := group + "_last"
+	key := "qq_last_" + group
 	flattendMsg := strings.TrimSpace(msg)
 	defer redisClient.LTrim(key, 0, 10)
 	defer redisClient.LPush(key, flattendMsg)
