@@ -77,8 +77,18 @@ func (t *TelegramBot) putQueue(msg []byte) {
 
 func (t *TelegramBot) sendFile(chat int64, file string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, file)
-	return t.Client.Send(tgbotapi.NewDocumentUpload(chat, file))
+
+	msg := tgbotapi.NewDocumentUpload(chat, file)
+	row := tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("❤️", "file:"+file+":like"),
+		tgbotapi.NewInlineKeyboardButtonData("💔", "file:"+file+":diss"),
+	)
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
+
+	return t.Client.Send(msg)
 }
+
+// DEPRECATE: use sendFile instead
 func (t *TelegramBot) sendPic(chat int64, file string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, file)
 	if strings.HasSuffix(file, ".mp4") {
@@ -160,9 +170,19 @@ func (t *TelegramBot) tgBot() {
 			} else if update.EditedMessage != nil {
 				message = update.EditedMessage
 			} else if update.CallbackQuery != nil {
-				logger.Debug("recv callback: %+v",
-					update.CallbackQuery,
+				logger.Infof(
+					"recv:(%s)[%s]{%s}",
+					update.CallbackQuery.ChatInstance,
+					update.CallbackQuery.From.String(),
+					update.CallbackQuery.Data,
 				)
+				_type := strings.SplitN(update.CallbackQuery.Data, ":", 1)[0]
+				switch _type {
+				case "comic":
+				case "pic":
+				default:
+				}
+
 				continue
 			} else {
 				continue
@@ -248,8 +268,8 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("❤️", "test"),
-		tgbotapi.NewInlineKeyboardButtonData("💔", "test2"),
+		tgbotapi.NewInlineKeyboardButtonData("❤️", "comic:"+number+":like"),
+		tgbotapi.NewInlineKeyboardButtonData("💔", "comic:"+number+":diss"),
 	)
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
 
