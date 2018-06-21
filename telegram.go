@@ -297,7 +297,7 @@ func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 	}
 
 	if err != nil {
-		logger.Errorf("%+v", err)
+		logger.Debugf("%+v", err)
 		callbackText = err.Error()
 	} else {
 		callbackText = reaction + " " + _id + "!"
