@@ -75,28 +75,6 @@ func (t *TelegramBot) putQueue(msg []byte) {
 	}
 }
 
-func (t *TelegramBot) sendFile(chat int64, file string) (tgbotapi.Message, error) {
-	logger.Debugf("[%d]%s", chat, file)
-
-	msg := tgbotapi.NewDocumentUpload(chat, file)
-	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("❤️", "file:"+file+":like"),
-		tgbotapi.NewInlineKeyboardButtonData("💔", "file:"+file+":diss"),
-	)
-	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
-
-	return t.Client.Send(msg)
-}
-
-// DEPRECATE: use sendFile instead
-func (t *TelegramBot) sendPic(chat int64, file string) (tgbotapi.Message, error) {
-	logger.Debugf("[%d]%s", chat, file)
-	if strings.HasSuffix(file, ".mp4") {
-		return t.Client.Send(tgbotapi.NewVideoUpload(chat, file))
-	}
-	return t.Client.Send(tgbotapi.NewPhotoUpload(chat, file))
-}
-
 func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, msg)
 	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
@@ -262,16 +240,12 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 		logger.Errorf("%+v", err)
 		return
 	}
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
-	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("❤️", "comic:"+number+":like"),
-		tgbotapi.NewInlineKeyboardButtonData("💔", "comic:"+number+":diss"),
-	)
-	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
+	msg.ReplyMarkup = buildInlineKeyboardMarkup("comic", number)
 
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := t.Client.Send(msg)
@@ -288,7 +262,7 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 }
 
 func onPic(t *TelegramBot, message *tgbotapi.Message) {
-	files, err := filepath.Glob(twitterBot.ImgPath + "/*")
+	files, err := filepath.Glob(filepath.Join(twitterBot.ImgPath, "*"))
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
@@ -296,11 +270,15 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 	if files == nil {
 		logger.Error("find no pics")
 	}
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
 
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
-	_, err = t.sendFile(message.Chat.ID, file)
+
+	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
+	msg.ReplyMarkup = buildInlineKeyboardMarkup("pic", filepath.Base(file))
+
+	_, err = t.Client.Send(msg)
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
@@ -318,4 +296,12 @@ func getMsgTitle(m *tgbotapi.Message) string {
 		return m.Chat.Title
 	}
 	return m.From.String()
+}
+
+func buildInlineKeyboardMarkup(_type, id string) tgbotapi.InlineKeyboardMarkup {
+	row := tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("❤️", _type+":"+id+":like"),
+		tgbotapi.NewInlineKeyboardButtonData("💔", _type+":"+id+":diss"),
+	)
+	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
