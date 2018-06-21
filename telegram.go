@@ -243,6 +243,9 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "https://nhentai.net/g/"+number)
 
+	row := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("👍", "test"), tgbotapi.NewInlineKeyboardButtonData("👎", "test2"))
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
+
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := t.Client.Send(msg)
 	if err != nil {

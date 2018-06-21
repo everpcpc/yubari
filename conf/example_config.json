@@ -30,6 +30,11 @@
     "comicPath": "",
     "deleteDelay": "1h"
   },
+  "pixiv":{
+    "username": "",
+    "password": "",
+    "redis_db": 1
+  },
   "beanstalkAddr": "localhost:11300",
   "bgmID": ""
 }
