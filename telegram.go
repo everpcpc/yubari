@@ -284,7 +284,9 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 }
 
 func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
-	_type, _id, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
+	var callbackText string
+
+	_type, _id, reaction, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
@@ -295,6 +297,15 @@ func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 		buildInlineKeyboardMarkup(_type, _id),
 	)
 	_, err = t.Client.Send(msg)
+	if err != nil {
+		logger.Errorf("%+v", err)
+		callbackText = err.Error()
+	} else {
+		callbackText = reaction + " " + _id + "!"
+	}
+
+	callbackMsg := tgbotapi.NewCallbackWithAlert(callbackQuery.ID, callbackText)
+	_, err = t.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		logger.Errorf("%+v", err)
 	}
@@ -335,7 +346,7 @@ func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup 
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
-func saveReaction(key string, user int) (_type, _id string, err error) {
+func saveReaction(key string, user int) (_type, _id, reaction string, err error) {
 	token := strings.Split(key, ":")
 	if len(token) != 3 {
 		err = fmt.Errorf("react data error: %s", key)
@@ -343,16 +354,17 @@ func saveReaction(key string, user int) (_type, _id string, err error) {
 	}
 	_type = token[0]
 	_id = token[1]
+	reaction = token[2]
 
 	pipe := redisClient.Pipeline()
-	switch token[2] {
+	switch reaction {
 	case "like":
 		pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
 		pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
 		_, err = pipe.Exec()
 	case "diss":
-		pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
-		pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
+		pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
+		pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
 		_, err = pipe.Exec()
 	default:
 		err = fmt.Errorf("react type error: %s", key)
