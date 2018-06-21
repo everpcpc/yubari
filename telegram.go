@@ -159,8 +159,15 @@ func (t *TelegramBot) tgBot() {
 				message = update.Message
 			} else if update.EditedMessage != nil {
 				message = update.EditedMessage
+			} else if update.CallbackQuery != nil {
+				message = update.CallbackQuery.Message
+				logger.Debug("recv callback:(%s)[%s]{%s}",
+					message.Chat.Title,
+					message.From.String(),
+					update.CallbackQuery.Data,
+				)
+				continue
 			} else {
-				// unkown msg type
 				continue
 			}
 			if message.Chat.IsGroup() {
@@ -241,9 +248,12 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	rand.Seed(time.Now().Unix())
 	file := files[rand.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
-	msg := tgbotapi.NewMessage(message.Chat.ID, "https://nhentai.net/g/"+number)
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
-	row := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("👍", "test"), tgbotapi.NewInlineKeyboardButtonData("👎", "test2"))
+	row := tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("❤️", "test"),
+		tgbotapi.NewInlineKeyboardButtonData("💔", "test2"),
+	)
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
 
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
