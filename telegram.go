@@ -307,13 +307,17 @@ func getMsgTitle(m *tgbotapi.Message) string {
 	return m.From.String()
 }
 
+func buildReactionData(_type, _id, reaction string) string {
+	return _type + ":" + _id + ":" + ":" + reaction
+}
+func buildReactionKey(_type, _id, reaction string) string {
+	return "tg_reaction_" + buildReactionData(_type, _id, reaction)
+}
+
 func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup {
 
-	likeKey := _type + ":" + _id + ":like"
-	dissKey := _type + ":" + _id + ":diss"
-
-	likeCount, _ := redisClient.SCard("tg_reaction_" + likeKey).Result()
-	dissCount, _ := redisClient.SCard("tg_reaction_" + dissKey).Result()
+	likeCount, _ := redisClient.SCard(buildReactionKey(_type, _id, "like")).Result()
+	dissCount, _ := redisClient.SCard(buildReactionKey(_type, _id, "diss")).Result()
 
 	likeText := "❤️"
 	if likeCount > 0 {
@@ -325,8 +329,8 @@ func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup 
 	}
 
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(likeText, likeKey),
-		tgbotapi.NewInlineKeyboardButtonData(dissText, dissKey),
+		tgbotapi.NewInlineKeyboardButtonData(likeText, buildReactionData(_type, _id, "like")),
+		tgbotapi.NewInlineKeyboardButtonData(dissText, buildReactionData(_type, _id, "diss")),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
@@ -340,18 +344,15 @@ func saveReaction(key string, user int) (_type, _id string, err error) {
 	_type = token[0]
 	_id = token[1]
 
-	likeKey := "tg_reaction_" + _type + ":" + _id + ":" + ":like"
-	dissKey := "tg_reaction_" + _type + ":" + _id + ":" + ":diss"
-
 	pipe := redisClient.Pipeline()
 	switch token[2] {
 	case "like":
-		pipe.SAdd(likeKey, strconv.Itoa(user))
-		pipe.SRem(dissKey, strconv.Itoa(user))
+		pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
 		_, err = pipe.Exec()
 	case "diss":
-		pipe.SAdd(likeKey, strconv.Itoa(user))
-		pipe.SRem(dissKey, strconv.Itoa(user))
+		pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
 		_, err = pipe.Exec()
 	default:
 		err = fmt.Errorf("react type error: %s", key)
