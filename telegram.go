@@ -308,7 +308,7 @@ func getMsgTitle(m *tgbotapi.Message) string {
 }
 
 func buildReactionData(_type, _id, reaction string) string {
-	return _type + ":" + _id + ":" + ":" + reaction
+	return _type + ":" + _id + ":" + reaction
 }
 func buildReactionKey(_type, _id, reaction string) string {
 	return "tg_reaction_" + buildReactionData(_type, _id, reaction)
