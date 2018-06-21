@@ -203,7 +203,7 @@ func (t *TelegramBot) tgBot() {
 }
 
 func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
-	key := "tg_" + getMsgTitle(message) + "_last"
+	key := "tg_last_" + getMsgTitle(message)
 	flattendMsg := strings.TrimSpace(message.Text)
 	defer redisClient.LTrim(key, 0, 10)
 	defer redisClient.LPush(key, flattendMsg)
@@ -321,7 +321,7 @@ func buildReactionData(_type, _id, reaction string) string {
 	return _type + ":" + _id + ":" + reaction
 }
 func buildReactionKey(_type, _id, reaction string) string {
-	return "tg_reaction_" + buildReactionData(_type, _id, reaction)
+	return "reaction_" + buildReactionData(_type, _id, reaction)
 }
 
 func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup {
