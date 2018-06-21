@@ -150,7 +150,7 @@ func (t *TelegramBot) tgBot() {
 				message = update.EditedMessage
 			} else if update.CallbackQuery != nil {
 				logger.Infof(
-					"recv:(%s)[%s]{%s}",
+					"recv:(%s)[%s]reaction:{%s}",
 					update.CallbackQuery.ChatInstance,
 					update.CallbackQuery.From.String(),
 					update.CallbackQuery.Data,
@@ -304,7 +304,7 @@ func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackText = reaction + " " + _id + "!"
 	}
 
-	callbackMsg := tgbotapi.NewCallbackWithAlert(callbackQuery.ID, callbackText)
+	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
 	_, err = t.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		logger.Errorf("%+v", err)
