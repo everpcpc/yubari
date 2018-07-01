@@ -102,14 +102,14 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 	switch tweet.User.IDStr {
 	case t.Follows["KanColle_STAFF"], t.Follows["imascg_stage"], t.Follows["fgoproject"]:
 		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
-		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
+		telegramBot.send(telegramBot.SelfChatID, getFullLink(tweet))
 
 	case t.Follows["komatan"], t.Follows["RailgunKy"], t.Follows["bison1bison"], t.Follows["kentauloss"], t.Follows["tomo_3"], t.Follows["infinote"], t.Follows["hi_mi_tsu_2"], t.Follows["caidychenkd"], t.Follows["amamitsuki12"], t.Follows["sakimori_st30"]:
 		if len(medias) == 0 {
 			return
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
-		telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
+		telegramBot.send(telegramBot.SelfChatID, getFullLink(tweet))
 
 	case t.Follows["maesanpicture"]:
 		if len(medias) == 0 {
@@ -117,7 +117,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		if hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
-			telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
+			telegramBot.send(telegramBot.SelfChatID, getFullLink(tweet))
 		}
 
 	case t.Follows["Strangestone"]:
@@ -126,7 +126,7 @@ func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
 		}
 		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
 		if strings.HasPrefix(msg, "月曜日のたわわ") {
-			telegramBot.send(telegramBot.ChannelChatID, getFullLink(tweet))
+			telegramBot.send(telegramBot.SelfChatID, getFullLink(tweet))
 		}
 
 	default:
@@ -184,7 +184,7 @@ func (t *TwitterBot) selfEvent(event *twitter.Event) {
 		medias := getMedias(event.TargetObject)
 		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
 		go t.selfProceedMedias(medias, 1)
-		go telegramBot.send(telegramBot.ChannelChatID, getFullLink(event.TargetObject))
+		go telegramBot.send(telegramBot.SelfChatID, getFullLink(event.TargetObject))
 	case "unfavorite":
 		medias := getMedias(event.TargetObject)
 		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
