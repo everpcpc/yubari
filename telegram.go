@@ -286,14 +286,25 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 	var callbackText string
 
-	_type, _id, reaction, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
+	_type, _id, reaction, diss, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
 	if err == nil {
-		msg := tgbotapi.NewEditMessageReplyMarkup(
-			callbackQuery.Message.Chat.ID,
-			callbackQuery.Message.MessageID,
-			buildInlineKeyboardMarkup(_type, _id),
-		)
-		_, err = t.Client.Send(msg)
+		if diss <= 1 {
+			msg := tgbotapi.NewEditMessageReplyMarkup(
+				callbackQuery.Message.Chat.ID,
+				callbackQuery.Message.MessageID,
+				buildInlineKeyboardMarkup(_type, _id),
+			)
+			_, err = t.Client.Send(msg)
+		} else {
+			delMsg := tgbotapi.DeleteMessageConfig{
+				ChatID:    callbackQuery.Message.Chat.ID,
+				MessageID: callbackQuery.Message.MessageID,
+			}
+			_, err = t.Client.DeleteMessage(delMsg)
+			if err == nil {
+				err = probate(_type, _id)
+			}
+		}
 	}
 
 	if err != nil {
@@ -345,7 +356,7 @@ func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup 
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
-func saveReaction(key string, user int) (_type, _id, reaction string, err error) {
+func saveReaction(key string, user int) (_type, _id, reaction string, diss int64, err error) {
 	token := strings.Split(key, ":")
 	if len(token) != 3 {
 		err = fmt.Errorf("react data error: %s", key)
@@ -375,6 +386,7 @@ func saveReaction(key string, user int) (_type, _id, reaction string, err error)
 				err = fmt.Errorf("not modified")
 			}
 		}
+		diss = dissCount.Val()
 	default:
 		err = fmt.Errorf("react type error: %s", key)
 	}
