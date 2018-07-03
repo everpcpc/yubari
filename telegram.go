@@ -357,7 +357,7 @@ func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup 
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
-func saveReaction(key string, user int) (_type, _id, reaction string int64, err error) {
+func saveReaction(key string, user int) (_type, _id, reaction string, err error) {
 	token := strings.Split(key, ":")
 	if len(token) != 3 {
 		err = fmt.Errorf("react data error: %s", key)
