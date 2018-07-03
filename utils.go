@@ -76,7 +76,6 @@ func probate(_type, _id string) error {
 	switch _type {
 	case "comic":
 		fileName := "nhentai.net@" + _id + ".epub"
-
 		return os.Rename(
 			path.Join(telegramBot.ComicPath, fileName),
 			path.Join(telegramBot.ComicPath, "probation", fileName),
@@ -86,7 +85,6 @@ func probate(_type, _id string) error {
 			path.Join(twitterBot.ImgPath, _id),
 			path.Join(twitterBot.ImgPath, "probation", _id),
 		)
-
 	default:
 		return fmt.Errorf("prohibit unkown type")
 	}
