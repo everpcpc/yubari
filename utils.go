@@ -72,7 +72,7 @@ func removeFile(url string, path string) error {
 }
 
 func probate(_type, _id string) error {
-	logger.Noticef("probate %s: %s", _type, _id)
+	logger.Noticef("%s: %s", _type, _id)
 	switch _type {
 	case "comic":
 		fileName := "nhentai.net@" + _id + ".epub"
