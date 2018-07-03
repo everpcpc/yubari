@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -77,13 +77,13 @@ func probate(_type, _id string) error {
 	case "comic":
 		fileName := "nhentai.net@" + _id + ".epub"
 		return os.Rename(
-			path.Join(telegramBot.ComicPath, fileName),
-			path.Join(telegramBot.ComicPath, "probation", fileName),
+			filepath.Join(telegramBot.ComicPath, fileName),
+			filepath.Join(telegramBot.ComicPath, "probation", fileName),
 		)
 	case "pic":
 		return os.Rename(
-			path.Join(twitterBot.ImgPath, _id),
-			path.Join(twitterBot.ImgPath, "probation", _id),
+			filepath.Join(twitterBot.ImgPath, _id),
+			filepath.Join(twitterBot.ImgPath, "probation", _id),
 		)
 	default:
 		return fmt.Errorf("prohibit unkown type")

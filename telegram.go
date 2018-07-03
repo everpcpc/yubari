@@ -234,7 +234,7 @@ func onStart(t *TelegramBot, message *tgbotapi.Message) {
 }
 
 func onComic(t *TelegramBot, message *tgbotapi.Message) {
-	files, err := filepath.Glob(t.ComicPath)
+	files, err := filepath.Glob(filepath.Join(t.ComicPath, "*.epub"))
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
