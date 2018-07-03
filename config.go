@@ -15,6 +15,7 @@ type Config struct {
 	Twitter       *TwitterConfig  `json:"twitter"`
 	Telegram      *TelegramConfig `json:"telegram"`
 	BgmID         string          `json:"bgmID"`
+	SentryDSN     string          `json:"sentry"`
 }
 
 // RedisConfig ...

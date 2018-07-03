@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"strings"
+
+	"github.com/getsentry/raven-go"
 )
 
 func main() {
@@ -22,6 +24,10 @@ func main() {
 
 	cfg := ReadConfig(flagCfgFile)
 	logger.Debugf("Starting with config: %+v", cfg)
+
+	if cfg.SentryDSN != "" {
+		raven.SetDSN(cfg.SentryDSN)
+	}
 
 	var err error
 	redisClient, err = NewRedisClient(cfg.Redis)
