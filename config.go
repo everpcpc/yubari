@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 )
 
 // Config ...
@@ -76,7 +75,6 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 	file, e := ioutil.ReadFile(*cfgfile)
 	if e != nil {
 		logger.Fatalf("Configfile error (%v)\n", e)
-		os.Exit(2)
 	}
 	json.Unmarshal(file, cfg)
 	return cfg
