@@ -1,0 +1,11 @@
+language: go
+
+go:
+  - "1.10.x"
+  - master
+
+install:
+  - go get -u golang.org/x/vgo
+
+script:
+  - vgo test -v -race -covermode=atomic ./...
