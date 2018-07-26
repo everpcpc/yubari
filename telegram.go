@@ -187,7 +187,7 @@ func (t *TelegramBot) tgBot() {
 				case "pic":
 					go onPic(t, message)
 				default:
-					logger.Infof("ignore unkown cmd: %+v", message.Command())
+					logger.Infof("ignore unknown cmd: %+v", message.Command())
 					continue
 				}
 			} else {
