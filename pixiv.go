@@ -12,6 +12,14 @@ func initPixiv(cfg *PixivConfig) error {
 	token := redisClient.HGet(tokenKey, "token").String()
 	refreshToken := redisClient.HGet(tokenKey, "refresh_token").String()
 	tokenDeadline, _ := time.Parse(time.RFC3339, redisClient.HGet(tokenKey, "token_deadline").String())
+	pixiv.HookAuth(func(t, rt string, td time.Time) error {
+		v := map[string]interface{}{
+			"token":          t,
+			"refresh_token":  rt,
+			"token_deadline": td.Format(time.RFC3339),
+		}
+		return redisClient.HMSet(tokenKey, v).Err()
+	})
 
 	var account *pixiv.Account
 	var err error
