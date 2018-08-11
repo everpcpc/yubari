@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/everpcpc/pixiv"
+	"github.com/go-redis/redis"
 )
 
 func initPixiv(cfg *PixivConfig) error {
@@ -45,11 +46,11 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 	}
 	papp := pixiv.NewApp()
 	ticker := time.Tick(time.Duration(ttl) * time.Second)
-	maxIDKey := "pixiv:" + cfg.Username + "follow"
+	maxIDKey := "pixiv:" + cfg.Username + ":follow"
 	for {
 		<-ticker
 		maxID, err := redisClient.Get(maxIDKey).Uint64()
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			logger.Error(err)
 			continue
 		}
