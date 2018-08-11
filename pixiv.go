@@ -9,9 +9,9 @@ import (
 
 func initPixiv(cfg *PixivConfig) error {
 	tokenKey := "pixiv:" + cfg.Username + ":auth"
-	token := redisClient.HGet(tokenKey, "token").String()
-	refreshToken := redisClient.HGet(tokenKey, "refresh_token").String()
-	tokenDeadline, _ := time.Parse(time.RFC3339, redisClient.HGet(tokenKey, "token_deadline").String())
+	token := redisClient.HGet(tokenKey, "token").Val()
+	refreshToken := redisClient.HGet(tokenKey, "refresh_token").Val()
+	tokenDeadline, _ := time.Parse(time.RFC3339, redisClient.HGet(tokenKey, "token_deadline").Val())
 	pixiv.HookAuth(func(t, rt string, td time.Time) error {
 		v := map[string]interface{}{
 			"token":          t,
@@ -45,7 +45,7 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 	}
 	papp := pixiv.NewApp()
 	ticker := time.Tick(time.Duration(ttl) * time.Second)
-	maxIDKey := "pixiv:"
+	maxIDKey := "pixiv:" + cfg.Username + "follow"
 	for {
 		<-ticker
 		illusts, err := papp.IllustFollow("public", 0)
