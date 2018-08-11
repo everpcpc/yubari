@@ -48,12 +48,13 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 	maxIDKey := "pixiv:" + cfg.Username + "follow"
 	for {
 		<-ticker
-		illusts, err := papp.IllustFollow("public", 0)
+		maxID, err := redisClient.Get(maxIDKey).Uint64()
 		if err != nil {
 			logger.Error(err)
 			continue
 		}
-		maxID, err := redisClient.Get(maxIDKey).Uint64()
+
+		illusts, err := papp.IllustFollow("public", 0)
 		if err != nil {
 			logger.Error(err)
 			continue
