@@ -24,8 +24,10 @@ func initPixiv(cfg *PixivConfig) error {
 	var account *pixiv.Account
 	var err error
 	if token+refreshToken == "" {
+		logger.Debugf("login with %s", cfg.Username)
 		account, err = pixiv.Login(cfg.Username, cfg.Password)
 	} else {
+		logger.Debugf("load auth with %+v", tokenDeadline)
 		account, err = pixiv.LoadAuth(token, refreshToken, tokenDeadline)
 	}
 	if err == nil {
