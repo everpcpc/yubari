@@ -77,7 +77,7 @@ func main() {
 			botsLaunched++
 		case "pixiv":
 			logger.Debug("Bot: pixivFollow")
-			go pixivFollow(20)
+			go pixivFollow(cfg.Pixiv, 20)
 			botsLaunched++
 		default:
 			logger.Warningf("Bot %s is not supported.", b)

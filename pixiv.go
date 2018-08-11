@@ -26,7 +26,10 @@ func initPixiv(cfg *PixivConfig) error {
 	return err
 }
 
-func pixivFollow(ttl int) {
+func pixivFollow(cfg *PixivConfig, ttl int) {
+	if err := initPixiv(cfg); err != nil {
+		logger.Fatal(err)
+	}
 	if ttl < 10 {
 		ttl = 10
 	}
