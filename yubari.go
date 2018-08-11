@@ -75,6 +75,10 @@ func main() {
 			logger.Debug("Bot: bgmTrack")
 			go bgmTrack(cfg.BgmID, 10)
 			botsLaunched++
+		case "pixiv":
+			logger.Debug("Bot: pixivFollow")
+			go pixivFollow(20)
+			botsLaunched++
 		default:
 			logger.Warningf("Bot %s is not supported.", b)
 		}

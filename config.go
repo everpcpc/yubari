@@ -13,6 +13,7 @@ type Config struct {
 	QQ            *QQConfig       `json:"qq"`
 	Twitter       *TwitterConfig  `json:"twitter"`
 	Telegram      *TelegramConfig `json:"telegram"`
+	Pixiv         *PixivConfig    `json:"pixiv"`
 	BgmID         string          `json:"bgmID"`
 	SentryDSN     string          `json:"sentry"`
 }
@@ -54,6 +55,12 @@ type TelegramConfig struct {
 	ChannelChatID int64  `json:"channelChatID"`
 	ComicPath     string `json:"comicPath"`
 	DeleteDelay   string `json:"deleteDelay"`
+}
+
+// PixivConfig ...
+type PixivConfig struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // ReadConfig ...
