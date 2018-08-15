@@ -5,10 +5,10 @@ require (
 	github.com/andybalholm/cascadia v1.0.0 // indirect
 	github.com/cenkalti/backoff v2.0.0+incompatible // indirect
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261 // indirect
-	github.com/dghubble/go-twitter v0.0.0-20180709080624-b77318be397b
+	github.com/dghubble/go-twitter v0.0.0-20180729205000-9b315f8b2c97
 	github.com/dghubble/oauth1 v0.4.0
-	github.com/everpcpc/pixiv v0.0.0-20180811102433-db33ea64784c
-	github.com/getsentry/raven-go v0.0.0-20180517221441-ed7bcb39ff10
+	github.com/everpcpc/pixiv v0.0.0-20180814103204-0e2a8f1157a8
+	github.com/getsentry/raven-go v0.0.0-20180801005657-7535a8fa2ace
 	github.com/go-redis/redis v6.13.2+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.2+incompatible
 	github.com/ikool-cn/gobeanstalk-connection-pool v0.0.0-20170511054316-6c091c21a74e
@@ -18,6 +18,6 @@ require (
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
-	golang.org/x/net v0.0.0-20180724234803-3673e40ba225 // indirect
+	golang.org/x/net v0.0.0-20180811021610-c39426892332 // indirect
 	golang.org/x/text v0.3.0
 )

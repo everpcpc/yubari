@@ -55,7 +55,7 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 			continue
 		}
 
-		illusts, err := papp.IllustFollow("public", 0)
+		illusts, _, err := papp.IllustFollow("public", 0)
 		if err != nil {
 			logger.Error(err)
 			continue
