@@ -20,6 +20,8 @@ github.com/everpcpc/pixiv v0.0.0-20180811102433-db33ea64784c h1:UI0jAE0SUcwD+xtD
 github.com/everpcpc/pixiv v0.0.0-20180811102433-db33ea64784c/go.mod h1:ZEyPR6lTdSwrImOIZIWhc8iWP7EhHypYp7QD3E4BA3c=
 github.com/everpcpc/pixiv v0.0.0-20180814103204-0e2a8f1157a8 h1:AdK5kRQvtMu3bb+JJl1quhD36auyqOJDjKxlJcdgBsw=
 github.com/everpcpc/pixiv v0.0.0-20180814103204-0e2a8f1157a8/go.mod h1:ZEyPR6lTdSwrImOIZIWhc8iWP7EhHypYp7QD3E4BA3c=
+github.com/everpcpc/pixiv v0.0.0-20180815063951-e1bedc985ca2 h1:Fk9iPDTOuD4tsFvb2FB0eh9t99RbeDHDYvFe5eB20IM=
+github.com/everpcpc/pixiv v0.0.0-20180815063951-e1bedc985ca2/go.mod h1:ZEyPR6lTdSwrImOIZIWhc8iWP7EhHypYp7QD3E4BA3c=
 github.com/getsentry/raven-go v0.0.0-20180517221441-ed7bcb39ff10 h1:YO10pIIBftO/kkTFdWhctH96grJ7qiy7bMdiZcIvPKs=
 github.com/getsentry/raven-go v0.0.0-20180517221441-ed7bcb39ff10/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49PX4NzFV5kcQ=
 github.com/getsentry/raven-go v0.0.0-20180801005657-7535a8fa2ace h1:M5ZUuRO+XFqhTa9PlaqyWgfzMNWKSraCWm7z4PzM1GA=
@@ -51,5 +53,7 @@ golang.org/x/net v0.0.0-20180724234803-3673e40ba225 h1:kNX+jCowfMYzvlSvJu5pQWEmy
 golang.org/x/net v0.0.0-20180724234803-3673e40ba225/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20180811021610-c39426892332 h1:efGso+ep0DjyCBJPjvoz0HI6UldX4Md2F1rZFe1ir0E=
 golang.org/x/net v0.0.0-20180811021610-c39426892332/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+golang.org/x/net v0.0.0-20180816102801-aaf60122140d h1:211XH5RPVP5tOBkz6xm3/b7KxtjqVf6PYG+evqJpE08=
+golang.org/x/net v0.0.0-20180816102801-aaf60122140d/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
