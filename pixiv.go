@@ -8,6 +8,10 @@ import (
 	"github.com/go-redis/redis"
 )
 
+var (
+	pixivPath = "."
+)
+
 func initPixiv(cfg *PixivConfig) error {
 	tokenKey := "pixiv:" + cfg.Username + ":auth"
 	token := redisClient.HGet(tokenKey, "token").Val()
@@ -21,6 +25,7 @@ func initPixiv(cfg *PixivConfig) error {
 		}
 		return redisClient.HMSet(tokenKey, v).Err()
 	})
+	pixivPath = cfg.ImgPath
 
 	var account *pixiv.Account
 	var err error
@@ -79,4 +84,9 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 
 func pixivURL(id uint64) string {
 	return "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + strconv.FormatUint(id, 10)
+}
+
+func downloadPixiv(id uint64) (int64, error) {
+	papp := pixiv.NewApp()
+	return papp.Download(id, pixivPath)
 }

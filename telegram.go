@@ -163,6 +163,12 @@ func (t *TelegramBot) tgBot() {
 				switch data[0] {
 				case "comic", "pic", "pixiv":
 					go onReaction(t, update.CallbackQuery)
+				case "pixivFollow":
+					if update.CallbackQuery.Message.Chat.ID != t.SelfChatID {
+						logger.Warning("reaction from illegal chat, ignore")
+						break
+					}
+					go onReactionSelf(t, update.CallbackQuery)
 				}
 				continue
 			} else {
@@ -350,6 +356,52 @@ func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
 	_, err = t.Client.AnswerCallbackQuery(callbackMsg)
+	if err != nil {
+		logger.Errorf("%+v", err)
+	}
+}
+
+func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
+
+	var callbackText string
+
+	token := strings.Split(callbackQuery.Data, ":")
+	if len(token) != 3 {
+		logger.Errorf("react data error: %s", callbackQuery.Data)
+		return
+	}
+	_id := token[1]
+	reaction := token[2]
+	switch reaction {
+	case "download":
+		id, err := strconv.ParseUint(_id, 10, 0)
+		if err != nil {
+			callbackText = "failed parsing pixiv id"
+			break
+		}
+		size, err := downloadPixiv(id)
+		if err != nil {
+			callbackText = "error downloading pixiv"
+			break
+		}
+		if size == 0 {
+			callbackText = "file aready exists"
+			break
+		}
+		callbackText = fmt.Sprintf("download success: %d bytes", size)
+	case "delete":
+		delMsg := tgbotapi.DeleteMessageConfig{
+			ChatID:    callbackQuery.Message.Chat.ID,
+			MessageID: callbackQuery.Message.MessageID,
+		}
+		_, err := t.Client.DeleteMessage(delMsg)
+		if err != nil {
+			logger.Errorf("failed deleting msg: %+v", err)
+		}
+	}
+
+	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
+	_, err := t.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		logger.Errorf("%+v", err)
 	}
