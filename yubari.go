@@ -27,6 +27,9 @@ func main() {
 
 	if cfg.SentryDSN != "" {
 		raven.SetDSN(cfg.SentryDSN)
+		raven.CapturePanic(func() {
+			// do all of the scary things here
+		}, nil)
 	}
 
 	var err error
