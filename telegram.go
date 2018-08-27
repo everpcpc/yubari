@@ -245,6 +245,10 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 		logger.Errorf("%+v", err)
 		return
 	}
+	if files == nil {
+		logger.Error("find no comic")
+		return
+	}
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
@@ -273,7 +277,8 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 		return
 	}
 	if files == nil {
-		logger.Error("find no pics")
+		logger.Error("find no pic")
+		return
 	}
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
@@ -296,7 +301,8 @@ func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
 		return
 	}
 	if files == nil {
-		logger.Error("find no pics")
+		logger.Error("find no pic")
+		return
 	}
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
