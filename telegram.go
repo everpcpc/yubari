@@ -19,39 +19,43 @@ var (
 
 // TelegramBot ...
 type TelegramBot struct {
-	Name          string
-	SelfChatID    int64
-	ChannelChatID int64
-	ComicPath     string
-	DeleteDelay   time.Duration
-	Client        *tgbotapi.BotAPI
-	Queue         *bt.Pool
-	Tube          string
+	Name           string
+	SelfChatID     int64
+	ChannelChatID  int64
+	ComicPath      string
+	PixivPath      string
+	TwitterImgPath string
+	DeleteDelay    time.Duration
+	Client         *tgbotapi.BotAPI
+	Queue          *bt.Pool
+	Tube           string
 }
 
 // NewTelegramBot ...
-func NewTelegramBot(cfg *TelegramConfig, btdAddr string) (t *TelegramBot) {
-	bot, err := tgbotapi.NewBotAPI(cfg.Token)
+func NewTelegramBot(cfg *Config) (t *TelegramBot) {
+	bot, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
 	if err != nil {
 		logger.Panicf("tg bot init failed: %+v", err)
 	}
-	delay, err := time.ParseDuration(cfg.DeleteDelay)
+	delay, err := time.ParseDuration(cfg.Telegram.DeleteDelay)
 	if err != nil {
 		logger.Panicf("delete delay error: %+v", err)
 	}
 
 	t = &TelegramBot{
-		Name:          bot.Self.UserName,
-		SelfChatID:    cfg.SelfChatID,
-		ChannelChatID: cfg.ChannelChatID,
-		ComicPath:     cfg.ComicPath,
-		DeleteDelay:   delay,
-		Client:        bot,
-		Tube:          "tg",
+		Name:           bot.Self.UserName,
+		SelfChatID:     cfg.Telegram.SelfChatID,
+		ChannelChatID:  cfg.Telegram.ChannelChatID,
+		ComicPath:      cfg.Telegram.ComicPath,
+		PixivPath:      cfg.Pixiv.ImgPath,
+		TwitterImgPath: cfg.Twitter.ImgPath,
+		DeleteDelay:    delay,
+		Client:         bot,
+		Tube:           "tg",
 	}
 	t.Queue = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
-			return bt.Dial(btdAddr)
+			return bt.Dial(cfg.BeanstalkAddr)
 		},
 		MaxIdle:     10,
 		MaxActive:   100,
@@ -157,7 +161,7 @@ func (t *TelegramBot) tgBot() {
 				)
 				data := strings.SplitN(update.CallbackQuery.Data, ":", 2)
 				switch data[0] {
-				case "comic", "pic":
+				case "comic", "pic", "pixiv":
 					go onReaction(t, update.CallbackQuery)
 				}
 				continue
@@ -186,6 +190,8 @@ func (t *TelegramBot) tgBot() {
 					go onComic(t, message)
 				case "pic":
 					go onPic(t, message)
+				case "pixiv":
+					go onPixiv(t, message)
 				default:
 					logger.Infof("ignore unknown cmd: %+v", message.Command())
 					continue
@@ -261,7 +267,7 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 }
 
 func onPic(t *TelegramBot, message *tgbotapi.Message) {
-	files, err := filepath.Glob(filepath.Join(twitterBot.ImgPath, "*"))
+	files, err := filepath.Glob(filepath.Join(t.TwitterImgPath, "*"))
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
@@ -276,6 +282,27 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
 	msg.ReplyMarkup = buildInlineKeyboardMarkup("pic", filepath.Base(file))
+
+	_, err = t.Client.Send(msg)
+	if err != nil {
+		logger.Errorf("%+v", err)
+	}
+}
+
+func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
+	files, err := filepath.Glob(filepath.Join(t.PixivPath, "*"))
+	if err != nil {
+		logger.Errorf("%+v", err)
+		return
+	}
+	if files == nil {
+		logger.Error("find no pics")
+	}
+	rand.Seed(time.Now().UnixNano())
+	file := files[rand.Intn(len(files))]
+	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
+	msg.ReplyMarkup = buildInlineKeyboardMarkup("pixiv", filepath.Base(file))
 
 	_, err = t.Client.Send(msg)
 	if err != nil {

@@ -92,6 +92,11 @@ func probate(_type, _id string) error {
 			filepath.Join(twitterBot.ImgPath, _id),
 			filepath.Join(twitterBot.ImgPath, "probation", _id),
 		)
+	case "pixiv":
+		return os.Rename(
+			filepath.Join(telegramBot.PixivPath, _id),
+			filepath.Join(telegramBot.PixivPath, "probation", _id),
+		)
 	default:
 		return fmt.Errorf("prohibit unkown type")
 	}

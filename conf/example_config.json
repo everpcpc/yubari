@@ -32,7 +32,8 @@
   },
   "pixiv":{
     "username": "",
-    "password": ""
+    "password": "",
+    "ImgPath": ""
   },
   "beanstalkAddr": "localhost:11300",
   "bgmID": "",

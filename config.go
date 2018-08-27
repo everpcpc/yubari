@@ -61,6 +61,7 @@ type TelegramConfig struct {
 type PixivConfig struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	ImgPath  string `json:"imgPath"`
 }
 
 // ReadConfig ...
