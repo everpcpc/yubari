@@ -315,12 +315,25 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 
 func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
 	args := message.CommandArguments()
+
 	if args != "" {
 		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
-			t.send(message.Chat.ID, pixivURL(id))
-		} else {
-			t.send(message.Chat.ID, "输入不对啦")
+			t.sendPixivIllust(id)
+			return
 		}
+		msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
+		msg.ReplyToMessageID = message.MessageID
+		msgSent, err := t.Client.Send(msg)
+		if err != nil {
+			logger.Errorf("%+v", err)
+			return
+		}
+		data, err := json.Marshal(msgSent)
+		if err != nil {
+			logger.Errorf("%+v", err)
+			return
+		}
+		t.putQueue(data)
 		return
 	}
 	files, err := filepath.Glob(filepath.Join(t.PixivPath, "*"))
