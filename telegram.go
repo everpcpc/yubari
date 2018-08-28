@@ -80,6 +80,15 @@ func (t *TelegramBot) putQueue(msg []byte) {
 	}
 }
 
+func (t *TelegramBot) isAuthedChat(c *tgbotapi.Chat) bool {
+	for _, w := range t.WhitelistChats {
+		if c.ID == w {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
 	logger.Debugf("[%d]%s", chat, msg)
 	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
@@ -168,7 +177,7 @@ func (t *TelegramBot) tgBot() {
 			} else if update.CallbackQuery != nil {
 				logger.Infof(
 					"recv:(%s)[%s]reaction:{%s}",
-					update.CallbackQuery.ChatInstance,
+					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.From.String(),
 					update.CallbackQuery.Data,
 				)
@@ -177,13 +186,7 @@ func (t *TelegramBot) tgBot() {
 				case "comic", "pic", "pixiv":
 					go onReaction(t, update.CallbackQuery)
 				case "pixivIllust":
-					authed := false
-					for _, w := range t.WhitelistChats {
-						if update.CallbackQuery.Message.Chat.ID == w {
-							authed = true
-						}
-					}
-					if authed {
+					if !t.isAuthedChat(update.CallbackQuery.Message.Chat) {
 						logger.Warning("reaction from illegal chat, ignore")
 						break
 					}
@@ -229,6 +232,7 @@ func (t *TelegramBot) tgBot() {
 					continue
 				}
 				checkRepeat(t, message)
+				checkPixiv(t, message)
 			}
 		}
 		logger.Warning("tg bot restarted.")
@@ -257,7 +261,39 @@ func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
 		redisClient.Del(key)
 		logger.Infof("repeat: %s", strconv.Quote(message.Text))
 		msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
-		t.Client.Send(msg)
+		go t.Client.Send(msg)
+	}
+}
+
+func checkPixiv(t *TelegramBot, message *tgbotapi.Message) {
+	if !t.isAuthedChat(message.Chat) {
+		return
+	}
+	id := parsePixivURL(message.Text)
+	if id == 0 {
+		return
+	}
+	var callbackText string
+	sizes, errs := downloadPixiv(id)
+	for i := range sizes {
+		if errs[i] != nil {
+			callbackText += fmt.Sprintf("p%d: error😕;", i)
+			continue
+		}
+		if sizes[i] == 0 {
+			callbackText += fmt.Sprintf("p%d: exists😋;", i)
+			continue
+		}
+		logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
+		callbackText += fmt.Sprintf("p%d: %s😊;", i, byteCountBinary(sizes[i]))
+	}
+
+	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, callbackText)
+	msg.ReplyToMessageID = message.MessageID
+
+	_, err := t.Client.Send(msg)
+	if err != nil {
+		logger.Errorf("%+v", err)
 	}
 }
 
@@ -424,17 +460,20 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "failed parsing pixiv id"
 			break
 		}
-		size, err := downloadPixiv(id)
-		if err != nil {
-			callbackText = "error downloading pixiv"
-			break
+		sizes, errs := downloadPixiv(id)
+		for i := range sizes {
+			if errs[i] != nil {
+				callbackText += fmt.Sprintf("p%d: error;", i)
+				continue
+			}
+			if sizes[i] == 0 {
+				callbackText += fmt.Sprintf("p%d: exists;", i)
+				continue
+			}
+			logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
+			callbackText += fmt.Sprintf("p%d: %s;", i, byteCountBinary(sizes[i]))
 		}
-		if size == 0 {
-			callbackText = "file aready exists"
-			break
-		}
-		logger.Debugf("download pixiv %d: %d bytes", id, size)
-		callbackText = fmt.Sprintf("download success: %s", byteCountBinary(size))
+
 	case "diss":
 	default:
 		callbackText = fmt.Sprintf("react type error: %s", reaction)

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -85,7 +87,21 @@ func pixivURL(id uint64) string {
 	return "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + strconv.FormatUint(id, 10)
 }
 
-func downloadPixiv(id uint64) (int64, error) {
+func parsePixivURL(s string) uint64 {
+	urlPattern := regexp.MustCompile(`https:\/\/www\.pixiv\.net\/member_illust\.php\?(illust_id=\d+|mode=medium|\&)+`)
+	matchURL := urlPattern.FindString(s)
+	u, err := url.Parse(matchURL)
+	if err != nil {
+		return 0
+	}
+	r, err := strconv.ParseUint(u.Query().Get("illust_id"), 10, 0)
+	if err != nil {
+		return 0
+	}
+	return r
+}
+
+func downloadPixiv(id uint64) ([]int64, []error) {
 	papp := pixiv.NewApp()
 	logger.Debugf("downloading %d", id)
 	return papp.Download(id, pixivPath)
