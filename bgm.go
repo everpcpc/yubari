@@ -76,7 +76,7 @@ func bgmTrack(id string, ttl int) {
 			text := getBangumiUpdate(item.Title, des[1])
 			logger.Info(text)
 			go twitterBot.Client.Statuses.Update(text, nil)
-			go telegramBot.send(telegramBot.SelfChatID, text)
+			go telegramBot.send(telegramBot.SelfID, text)
 		}
 		if redisClient.Set(keyLast, latest, 0).Err() != nil {
 			logger.Errorf("set last %+v", err)

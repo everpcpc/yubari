@@ -25,7 +25,7 @@
   },
   "telegram":{
     "token": "",
-    "selfChatID": 0,
+    "selfID": 0,
     "whitelistChats": [],
     "comicPath": "",
     "deleteDelay": "1h"

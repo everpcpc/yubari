@@ -20,7 +20,7 @@ var (
 // TelegramBot ...
 type TelegramBot struct {
 	Name           string
-	SelfChatID     int64
+	SelfID         int64
 	WhitelistChats []int64
 	ComicPath      string
 	PixivPath      string
@@ -44,7 +44,7 @@ func NewTelegramBot(cfg *Config) (t *TelegramBot) {
 
 	t = &TelegramBot{
 		Name:           bot.Self.UserName,
-		SelfChatID:     cfg.Telegram.SelfChatID,
+		SelfID:         cfg.Telegram.SelfID,
 		WhitelistChats: cfg.Telegram.WhitelistChats,
 		ComicPath:      cfg.Telegram.ComicPath,
 		PixivPath:      cfg.Pixiv.ImgPath,
@@ -85,12 +85,12 @@ func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
 	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
 }
 
-func (t *TelegramBot) sendPixivIllust(id uint64) {
+func (t *TelegramBot) sendPixivIllust(target int64, id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "like")),
 		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "diss")),
 	)
-	msg := tgbotapi.NewMessage(t.SelfChatID, pixivURL(id))
+	msg := tgbotapi.NewMessage(target, pixivURL(id))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
 	_, err := t.Client.Send(msg)
 	if err != nil {
@@ -327,7 +327,7 @@ func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
 
 	if args != "" {
 		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
-			t.sendPixivIllust(id)
+			t.sendPixivIllust(message.Chat.ID, id)
 			return
 		}
 		msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")

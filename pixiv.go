@@ -73,7 +73,7 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 				break
 			}
 			logger.Infof("post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, pixivURL(illusts[i].ID))
-			go telegramBot.sendPixivIllust(illusts[i].ID)
+			go telegramBot.sendPixivIllust(telegramBot.SelfID, illusts[i].ID)
 		}
 		if err := redisClient.Set(maxIDKey, illusts[0].ID, 0).Err(); err != nil {
 			logger.Error(err)
