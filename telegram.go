@@ -288,7 +288,7 @@ func checkPixiv(t *TelegramBot, message *tgbotapi.Message) {
 		callbackText += fmt.Sprintf("p%d: %s😊;", i, byteCountBinary(sizes[i]))
 	}
 
-	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, callbackText)
+	msg := tgbotapi.NewMessage(message.Chat.ID, callbackText)
 	msg.ReplyToMessageID = message.MessageID
 
 	_, err := t.Client.Send(msg)
