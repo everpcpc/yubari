@@ -85,10 +85,10 @@ func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
 	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
 }
 
-func (t *TelegramBot) sendPixivSelf(id uint64) {
+func (t *TelegramBot) sendPixivIllust(id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "like")),
-		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "diss")),
+		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "like")),
+		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "diss")),
 	)
 	msg := tgbotapi.NewMessage(t.SelfChatID, pixivURL(id))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
@@ -176,7 +176,7 @@ func (t *TelegramBot) tgBot() {
 				switch data[0] {
 				case "comic", "pic", "pixiv":
 					go onReaction(t, update.CallbackQuery)
-				case "pixivFollow":
+				case "pixivIllust":
 					if update.CallbackQuery.Message.Chat.ID != t.SelfChatID {
 						logger.Warning("reaction from illegal chat, ignore")
 						break
@@ -314,6 +314,15 @@ func onPic(t *TelegramBot, message *tgbotapi.Message) {
 }
 
 func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
+	args := message.CommandArguments()
+	if args != "" {
+		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
+			t.send(message.Chat.ID, pixivURL(id))
+		} else {
+			t.send(message.Chat.ID, "输入不对啦")
+		}
+		return
+	}
 	files, err := filepath.Glob(filepath.Join(t.PixivPath, "*"))
 	if err != nil {
 		logger.Errorf("%+v", err)
@@ -328,6 +337,7 @@ func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
 	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
 	msg.ReplyMarkup = buildInlineKeyboardMarkup("pixiv", filepath.Base(file))
+	msg.ReplyToMessageID = message.MessageID
 
 	_, err = t.Client.Send(msg)
 	if err != nil {
