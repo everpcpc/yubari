@@ -182,6 +182,7 @@ func (t *TelegramBot) tgBot() {
 						break
 					}
 					go onReactionSelf(t, update.CallbackQuery)
+				default:
 				}
 				continue
 			} else {
@@ -427,6 +428,8 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 		logger.Debugf("download pixiv %d: %d bytes", id, size)
 		callbackText = fmt.Sprintf("download success: %s", byteCountBinary(size))
 	case "diss":
+	default:
+		callbackText = fmt.Sprintf("react type error: %s", reaction)
 	}
 
 	delMsg := tgbotapi.DeleteMessageConfig{
