@@ -21,7 +21,7 @@ var (
 type TelegramBot struct {
 	Name           string
 	SelfChatID     int64
-	ChannelChatID  int64
+	WhitelistChats []int64
 	ComicPath      string
 	PixivPath      string
 	TwitterImgPath string
@@ -45,7 +45,7 @@ func NewTelegramBot(cfg *Config) (t *TelegramBot) {
 	t = &TelegramBot{
 		Name:           bot.Self.UserName,
 		SelfChatID:     cfg.Telegram.SelfChatID,
-		ChannelChatID:  cfg.Telegram.ChannelChatID,
+		WhitelistChats: cfg.Telegram.WhitelistChats,
 		ComicPath:      cfg.Telegram.ComicPath,
 		PixivPath:      cfg.Pixiv.ImgPath,
 		TwitterImgPath: cfg.Twitter.ImgPath,
@@ -177,7 +177,13 @@ func (t *TelegramBot) tgBot() {
 				case "comic", "pic", "pixiv":
 					go onReaction(t, update.CallbackQuery)
 				case "pixivIllust":
-					if update.CallbackQuery.Message.Chat.ID != t.SelfChatID {
+					authed := false
+					for _, w := range t.WhitelistChats {
+						if update.CallbackQuery.Message.Chat.ID == w {
+							authed = true
+						}
+					}
+					if authed {
 						logger.Warning("reaction from illegal chat, ignore")
 						break
 					}
@@ -190,13 +196,15 @@ func (t *TelegramBot) tgBot() {
 			}
 			if message.Chat.IsGroup() {
 				logger.Infof(
-					"recv:(%s)[%s]{%s}",
+					"recv:(%d)[%s:%s]{%s}",
+					message.Chat.ID,
 					message.Chat.Title,
 					message.From.String(),
 					strconv.Quote(message.Text))
 			} else {
 				logger.Infof(
-					"recv:[%s]{%s}",
+					"recv:(%d)[%s]{%s}",
+					message.Chat.ID,
 					message.From.String(),
 					strconv.Quote(message.Text),
 				)
