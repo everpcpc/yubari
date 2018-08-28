@@ -277,15 +277,15 @@ func checkPixiv(t *TelegramBot, message *tgbotapi.Message) {
 	sizes, errs := downloadPixiv(id)
 	for i := range sizes {
 		if errs[i] != nil {
-			callbackText += fmt.Sprintf("p%d: error😕;", i)
+			callbackText += fmt.Sprintf("p%d: error😕 ", i)
 			continue
 		}
 		if sizes[i] == 0 {
-			callbackText += fmt.Sprintf("p%d: exists😋;", i)
+			callbackText += fmt.Sprintf("p%d: exists😋 ", i)
 			continue
 		}
 		logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
-		callbackText += fmt.Sprintf("p%d: %s😊;", i, byteCountBinary(sizes[i]))
+		callbackText += fmt.Sprintf("p%d: %s😊 ", i, byteCountBinary(sizes[i]))
 	}
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, callbackText)
