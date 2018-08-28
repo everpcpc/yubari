@@ -87,8 +87,8 @@ func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
 
 func (t *TelegramBot) sendPixivSelf(id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "download")),
-		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "delete")),
+		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "like")),
+		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "diss")),
 	)
 	msg := tgbotapi.NewMessage(t.SelfChatID, pixivURL(id))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
@@ -386,7 +386,7 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 	_id := token[1]
 	reaction := token[2]
 	switch reaction {
-	case "download":
+	case "like":
 		id, err := strconv.ParseUint(_id, 10, 0)
 		if err != nil {
 			callbackText = "failed parsing pixiv id"
@@ -401,20 +401,21 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "file aready exists"
 			break
 		}
-		callbackText = fmt.Sprintf("download success: %d bytes", size)
-	case "delete":
-		delMsg := tgbotapi.DeleteMessageConfig{
-			ChatID:    callbackQuery.Message.Chat.ID,
-			MessageID: callbackQuery.Message.MessageID,
-		}
-		_, err := t.Client.DeleteMessage(delMsg)
-		if err != nil {
-			logger.Errorf("failed deleting msg: %+v", err)
-		}
+		callbackText = fmt.Sprintf("download success: %s", byteCountBinary(size))
+	case "diss":
+	}
+
+	delMsg := tgbotapi.DeleteMessageConfig{
+		ChatID:    callbackQuery.Message.Chat.ID,
+		MessageID: callbackQuery.Message.MessageID,
+	}
+	_, err := t.Client.DeleteMessage(delMsg)
+	if err != nil {
+		logger.Errorf("failed deleting msg: %+v", err)
 	}
 
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err := t.Client.AnswerCallbackQuery(callbackMsg)
+	_, err = t.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		logger.Errorf("%+v", err)
 	}
