@@ -72,9 +72,8 @@ func pixivFollow(cfg *PixivConfig, ttl int) {
 			if maxID >= illusts[i].ID {
 				break
 			}
-			url := pixivURL(illusts[i].ID)
-			logger.Infof("post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, url)
-			go telegramBot.send(telegramBot.SelfChatID, url)
+			logger.Infof("post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, pixivURL(illusts[i].ID))
+			go telegramBot.sendPixivSelf(illusts[i].ID)
 		}
 		if err := redisClient.Set(maxIDKey, illusts[0].ID, 0).Err(); err != nil {
 			logger.Error(err)

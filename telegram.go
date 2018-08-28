@@ -85,6 +85,19 @@ func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
 	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
 }
 
+func (t *TelegramBot) sendPixivSelf(id uint64) {
+	row := tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "download")),
+		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivFollow", strconv.FormatUint(id, 10), "delete")),
+	)
+	msg := tgbotapi.NewMessage(t.SelfChatID, pixivURL(id))
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
+	_, err := t.Client.Send(msg)
+	if err != nil {
+		logger.Errorf("%+v", err)
+	}
+}
+
 func (t *TelegramBot) delMessage() {
 	for {
 		conn, err := t.Queue.Get()
