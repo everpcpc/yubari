@@ -87,5 +87,6 @@ func pixivURL(id uint64) string {
 
 func downloadPixiv(id uint64) (int64, error) {
 	papp := pixiv.NewApp()
+	logger.Debugf("downloading %d", id)
 	return papp.Download(id, pixivPath)
 }

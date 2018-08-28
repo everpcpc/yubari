@@ -401,6 +401,7 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "file aready exists"
 			break
 		}
+		logger.Debugf("download pixiv %d: %d bytes", id, size)
 		callbackText = fmt.Sprintf("download success: %s", byteCountBinary(size))
 	case "diss":
 	}
