@@ -176,7 +176,7 @@ func (t *TelegramBot) tgBot() {
 				message = update.EditedMessage
 			} else if update.CallbackQuery != nil {
 				logger.Infof(
-					"recv:(%s)[%s]reaction:{%s}",
+					"recv:(%d)[%s]reaction:{%s}",
 					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.From.String(),
 					update.CallbackQuery.Data,
