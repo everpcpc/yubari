@@ -409,7 +409,8 @@ func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 	_type, _id, reaction, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
 	if err == nil {
 		diss := redisClient.SCard(buildReactionKey(_type, _id, "diss")).Val()
-		if diss <= 1 {
+		like := redisClient.SCard(buildReactionKey(_type, _id, "like")).Val()
+		if diss-like < 2 {
 			msg := tgbotapi.NewEditMessageReplyMarkup(
 				callbackQuery.Message.Chat.ID,
 				callbackQuery.Message.MessageID,
