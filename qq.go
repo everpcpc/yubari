@@ -347,23 +347,36 @@ func qqWatch(messages chan map[string]string) {
 		case "GroupMsg":
 			if _, ok := groupIgnore[msg["qq"]]; ok {
 				logger.Debugf("Ignore (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
-				go checkKancolleMsg(msg["msg"])
+				// go checkKancolleMsg(msg["msg"])
 				continue
 			}
+			// clean message
+			_ = reCQ.ReplaceAllString(msg["msg"], "")
+			logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
+
 			go qqBot.NoticeMention(msg["msg"], msg["group"])
 			go qqBot.CheckRepeat(msg["msg"], msg["group"])
 			if qqBot.CheckAt(msg["msg"]) {
-				cleanMsg := reCQ.ReplaceAllString(msg["msg"], "")
-				logger.Infof("at: (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(cleanMsg))
 				rand.Seed(time.Now().UnixNano())
 				if rand.Intn(100) > 90 {
 					qqBot.SendGroupMsg(msg["group"], "不要随便 @ 人家啦 >_<")
 				}
-			} else {
-				logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
 			}
 		default:
 			logger.Infof("%+v", msg)
 		}
+	}
+}
+
+func proceedCommand(msg string) (string, error) {
+	if !strings.HasPrefix(msg, "/") {
+		return "", nil
+	}
+	token := strings.SplitN(msg, " ", 2)
+	switch token[0] {
+	case "/dps":
+		return onDPS(strings.TrimSpace(token[1]))
+	default:
+		return "Unkown Command", nil
 	}
 }
