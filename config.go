@@ -29,8 +29,6 @@ type RedisConfig struct {
 type QQConfig struct {
 	SelfID          string   `json:"selfID"`
 	BotID           string   `json:"botID"`
-	GroupID         string   `json:"groupID"`
-	GroupName       string   `json:"groupName"`
 	QQPrivateIgnore []string `json:"qqPrivateIgnore"`
 	QQGroupIgnore   []string `json:"qqGroupIgnore"`
 	SelfNames       []string `json:"selfNames"`

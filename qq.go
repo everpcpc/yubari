@@ -103,9 +103,9 @@ func (q *QQBot) send(msg []byte) {
 }
 
 // SendGroupMsg ...
-func (q *QQBot) SendGroupMsg(msg string) {
+func (q *QQBot) SendGroupMsg(group, msg string) {
 	logger.Info(strconv.Quote(msg))
-	fullMsg, err := formMsg("sendGroupMsg", q.Config.GroupID, msg)
+	fullMsg, err := formMsg("sendGroupMsg", group, msg)
 	if err != nil {
 		logger.Errorf("%+v", err)
 		return
@@ -168,7 +168,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 			logger.Errorf("%+v", err)
 			return
 		}
-		q.SendGroupMsg("呀呀呀，召唤一号机" + QQAt{q.Config.SelfID}.String())
+		q.SendGroupMsg(group, "呀呀呀，召唤一号机"+QQAt{q.Config.SelfID}.String())
 	}
 }
 
@@ -192,7 +192,7 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 	if i > 1 {
 		redisClient.Del(key)
 		logger.Infof("Repeat: %s", strconv.Quote(msg))
-		q.SendGroupMsg(msg)
+		q.SendGroupMsg(group, msg)
 	}
 }
 
@@ -357,7 +357,7 @@ func qqWatch(messages chan map[string]string) {
 				logger.Infof("at: (%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(cleanMsg))
 				rand.Seed(time.Now().UnixNano())
 				if rand.Intn(100) > 90 {
-					qqBot.SendGroupMsg("不要随便 @ 人家啦 >_<")
+					qqBot.SendGroupMsg(msg["group"], "不要随便 @ 人家啦 >_<")
 				}
 			} else {
 				logger.Infof("(%s)[%s]:{%s}", msg["group"], msg["qq"], strconv.Quote(msg["msg"]))
