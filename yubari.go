@@ -12,7 +12,7 @@ func main() {
 	flagSyslog := flag.Bool("syslog", false, "also log to syslog")
 	flagLogLevel := flag.String("loglevel", "debug", "debug, info, notice, warning, error")
 	flagBots := flag.String(
-		"bots", "tg,bgm,pixiv",
+		"bots", "qw,tg,bgm,pixiv",
 		"Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, tg telegram, bgm bgmTrack, pixiv pixivFollow")
 	flag.Parse()
 
