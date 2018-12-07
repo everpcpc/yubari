@@ -41,9 +41,9 @@ func main() {
 	defer redisClient.Close()
 	logger.Debugf("Redis connected: %+v", redisClient)
 
-	// qqBot = NewQQBot(cfg)
-	// defer qqBot.Client.Close()
-	// logger.Debugf("QQBot: %+v", qqBot)
+	qqBot = NewQQBot(cfg)
+	defer qqBot.Client.Close()
+	logger.Debugf("QQBot: %+v", qqBot)
 
 	twitterBot = NewTwitterBot(cfg.Twitter)
 	logger.Debugf("TwitterBot: %+v", twitterBot)
@@ -55,12 +55,12 @@ func main() {
 	botsLaunched := 0
 	for _, b := range bots {
 		switch b {
-		// case "qw":
-		// logger.Debug("Bot: qqWatch")
-		// messages := make(chan map[string]string)
-		// go qqBot.Poll(messages)
-		// go qqWatch(messages)
-		// botsLaunched++
+		case "qw":
+			logger.Debug("Bot: qqWatch")
+			messages := make(chan map[string]string)
+			go qqBot.Poll(messages)
+			go qqWatch(messages)
+			botsLaunched++
 		// case "tt":
 		// 	logger.Debug("Bot: twitterTrack")
 		// 	go twitterBot.Track()
