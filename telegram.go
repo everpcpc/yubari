@@ -307,7 +307,7 @@ func onStart(t *TelegramBot, message *tgbotapi.Message) {
 
 func onRoll(t *TelegramBot, message *tgbotapi.Message) {
 	rand.Seed(time.Now().UnixNano())
-	msg := tgbotapi.NewMessage(message.Chat.ID, strconv.Itoa(rand.Intn(100)))
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(rand.Intn(100)))
 	msg.ReplyToMessageID = message.MessageID
 	t.Client.Send(msg)
 }
