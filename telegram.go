@@ -310,7 +310,6 @@ func onRoll(t *TelegramBot, message *tgbotapi.Message) {
 	var limit int
 
 	args := message.CommandArguments()
-	limit = 100
 
 	if args != "" {
 		limit, err = strconv.Atoi(args)
@@ -323,6 +322,9 @@ func onRoll(t *TelegramBot, message *tgbotapi.Message) {
 			}
 			return
 		}
+	}
+	if limit <= 0 {
+		limit = 100
 	}
 
 	rand.Seed(time.Now().UnixNano())

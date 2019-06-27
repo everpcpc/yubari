@@ -99,7 +99,6 @@ func (q *QQBot) send(msg []byte) {
 	}
 
 	q.Client.Release(conn, false)
-	return
 }
 
 // SendGroupMsg ...
