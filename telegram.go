@@ -306,10 +306,32 @@ func onStart(t *TelegramBot, message *tgbotapi.Message) {
 }
 
 func onRoll(t *TelegramBot, message *tgbotapi.Message) {
+	var err error
+	var limit int
+
+	args := message.CommandArguments()
+	limit = 100
+
+	if args != "" {
+		limit, err = strconv.Atoi(args)
+		if err != nil {
+			msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
+			msg.ReplyToMessageID = message.MessageID
+			_, err := t.Client.Send(msg)
+			if err != nil {
+				logger.Errorf("%+v", err)
+			}
+			return
+		}
+	}
+
 	rand.Seed(time.Now().UnixNano())
-	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(rand.Intn(100)))
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(rand.Intn(limit)))
 	msg.ReplyToMessageID = message.MessageID
-	t.Client.Send(msg)
+	_, err = t.Client.Send(msg)
+	if err != nil {
+		logger.Errorf("%+v", err)
+	}
 }
 
 func onComic(t *TelegramBot, message *tgbotapi.Message) {
