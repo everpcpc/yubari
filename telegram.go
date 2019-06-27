@@ -217,6 +217,8 @@ func (t *TelegramBot) tgBot() {
 				switch message.Command() {
 				case "start":
 					go onStart(t, message)
+				case "roll":
+					go onRoll(t, message)
 				case "comic":
 					go onComic(t, message)
 				case "pic":
@@ -299,6 +301,13 @@ func checkPixiv(t *TelegramBot, message *tgbotapi.Message) {
 
 func onStart(t *TelegramBot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "呀呀呀")
+	msg.ReplyToMessageID = message.MessageID
+	t.Client.Send(msg)
+}
+
+func onRoll(t *TelegramBot, message *tgbotapi.Message) {
+	rand.Seed(time.Now().UnixNano())
+	msg := tgbotapi.NewMessage(message.Chat.ID, strconv.Itoa(rand.Intn(100)))
 	msg.ReplyToMessageID = message.MessageID
 	t.Client.Send(msg)
 }

@@ -44,7 +44,7 @@ func NewTwitterBot(cfg *TwitterConfig) *TwitterBot {
 			// "kentauloss":    "344418162",
 			// "tomo_3":        "69314676",
 			// "infinote":      "81257783",
-			// "hi_mi_tsu_2": "803529026333642752",
+			// "hi_mi_tsu_2":   "803529026333642752",
 			// "caidychenkd":   "843223963",
 			// "amamitsuki12":  "958290270",
 			// "sakimori_st30": "718736267056263168",
