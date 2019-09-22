@@ -13,7 +13,13 @@ func main() {
 	flagLogLevel := flag.String("loglevel", "debug", "debug, info, notice, warning, error")
 	flagBots := flag.String(
 		"bots", "qw,tg,bgm,pixiv",
-		"Bots to start: qw qqWatch, tt twitterTrack, ts twitterSelf, tg telegram, bgm bgmTrack, pixiv pixivFollow")
+		`Bots to start:
+			qw qqWatch,
+			tt twitterTrack,
+			ts twitterSelf,
+			tg telegram,
+			bgm bgmTrack,
+			pixiv pixivFollow`)
 	flag.Parse()
 
 	var logFlags byte
