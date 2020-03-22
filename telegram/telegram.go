@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
@@ -38,6 +39,7 @@ type Bot struct {
 	Tube           string
 	logger         *logging.Logger
 	redis          *redis.Client
+	es             *elasticsearch7.Client
 }
 
 func NewBot(cfg *Config) (b *Bot, err error) {
@@ -84,6 +86,11 @@ func (b *Bot) WithTwitterImg(imgPath string) *Bot {
 func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
 	b.Queue = queue
 	b.Tube = "tg"
+	return b
+}
+
+func (b *Bot) WithES(es *elasticsearch7.Client) *Bot {
+	b.es = es
 	return b
 }
 
@@ -248,6 +255,8 @@ func (b *Bot) Start() {
 					go onPic(b, message)
 				case "pixiv":
 					go onPixiv(b, message)
+				case "search":
+					go onSearch(b, message)
 				default:
 					b.logger.Infof("ignore unknown cmd: %+v", message.Command())
 					continue

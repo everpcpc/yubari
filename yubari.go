@@ -4,6 +4,7 @@ import (
 	"flag"
 	"time"
 
+	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/getsentry/raven-go"
 	"github.com/go-redis/redis"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
@@ -66,12 +67,18 @@ func main() {
 		MaxLifetime: 180 * time.Second,
 		Wait:        true,
 	}
+	es, err := elasticsearch7.NewClient(elasticsearch7.Config{Addresses: []string{"localhost:9200"}})
+	if err != nil {
+		logger.Panic(err)
+		return
+	}
 
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
 		logger.Panicf("TelegramBot error: %+v", err)
 	}
-	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
+	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithES(es)
+	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
 
 	twitterBot := twitter.NewBot(cfg.Twitter)
 	bangumiBot := bangumi.NewBot(cfg.BgmID).WithLogger(logger).WithRedis(redisClient)
