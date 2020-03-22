@@ -21,7 +21,7 @@ type Bot struct {
 	Follows map[string]string
 }
 
-func NewTwitterBot(cfg *Config) *Bot {
+func NewBot(cfg *Config) *Bot {
 	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
 	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
 	httpClient := config.Client(oauth1.NoContext, token)

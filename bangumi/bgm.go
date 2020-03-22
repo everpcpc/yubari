@@ -32,7 +32,7 @@ func (b *Bot) WithRedis(rds *redis.Client) *Bot {
 	return b
 }
 
-func (b *Bot) StartTrack(ttl int) {
+func (b *Bot) StartTrack(ttl int, output chan string) {
 	rssURL := "https://bgm.tv/feed/user/" + b.selfID + "/timeline"
 	if ttl < 10 {
 		ttl = 10
@@ -97,9 +97,7 @@ func (b *Bot) StartTrack(ttl int) {
 			}
 			text := getBangumiUpdate(item.Title, des[1])
 			b.logger.Info(text)
-			// TODO:
-			// go twitterBot.Client.Statuses.Update(text, nil)
-			// go telegramBot.send(telegramBot.SelfID, text)
+			output <- text
 		}
 		if b.redis.Set(keyLast, latest, 0).Err() != nil {
 			b.logger.Errorf("set last %+v", err)

@@ -4,10 +4,6 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var (
-	redisClient *redis.Client
-)
-
 func NewRedisClient(cfg *RedisConfig) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,

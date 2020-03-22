@@ -120,12 +120,12 @@ func (b *Bot) isAuthedChat(c *tgbotapi.Chat) bool {
 	return false
 }
 
-func (b *Bot) send(chat int64, msg string) (tgbotapi.Message, error) {
+func (b *Bot) Send(chat int64, msg string) (tgbotapi.Message, error) {
 	b.logger.Debugf("[%d]%s", chat, msg)
 	return b.Client.Send(tgbotapi.NewMessage(chat, msg))
 }
 
-func (b *Bot) sendPixivIllust(target int64, id uint64) {
+func (b *Bot) SendPixivIllust(target int64, id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "like")),
 		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "diss")),
@@ -429,7 +429,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 
 	if args != "" {
 		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
-			b.sendPixivIllust(message.Chat.ID, id)
+			b.SendPixivIllust(message.Chat.ID, id)
 			return
 		}
 		msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
