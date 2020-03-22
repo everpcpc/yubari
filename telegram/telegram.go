@@ -384,7 +384,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
-	msg.ReplyMarkup = b.buildInlineKeyboardMarkup("comic", number)
+	msg.ReplyMarkup = buildInlineKeyboardMarkup(b.redis, "comic", number)
 
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := b.Client.Send(msg)
@@ -416,7 +416,7 @@ func onPic(b *Bot, message *tgbotapi.Message) {
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = b.buildInlineKeyboardMarkup("pic", filepath.Base(file))
+	msg.ReplyMarkup = buildInlineKeyboardMarkup(b.redis, "pic", filepath.Base(file))
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
@@ -460,7 +460,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 	file := files[rand.Intn(len(files))]
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = b.buildInlineKeyboardMarkup("pixiv", filepath.Base(file))
+	msg.ReplyMarkup = buildInlineKeyboardMarkup(b.redis, "pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
 
 	_, err = b.Client.Send(msg)
@@ -472,7 +472,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	var callbackText string
 
-	_type, _id, reaction, err := b.saveReaction(callbackQuery.Data, callbackQuery.From.ID)
+	_type, _id, reaction, err := saveReaction(b.redis, callbackQuery.Data, callbackQuery.From.ID)
 	if err == nil {
 		diss := b.redis.SCard(buildReactionKey(_type, _id, "diss")).Val()
 		like := b.redis.SCard(buildReactionKey(_type, _id, "like")).Val()
@@ -480,7 +480,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			msg := tgbotapi.NewEditMessageReplyMarkup(
 				callbackQuery.Message.Chat.ID,
 				callbackQuery.Message.MessageID,
-				b.buildInlineKeyboardMarkup(_type, _id),
+				buildInlineKeyboardMarkup(b.redis, _type, _id),
 			)
 			_, err = b.Client.Send(msg)
 		} else {
@@ -567,70 +567,6 @@ func getMsgTitle(m *tgbotapi.Message) string {
 		return m.Chat.Title
 	}
 	return m.From.String()
-}
-
-func buildReactionData(_type, _id, reaction string) string {
-	return _type + ":" + _id + ":" + reaction
-}
-func buildReactionKey(_type, _id, reaction string) string {
-	return "reaction_" + buildReactionData(_type, _id, reaction)
-}
-
-func (b *Bot) buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup {
-
-	likeCount, _ := b.redis.SCard(buildReactionKey(_type, _id, "like")).Result()
-	dissCount, _ := b.redis.SCard(buildReactionKey(_type, _id, "diss")).Result()
-
-	likeText := "❤️"
-	if likeCount > 0 {
-		likeText = likeText + " " + strconv.FormatInt(likeCount, 10)
-	}
-	dissText := "💔"
-	if dissCount > 0 {
-		dissText = dissText + " " + strconv.FormatInt(dissCount, 10)
-	}
-
-	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(likeText, buildReactionData(_type, _id, "like")),
-		tgbotapi.NewInlineKeyboardButtonData(dissText, buildReactionData(_type, _id, "diss")),
-	)
-	return tgbotapi.NewInlineKeyboardMarkup(row)
-}
-
-func (b *Bot) saveReaction(key string, user int) (_type, _id, reaction string, err error) {
-	token := strings.Split(key, ":")
-	if len(token) != 3 {
-		err = fmt.Errorf("react data error: %s", key)
-		return
-	}
-	_type = token[0]
-	_id = token[1]
-	reaction = token[2]
-
-	pipe := b.redis.Pipeline()
-	switch reaction {
-	case "like":
-		likeCount := pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
-		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
-		_, err = pipe.Exec()
-		if err == nil {
-			if likeCount.Val()+dissCount.Val() == 0 {
-				err = fmt.Errorf("not modified")
-			}
-		}
-	case "diss":
-		dissCount := pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
-		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
-		_, err = pipe.Exec()
-		if err == nil {
-			if likeCount.Val()+dissCount.Val() == 0 {
-				err = fmt.Errorf("not modified")
-			}
-		}
-	default:
-		err = fmt.Errorf("react type error: %s", key)
-	}
-	return
 }
 
 func (b *Bot) probate(_type, _id string) error {

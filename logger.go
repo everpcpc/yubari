@@ -16,7 +16,6 @@ var (
 	logger *logging.Logger
 )
 
-// GetLogger ...
 func GetLogger(name, level string, flags byte) *logging.Logger {
 	log := logging.MustGetLogger(name)
 	formatString := `%{level:.4s} ▶ %{shortfunc} %{message}`
