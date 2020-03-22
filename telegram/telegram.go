@@ -1,24 +1,32 @@
-package main
+package telegram
 
 import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
+	logging "github.com/op/go-logging"
+
+	"github.com/everpcpc/yubari/pixiv"
 )
 
-var (
-	telegramBot *TelegramBot
-)
+type Config struct {
+	Token          string  `json:"token"`
+	SelfID         int64   `json:"selfID"`
+	WhitelistChats []int64 `json:"whitelistChats"`
+	ComicPath      string  `json:"comicPath"`
+	DeleteDelay    string  `json:"deleteDelay"`
+}
 
-// TelegramBot ...
-type TelegramBot struct {
+type Bot struct {
 	Name           string
 	SelfID         int64
 	WhitelistChats []int64
@@ -29,33 +37,55 @@ type TelegramBot struct {
 	Client         *tgbotapi.BotAPI
 	Queue          *bt.Pool
 	Tube           string
+	logger         *logging.Logger
+	redis          *redis.Client
 }
 
-// NewTelegramBot ...
-func NewTelegramBot(cfg *Config) (t *TelegramBot) {
-	bot, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
+func NewBot(cfg *Config) (b *Bot, err error) {
+	bot, err := tgbotapi.NewBotAPI(cfg.Token)
 	if err != nil {
-		logger.Panicf("tg bot init failed: %+v", err)
+		return nil, fmt.Errorf("tg bot init failed: %+v", err)
 	}
-	delay, err := time.ParseDuration(cfg.Telegram.DeleteDelay)
+	delay, err := time.ParseDuration(cfg.DeleteDelay)
 	if err != nil {
-		logger.Panicf("delete delay error: %+v", err)
+		return nil, fmt.Errorf("delete delay error: %+v", err)
 	}
 
-	t = &TelegramBot{
+	b = &Bot{
 		Name:           bot.Self.UserName,
-		SelfID:         cfg.Telegram.SelfID,
-		WhitelistChats: cfg.Telegram.WhitelistChats,
-		ComicPath:      cfg.Telegram.ComicPath,
-		PixivPath:      cfg.Pixiv.ImgPath,
-		TwitterImgPath: cfg.Twitter.ImgPath,
+		SelfID:         cfg.SelfID,
+		WhitelistChats: cfg.WhitelistChats,
+		ComicPath:      cfg.ComicPath,
 		DeleteDelay:    delay,
 		Client:         bot,
-		Tube:           "tg",
 	}
-	t.Queue = &bt.Pool{
+	return
+}
+
+func (b *Bot) WithLogger(logger *logging.Logger) *Bot {
+	b.logger = logger
+	return b
+}
+
+func (b *Bot) WithRedis(rds *redis.Client) *Bot {
+	b.redis = rds
+	return b
+}
+
+func (b *Bot) WithPixivImg(imgPath string) *Bot {
+	b.PixivPath = imgPath
+	return b
+}
+
+func (b *Bot) WithTwitterImg(imgPath string) *Bot {
+	b.TwitterImgPath = imgPath
+	return b
+}
+
+func (b *Bot) WithBeanstalkd(addr string) *Bot {
+	b.Queue = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
-			return bt.Dial(cfg.BeanstalkAddr)
+			return bt.Dial(addr)
 		},
 		MaxIdle:     10,
 		MaxActive:   100,
@@ -63,25 +93,26 @@ func NewTelegramBot(cfg *Config) (t *TelegramBot) {
 		MaxLifetime: 180 * time.Second,
 		Wait:        true,
 	}
-	return
+	b.Tube = "tg"
+	return b
 }
 
-func (t *TelegramBot) putQueue(msg []byte) {
-	conn, err := t.Queue.Get()
+func (b *Bot) putQueue(msg []byte) {
+	conn, err := b.Queue.Get()
 	if err != nil {
-		logger.Errorf("%+v: %s", err, string(msg))
+		b.logger.Errorf("%+v: %s", err, string(msg))
 		return
 	}
-	conn.Use(t.Tube)
-	_, err = conn.Put(msg, 1, t.DeleteDelay, time.Minute)
+	conn.Use(b.Tube)
+	_, err = conn.Put(msg, 1, b.DeleteDelay, time.Minute)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
 }
 
-func (t *TelegramBot) isAuthedChat(c *tgbotapi.Chat) bool {
-	for _, w := range t.WhitelistChats {
+func (b *Bot) isAuthedChat(c *tgbotapi.Chat) bool {
+	for _, w := range b.WhitelistChats {
 		if c.ID == w {
 			return true
 		}
@@ -89,46 +120,46 @@ func (t *TelegramBot) isAuthedChat(c *tgbotapi.Chat) bool {
 	return false
 }
 
-func (t *TelegramBot) send(chat int64, msg string) (tgbotapi.Message, error) {
-	logger.Debugf("[%d]%s", chat, msg)
-	return t.Client.Send(tgbotapi.NewMessage(chat, msg))
+func (b *Bot) send(chat int64, msg string) (tgbotapi.Message, error) {
+	b.logger.Debugf("[%d]%s", chat, msg)
+	return b.Client.Send(tgbotapi.NewMessage(chat, msg))
 }
 
-func (t *TelegramBot) sendPixivIllust(target int64, id uint64) {
+func (b *Bot) sendPixivIllust(target int64, id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "like")),
 		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "diss")),
 	)
-	msg := tgbotapi.NewMessage(target, pixivURL(id))
+	msg := tgbotapi.NewMessage(target, pixiv.URLWithID(id))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
-	_, err := t.Client.Send(msg)
+	_, err := b.Client.Send(msg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
-func (t *TelegramBot) delMessage() {
+func (b *Bot) startDeleteMessage() {
 	for {
-		conn, err := t.Queue.Get()
+		conn, err := b.Queue.Get()
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		conn.Watch(t.Tube)
+		conn.Watch(b.Tube)
 		job, err := conn.Reserve()
 		if err != nil {
-			logger.Warningf("%+v", err)
+			b.logger.Warningf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		msg := &tgbotapi.Message{}
 		err = json.Unmarshal(job.Body, msg)
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				logger.Errorf("%+v", err)
+				b.logger.Errorf("%+v", err)
 			}
 			time.Sleep(3 * time.Second)
 			continue
@@ -137,34 +168,36 @@ func (t *TelegramBot) delMessage() {
 			ChatID:    msg.Chat.ID,
 			MessageID: msg.MessageID,
 		}
-		logger.Infof(":[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
+		b.logger.Infof(":[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
 
-		_, err = t.Client.DeleteMessage(delMsg)
+		_, err = b.Client.DeleteMessage(delMsg)
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				logger.Errorf("%+v", err)
+				b.logger.Errorf("%+v", err)
 			}
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		err = conn.Delete(job.ID)
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 		}
-		t.Queue.Release(conn, false)
+		b.Queue.Release(conn, false)
 	}
 }
 
-func (t *TelegramBot) tgBot() {
+func (b *Bot) Start() {
+	go b.startDeleteMessage()
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	for {
-		updates, err := t.Client.GetUpdatesChan(u)
+		updates, err := b.Client.GetUpdatesChan(u)
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -175,7 +208,7 @@ func (t *TelegramBot) tgBot() {
 			} else if update.EditedMessage != nil {
 				message = update.EditedMessage
 			} else if update.CallbackQuery != nil {
-				logger.Infof(
+				b.logger.Infof(
 					"recv:(%d)[%s]reaction:{%s}",
 					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.From.String(),
@@ -184,13 +217,13 @@ func (t *TelegramBot) tgBot() {
 				data := strings.SplitN(update.CallbackQuery.Data, ":", 2)
 				switch data[0] {
 				case "comic", "pic", "pixiv":
-					go onReaction(t, update.CallbackQuery)
+					go onReaction(b, update.CallbackQuery)
 				case "pixivIllust":
-					if !t.isAuthedChat(update.CallbackQuery.Message.Chat) {
-						logger.Warning("reaction from illegal chat, ignore")
+					if !b.isAuthedChat(update.CallbackQuery.Message.Chat) {
+						b.logger.Warning("reaction from illegal chat, ignore")
 						break
 					}
-					go onReactionSelf(t, update.CallbackQuery)
+					go onReactionSelf(b, update.CallbackQuery)
 				default:
 				}
 				continue
@@ -198,14 +231,14 @@ func (t *TelegramBot) tgBot() {
 				continue
 			}
 			if message.Chat.IsGroup() {
-				logger.Infof(
+				b.logger.Infof(
 					"recv:(%d)[%s:%s]{%s}",
 					message.Chat.ID,
 					message.Chat.Title,
 					message.From.String(),
 					strconv.Quote(message.Text))
 			} else {
-				logger.Infof(
+				b.logger.Infof(
 					"recv:(%d)[%s]{%s}",
 					message.Chat.ID,
 					message.From.String(),
@@ -216,41 +249,41 @@ func (t *TelegramBot) tgBot() {
 			if message.IsCommand() {
 				switch message.Command() {
 				case "start":
-					go onStart(t, message)
+					go onStart(b, message)
 				case "roll":
-					go onRoll(t, message)
+					go onRoll(b, message)
 				case "comic":
-					go onComic(t, message)
+					go onComic(b, message)
 				case "pic":
-					go onPic(t, message)
+					go onPic(b, message)
 				case "pixiv":
-					go onPixiv(t, message)
+					go onPixiv(b, message)
 				default:
-					logger.Infof("ignore unknown cmd: %+v", message.Command())
+					b.logger.Infof("ignore unknown cmd: %+v", message.Command())
 					continue
 				}
 			} else {
 				if message.Text == "" {
 					continue
 				}
-				checkRepeat(t, message)
-				checkPixiv(t, message)
+				checkRepeat(b, message)
+				checkPixiv(b, message)
 			}
 		}
-		logger.Warning("tg bot restarted.")
+		b.logger.Warning("tg bot restarted.")
 		time.Sleep(3 * time.Second)
 	}
 }
 
-func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
+func checkRepeat(b *Bot, message *tgbotapi.Message) {
 	key := "tg_last_" + strconv.FormatInt(message.Chat.ID, 10)
 	flattendMsg := strings.TrimSpace(message.Text)
-	defer redisClient.LTrim(key, 0, 10)
-	defer redisClient.LPush(key, flattendMsg)
+	defer b.redis.LTrim(key, 0, 10)
+	defer b.redis.LPush(key, flattendMsg)
 
-	lastMsgs, err := redisClient.LRange(key, 0, 6).Result()
+	lastMsgs, err := b.redis.LRange(key, 0, 6).Result()
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
 	i := 0
@@ -260,23 +293,23 @@ func checkRepeat(t *TelegramBot, message *tgbotapi.Message) {
 		}
 	}
 	if i > 1 {
-		redisClient.Del(key)
-		logger.Infof("repeat: %s", strconv.Quote(message.Text))
+		b.redis.Del(key)
+		b.logger.Infof("repeat: %s", strconv.Quote(message.Text))
 		msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
-		go t.Client.Send(msg)
+		go b.Client.Send(msg)
 	}
 }
 
-func checkPixiv(t *TelegramBot, message *tgbotapi.Message) {
-	if !t.isAuthedChat(message.Chat) {
+func checkPixiv(b *Bot, message *tgbotapi.Message) {
+	if !b.isAuthedChat(message.Chat) {
 		return
 	}
-	id := parsePixivURL(message.Text)
+	id := pixiv.ParseURL(message.Text)
 	if id == 0 {
 		return
 	}
 	var callbackText string
-	sizes, errs := downloadPixiv(id)
+	sizes, errs := pixiv.Download(id, b.PixivPath)
 	for i := range sizes {
 		if errs[i] != nil {
 			callbackText += fmt.Sprintf("p%d: error😕 ", i)
@@ -286,26 +319,26 @@ func checkPixiv(t *TelegramBot, message *tgbotapi.Message) {
 			callbackText += fmt.Sprintf("p%d: exists😋 ", i)
 			continue
 		}
-		logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
+		b.logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
 		callbackText += fmt.Sprintf("p%d: %s😊 ", i, byteCountBinary(sizes[i]))
 	}
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, callbackText)
 	msg.ReplyToMessageID = message.MessageID
 
-	_, err := t.Client.Send(msg)
+	_, err := b.Client.Send(msg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
-func onStart(t *TelegramBot, message *tgbotapi.Message) {
+func onStart(b *Bot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "呀呀呀")
 	msg.ReplyToMessageID = message.MessageID
-	t.Client.Send(msg)
+	b.Client.Send(msg)
 }
 
-func onRoll(t *TelegramBot, message *tgbotapi.Message) {
+func onRoll(b *Bot, message *tgbotapi.Message) {
 	var err error
 	var limit int
 
@@ -316,9 +349,9 @@ func onRoll(t *TelegramBot, message *tgbotapi.Message) {
 		if err != nil {
 			msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
 			msg.ReplyToMessageID = message.MessageID
-			_, err := t.Client.Send(msg)
+			_, err := b.Client.Send(msg)
 			if err != nil {
-				logger.Errorf("%+v", err)
+				b.logger.Errorf("%+v", err)
 			}
 			return
 		}
@@ -330,20 +363,20 @@ func onRoll(t *TelegramBot, message *tgbotapi.Message) {
 	rand.Seed(time.Now().UnixNano())
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(rand.Intn(limit)))
 	msg.ReplyToMessageID = message.MessageID
-	_, err = t.Client.Send(msg)
+	_, err = b.Client.Send(msg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
-func onComic(t *TelegramBot, message *tgbotapi.Message) {
-	files, err := filepath.Glob(filepath.Join(t.ComicPath, "*.epub"))
+func onComic(b *Bot, message *tgbotapi.Message) {
+	files, err := filepath.Glob(filepath.Join(b.ComicPath, "*.epub"))
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
 	if files == nil {
-		logger.Error("find no comic")
+		b.logger.Error("find no comic")
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
@@ -351,138 +384,138 @@ func onComic(t *TelegramBot, message *tgbotapi.Message) {
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
-	msg.ReplyMarkup = buildInlineKeyboardMarkup("comic", number)
+	msg.ReplyMarkup = b.buildInlineKeyboardMarkup("comic", number)
 
-	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
-	msgSent, err := t.Client.Send(msg)
+	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	msgSent, err := b.Client.Send(msg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
 	data, err := json.Marshal(msgSent)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
-	t.putQueue(data)
+	b.putQueue(data)
 }
 
-func onPic(t *TelegramBot, message *tgbotapi.Message) {
-	files, err := filepath.Glob(filepath.Join(t.TwitterImgPath, "*"))
+func onPic(b *Bot, message *tgbotapi.Message) {
+	files, err := filepath.Glob(filepath.Join(b.TwitterImgPath, "*"))
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
 	if files == nil {
-		logger.Error("find no pic")
+		b.logger.Error("find no pic")
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
 
-	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = buildInlineKeyboardMarkup("pic", filepath.Base(file))
+	msg.ReplyMarkup = b.buildInlineKeyboardMarkup("pic", filepath.Base(file))
 
-	_, err = t.Client.Send(msg)
+	_, err = b.Client.Send(msg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
-func onPixiv(t *TelegramBot, message *tgbotapi.Message) {
+func onPixiv(b *Bot, message *tgbotapi.Message) {
 	args := message.CommandArguments()
 
 	if args != "" {
 		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
-			t.sendPixivIllust(message.Chat.ID, id)
+			b.sendPixivIllust(message.Chat.ID, id)
 			return
 		}
 		msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
 		msg.ReplyToMessageID = message.MessageID
-		msgSent, err := t.Client.Send(msg)
+		msgSent, err := b.Client.Send(msg)
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			return
 		}
 		data, err := json.Marshal(msgSent)
 		if err != nil {
-			logger.Errorf("%+v", err)
+			b.logger.Errorf("%+v", err)
 			return
 		}
-		t.putQueue(data)
+		b.putQueue(data)
 		return
 	}
-	files, err := filepath.Glob(filepath.Join(t.PixivPath, "*"))
+	files, err := filepath.Glob(filepath.Join(b.PixivPath, "*"))
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 		return
 	}
 	if files == nil {
-		logger.Error("find no pic")
+		b.logger.Error("find no pic")
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
-	logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = buildInlineKeyboardMarkup("pixiv", filepath.Base(file))
+	msg.ReplyMarkup = b.buildInlineKeyboardMarkup("pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
 
-	_, err = t.Client.Send(msg)
+	_, err = b.Client.Send(msg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
-func onReaction(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
+func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	var callbackText string
 
-	_type, _id, reaction, err := saveReaction(callbackQuery.Data, callbackQuery.From.ID)
+	_type, _id, reaction, err := b.saveReaction(callbackQuery.Data, callbackQuery.From.ID)
 	if err == nil {
-		diss := redisClient.SCard(buildReactionKey(_type, _id, "diss")).Val()
-		like := redisClient.SCard(buildReactionKey(_type, _id, "like")).Val()
+		diss := b.redis.SCard(buildReactionKey(_type, _id, "diss")).Val()
+		like := b.redis.SCard(buildReactionKey(_type, _id, "like")).Val()
 		if diss-like < 2 {
 			msg := tgbotapi.NewEditMessageReplyMarkup(
 				callbackQuery.Message.Chat.ID,
 				callbackQuery.Message.MessageID,
-				buildInlineKeyboardMarkup(_type, _id),
+				b.buildInlineKeyboardMarkup(_type, _id),
 			)
-			_, err = t.Client.Send(msg)
+			_, err = b.Client.Send(msg)
 		} else {
 			delMsg := tgbotapi.DeleteMessageConfig{
 				ChatID:    callbackQuery.Message.Chat.ID,
 				MessageID: callbackQuery.Message.MessageID,
 			}
-			_, err = t.Client.DeleteMessage(delMsg)
+			_, err = b.Client.DeleteMessage(delMsg)
 			if err == nil {
-				err = probate(_type, _id)
+				err = b.probate(_type, _id)
 			}
 		}
 	}
 
 	if err != nil {
-		logger.Debugf("%+v", err)
+		b.logger.Debugf("%+v", err)
 		callbackText = err.Error()
 	} else {
 		callbackText = reaction + " " + _id + "!"
 	}
 
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err = t.Client.AnswerCallbackQuery(callbackMsg)
+	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
-func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
+func onReactionSelf(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	var callbackText string
 
 	token := strings.Split(callbackQuery.Data, ":")
 	if len(token) != 3 {
-		logger.Errorf("react data error: %s", callbackQuery.Data)
+		b.logger.Errorf("react data error: %s", callbackQuery.Data)
 		return
 	}
 	_id := token[1]
@@ -494,7 +527,7 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "failed parsing pixiv id"
 			break
 		}
-		sizes, errs := downloadPixiv(id)
+		sizes, errs := pixiv.Download(id, b.PixivPath)
 		for i := range sizes {
 			if errs[i] != nil {
 				callbackText += fmt.Sprintf("p%d: error;", i)
@@ -504,7 +537,7 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 				callbackText += fmt.Sprintf("p%d: exists;", i)
 				continue
 			}
-			logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
+			b.logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
 			callbackText += fmt.Sprintf("p%d: %s;", i, byteCountBinary(sizes[i]))
 		}
 
@@ -517,15 +550,15 @@ func onReactionSelf(t *TelegramBot, callbackQuery *tgbotapi.CallbackQuery) {
 		ChatID:    callbackQuery.Message.Chat.ID,
 		MessageID: callbackQuery.Message.MessageID,
 	}
-	_, err := t.Client.DeleteMessage(delMsg)
+	_, err := b.Client.DeleteMessage(delMsg)
 	if err != nil {
-		logger.Errorf("failed deleting msg: %+v", err)
+		b.logger.Errorf("failed deleting msg: %+v", err)
 	}
 
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err = t.Client.AnswerCallbackQuery(callbackMsg)
+	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
-		logger.Errorf("%+v", err)
+		b.logger.Errorf("%+v", err)
 	}
 }
 
@@ -543,10 +576,10 @@ func buildReactionKey(_type, _id, reaction string) string {
 	return "reaction_" + buildReactionData(_type, _id, reaction)
 }
 
-func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup {
+func (b *Bot) buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup {
 
-	likeCount, _ := redisClient.SCard(buildReactionKey(_type, _id, "like")).Result()
-	dissCount, _ := redisClient.SCard(buildReactionKey(_type, _id, "diss")).Result()
+	likeCount, _ := b.redis.SCard(buildReactionKey(_type, _id, "like")).Result()
+	dissCount, _ := b.redis.SCard(buildReactionKey(_type, _id, "diss")).Result()
 
 	likeText := "❤️"
 	if likeCount > 0 {
@@ -564,7 +597,7 @@ func buildInlineKeyboardMarkup(_type, _id string) tgbotapi.InlineKeyboardMarkup 
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
-func saveReaction(key string, user int) (_type, _id, reaction string, err error) {
+func (b *Bot) saveReaction(key string, user int) (_type, _id, reaction string, err error) {
 	token := strings.Split(key, ":")
 	if len(token) != 3 {
 		err = fmt.Errorf("react data error: %s", key)
@@ -574,7 +607,7 @@ func saveReaction(key string, user int) (_type, _id, reaction string, err error)
 	_id = token[1]
 	reaction = token[2]
 
-	pipe := redisClient.Pipeline()
+	pipe := b.redis.Pipeline()
 	switch reaction {
 	case "like":
 		likeCount := pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
@@ -598,4 +631,28 @@ func saveReaction(key string, user int) (_type, _id, reaction string, err error)
 		err = fmt.Errorf("react type error: %s", key)
 	}
 	return
+}
+
+func (b *Bot) probate(_type, _id string) error {
+	b.logger.Noticef("%s: %s", _type, _id)
+	switch _type {
+	case "comic":
+		fileName := "nhentai.net@" + _id + ".epub"
+		return os.Rename(
+			filepath.Join(b.ComicPath, fileName),
+			filepath.Join(b.ComicPath, "probation", fileName),
+		)
+	case "pic":
+		return os.Rename(
+			filepath.Join(b.TwitterImgPath, _id),
+			filepath.Join(b.TwitterImgPath, "probation", _id),
+		)
+	case "pixiv":
+		return os.Rename(
+			filepath.Join(b.PixivPath, _id),
+			filepath.Join(b.PixivPath, "probation", _id),
+		)
+	default:
+		return fmt.Errorf("prohibit unkown type")
+	}
 }

@@ -8,7 +8,6 @@ var (
 	redisClient *redis.Client
 )
 
-// NewRedisClient ...
 func NewRedisClient(cfg *RedisConfig) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,

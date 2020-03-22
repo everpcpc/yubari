@@ -1,4 +1,4 @@
-package main
+package bangumi
 
 var (
 	emojiBangumi = map[string]string{

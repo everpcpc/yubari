@@ -1,4 +1,4 @@
-package main
+package qq
 
 import (
 	"bytes"
@@ -14,38 +14,26 @@ import (
 )
 
 var (
-	qqBot *QQBot
-	reCQ  = regexp.MustCompile(`\[CQ:(image|at|face),(file|qq|id)\=([\w\.]+)\]`)
+	reCQ = regexp.MustCompile(`\[CQ:(image|at|face),(file|qq|id)\=([\w\.]+)\]`)
 )
 
-// QQFace ...
-type QQFace int
-
-// QQAt ...
-type QQAt struct {
-	qq string
-}
-
-// QQImage ...
-type QQImage struct {
-	file string
-}
-
-// QQBot ...
-type QQBot struct {
+type Bot struct {
 	ID     string
-	Config *QQConfig
+	Config *Config
 	Client *bt.Pool
 	RecvQ  string
 	SendQ  string
 }
 
-// NewQQBot ...
-func NewQQBot(cfg *Config) *QQBot {
-	q := &QQBot{ID: cfg.QQ.BotID, Config: cfg.QQ}
-	q.Client = &bt.Pool{
+func NewQQBot(cfg *Config) *Bot {
+	b := &Bot{ID: cfg.BotID, Config: cfg}
+	return b
+}
+
+func (b *Bot) WithBeanstalkd(addr string) *Bot {
+	b.Client = &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
-			return bt.Dial(cfg.BeanstalkAddr)
+			return bt.Dial(addr)
 		},
 		MaxIdle:     10,
 		MaxActive:   100,
@@ -54,27 +42,12 @@ func NewQQBot(cfg *Config) *QQBot {
 		Wait:        true,
 	}
 
-	q.RecvQ = q.ID + "(o)"
-	q.SendQ = q.ID + "(i)"
-	return q
+	b.RecvQ = b.ID + "(o)"
+	b.SendQ = b.ID + "(i)"
+	return b
 }
 
-// String generate code string for qq face
-func (q QQFace) String() string {
-	return fmt.Sprintf("[CQ:face,id=%d]", q)
-}
-
-// String generate code string for qq image
-func (q QQImage) String() string {
-	return fmt.Sprintf("[CQ:image,file=%s]", q.file)
-}
-
-// String generate code string for qq qt msg
-func (q QQAt) String() string {
-	return fmt.Sprintf("[CQ:at,qq=%s]", q.qq)
-}
-
-func (q *QQBot) send(msg []byte) {
+func (b *Bot) send(msg []byte) {
 	// wait longer with more errors
 	var (
 		conn *bt.Conn
@@ -101,8 +74,7 @@ func (q *QQBot) send(msg []byte) {
 	q.Client.Release(conn, false)
 }
 
-// SendGroupMsg ...
-func (q *QQBot) SendGroupMsg(group, msg string) {
+func (b *Bot) SendGroupMsg(group, msg string) {
 	logger.Info(strconv.Quote(msg))
 	fullMsg, err := formMsg("sendGroupMsg", group, msg)
 	if err != nil {
@@ -113,7 +85,7 @@ func (q *QQBot) SendGroupMsg(group, msg string) {
 }
 
 // SendPics ...
-func (q *QQBot) SendPics(fn func(string), url string) {
+func (b *Bot) SendPics(fn func(string), url string) {
 	file, err := downloadFile(url, q.Config.ImgPath)
 	if err != nil {
 		return
@@ -123,7 +95,7 @@ func (q *QQBot) SendPics(fn func(string), url string) {
 }
 
 // SendPrivateMsg ...
-func (q *QQBot) SendPrivateMsg(qq string, msg string) {
+func (b *Bot) SendPrivateMsg(qq string, msg string) {
 	logger.Infof("TO: %s:%s", qq, strconv.Quote(msg))
 	fullMsg, err := formMsg("sendPrivateMsg", qq, msg)
 	if err != nil {
@@ -134,12 +106,12 @@ func (q *QQBot) SendPrivateMsg(qq string, msg string) {
 }
 
 //SendSelfMsg ...
-func (q *QQBot) SendSelfMsg(msg string) {
+func (b *Bot) SendSelfMsg(msg string) {
 	q.SendPrivateMsg(q.Config.SelfID, msg)
 }
 
 // CheckMention ...
-func (q *QQBot) CheckMention(msg string) bool {
+func (b *Bot) CheckMention(msg string) bool {
 	for _, s := range q.Config.SelfNames {
 		if strings.Contains(msg, s) {
 			return true
@@ -149,7 +121,7 @@ func (q *QQBot) CheckMention(msg string) bool {
 }
 
 // NoticeMention ...
-func (q *QQBot) NoticeMention(msg string, group string) {
+func (b *Bot) NoticeMention(msg string, group string) {
 	if !q.CheckMention(msg) {
 		return
 	}
@@ -172,7 +144,7 @@ func (q *QQBot) NoticeMention(msg string, group string) {
 }
 
 // CheckRepeat ...
-func (q *QQBot) CheckRepeat(msg string, group string) {
+func (b *Bot) CheckRepeat(msg string, group string) {
 	key := "qq_last_" + group
 	flattendMsg := strings.TrimSpace(msg)
 	defer redisClient.LTrim(key, 0, 10)
@@ -196,7 +168,7 @@ func (q *QQBot) CheckRepeat(msg string, group string) {
 }
 
 // CheckAt ...
-func (q *QQBot) CheckAt(msg string) bool {
+func (b *Bot) CheckAt(msg string) bool {
 	ss := reCQ.FindAllStringSubmatch(msg, -1)
 	for _, s := range ss {
 		if s[1] == "at" {
@@ -209,7 +181,7 @@ func (q *QQBot) CheckAt(msg string) bool {
 }
 
 // Poll reserve msg from beanstalkd
-func (q *QQBot) Poll(messages chan map[string]string) {
+func (b *Bot) Poll(messages chan map[string]string) {
 	for {
 		conn, err := q.Client.Get()
 		if err != nil {

@@ -1,10 +1,11 @@
-package main
+package qq
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestQQFace(t *testing.T) {

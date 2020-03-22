@@ -1,13 +1,19 @@
-package main
+package bangumi
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetSubjectTitleFromURL(t *testing.T) {
-	assert.Equal(t, "3月のライオン", getSubjectTitleFromURL("https://bgm.tv/ep/648826"))
-	assert.Equal(t, "放課後のプレアデス", getSubjectTitleFromURL("https://bgm.tv/subject/86517"))
+	ret, err := getSubjectTitleFromURL("https://bgm.tv/ep/648826")
+	assert.Nil(t, err)
+	assert.Equal(t, "3月のライオン", ret)
+
+	ret, err = getSubjectTitleFromURL("https://bgm.tv/subject/86517")
+	assert.Nil(t, err)
+	assert.Equal(t, "放課後のプレアデス", ret)
 }
 
 func TestGetBangumiUpdate(t *testing.T) {

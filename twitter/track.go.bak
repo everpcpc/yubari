@@ -1,0 +1,158 @@
+package twitter
+
+import (
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/dghubble/go-twitter/twitter"
+)
+
+func (t *TwitterBot) Self() {
+	for i := 1; ; i++ {
+		demux := twitter.NewSwitchDemux()
+		demux.Event = t.selfEvent
+		userParams := &twitter.StreamUserParams{
+			With: t.ID,
+		}
+		stream, err := t.Client.Streams.User(userParams)
+		if err != nil {
+			logger.Errorf("%+v", err)
+			time.Sleep(time.Duration(i) * time.Second)
+		}
+		demux.HandleChan(stream.Messages)
+	}
+}
+
+func (t *TwitterBot) Track() {
+	follows := []string{}
+	for _, value := range t.Follows {
+		follows = append(follows, value)
+	}
+	for i := 1; ; i++ {
+		demux := twitter.NewSwitchDemux()
+		demux.Tweet = t.trackTweet
+		filterParams := &twitter.StreamFilterParams{
+			Follow: follows,
+		}
+		stream, err := t.Client.Streams.Filter(filterParams)
+		if err != nil {
+			logger.Errorf("%+v", err)
+			time.Sleep(time.Duration(i) * time.Second)
+		}
+		demux.HandleChan(stream.Messages)
+	}
+}
+
+func (t *TwitterBot) selfEvent(event *twitter.Event) {
+	if event.Source.IDStr != t.ID {
+		logger.Debugf("%s: (%s)", event.Event, event.Source.Name)
+		return
+	}
+	switch event.Event {
+	case "favorite":
+		medias := getMedias(event.TargetObject)
+		logger.Infof("favorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
+		go t.selfProceedMedias(medias, 1)
+		go telegramBot.send(telegramBot.SelfID, getFullLink(event.TargetObject))
+	case "unfavorite":
+		medias := getMedias(event.TargetObject)
+		logger.Debugf("unfavorite: (%s):{%s} %d medias", event.TargetObject.User.Name, strconv.Quote(event.TargetObject.Text), len(medias))
+		go t.selfProceedMedias(medias, -1)
+	default:
+		logger.Debugf("%+v", event.Event)
+	}
+}
+
+func (t *TwitterBot) selfProceedMedias(medias []twitter.MediaEntity, action int) {
+	var url string
+	for _, media := range medias {
+		switch media.Type {
+		case "photo":
+			url = media.MediaURLHttps + ":orig"
+
+		case "video":
+			vs := media.VideoInfo.Variants
+			vsLen := len(vs)
+			for i := range vs {
+				if vs[vsLen-i-1].ContentType == "video/mp4" {
+					url = vs[vsLen-i-1].URL
+					break
+				}
+			}
+		case "animated_gif":
+			vs := media.VideoInfo.Variants
+			vsLen := len(vs)
+			for i := range vs {
+				if vs[vsLen-i-1].ContentType == "video/mp4" {
+					url = vs[vsLen-i-1].URL
+					break
+				}
+			}
+
+		default:
+			logger.Noticef("media type ignored: %+v", media.Type)
+			continue
+		}
+
+		switch action {
+		case 1:
+			downloadFile(url, t.ImgPath)
+		case -1:
+			removeFile(url, t.ImgPath)
+		}
+	}
+}
+
+func (t *TwitterBot) trackTweet(tweet *twitter.Tweet) {
+	if tweet.RetweetedStatus != nil {
+		// logger.Debugf("ignore retweet (%s):{%s}", tweet.User.Name, tweet.Text)
+		return
+	}
+	msg := tweet.Text
+	medias := getMedias(tweet)
+	if tweet.Truncated {
+		if tweet.ExtendedTweet != nil {
+			msg = tweet.ExtendedTweet.FullText
+		}
+	}
+	flattenedText := strconv.Quote(msg)
+
+	switch tweet.User.IDStr {
+	case t.Follows["KanColle_STAFF"], t.Follows["imascg_stage"], t.Follows["fgoproject"]:
+		logger.Infof("(%s):{%s} %d medias", tweet.User.Name, flattenedText, len(medias))
+		telegramBot.send(telegramBot.SelfID, getFullLink(tweet))
+
+	case t.Follows["komatan"], t.Follows["RailgunKy"], t.Follows["bison1bison"], t.Follows["kentauloss"], t.Follows["tomo_3"], t.Follows["infinote"], t.Follows["hi_mi_tsu_2"], t.Follows["caidychenkd"], t.Follows["amamitsuki12"], t.Follows["sakimori_st30"]:
+		if len(medias) == 0 {
+			return
+		}
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		telegramBot.send(telegramBot.SelfID, getFullLink(tweet))
+
+	case t.Follows["maesanpicture"]:
+		if len(medias) == 0 {
+			return
+		}
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		if hasHashTags("毎日五月雨", tweet.Entities.Hashtags) {
+			telegramBot.send(telegramBot.SelfID, getFullLink(tweet))
+		}
+
+	case t.Follows["Strangestone"]:
+		if len(medias) == 0 {
+			return
+		}
+		logger.Infof("(%s):{%s}", tweet.User.Name, flattenedText)
+		if strings.HasPrefix(msg, "月曜日のたわわ") {
+			telegramBot.send(telegramBot.SelfID, getFullLink(tweet))
+		}
+
+	default:
+		// logger.Debugf("(%s):{%s}", tweet.User.Name, flattenedText)
+	}
+}
+
+func logAllTrack(msg interface{}) {
+	logger.Debugf("%+v", msg)
+}
