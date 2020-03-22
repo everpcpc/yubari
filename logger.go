@@ -6,7 +6,6 @@ import (
 	"github.com/op/go-logging"
 )
 
-// logflags ...
 const (
 	LOGSYS   = 1 << 0
 	LOGCOLOR = 1 << 1
