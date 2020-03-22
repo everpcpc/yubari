@@ -1,1 +1,3 @@
-# yubari [![build](https://travis-ci.org/everpcpc/yubari.svg)](https://travis-ci.org/everpcpc/yubari)
+# yubari
+
+![test](https://github.com/everpcpc/yubari/workflows/test/badge.svg)
