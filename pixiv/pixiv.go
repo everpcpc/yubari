@@ -75,10 +75,10 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 		ttl = 10
 	}
 	papp := pixiv.NewApp()
-	ticker := time.Tick(time.Duration(ttl) * time.Second)
+	ticker := time.NewTicker(time.Duration(ttl) * time.Second)
 	maxIDKey := "pixiv:" + b.config.Username + ":follow"
 	for {
-		<-ticker
+		<-ticker.C
 		maxID, err := b.redis.Get(maxIDKey).Uint64()
 		if err != nil && err != redis.Nil {
 			b.logger.Error(err)
@@ -99,7 +99,6 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 			}
 			b.logger.Infof("post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, URLWithID(illusts[i].ID))
 			output <- illusts[i].ID
-			// go telegramBot.sendPixivIllust(telegramBot.SelfID, illusts[i].ID)
 		}
 		if err := b.redis.Set(maxIDKey, illusts[0].ID, 0).Err(); err != nil {
 			b.logger.Error(err)
