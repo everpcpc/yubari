@@ -46,20 +46,19 @@ func main() {
 		logger.Panicf("TelegramBot error: %+v", err)
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithBeanstalkd(cfg.BeanstalkAddr).WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
-	logger.Debugf("TelegramBot: %+v", telegramBot)
 
 	twitterBot := twitter.NewBot(cfg.Twitter)
 	bangumiBot := bangumi.NewBot(cfg.BgmID).WithLogger(logger).WithRedis(redisClient)
 	pixivBot := pixiv.NewBot(cfg.Pixiv).WithLogger(logger).WithRedis(redisClient)
 
-	logger.Debug("Bot: telegram")
+	logger.Debugf("Bot: telegram: %+v", telegramBot)
 	go telegramBot.Start()
 
-	logger.Debug("Bot: bangumi")
+	logger.Debugf("Bot: bangumi: %+v", bangumiBot)
 	bgmUpdate := make(chan string)
 	go bangumiBot.StartTrack(10, bgmUpdate)
 
-	logger.Debug("Bot: pixiv")
+	logger.Debugf("Bot: pixiv: %+v", pixivBot)
 	pixivUpdate := make(chan uint64)
 	go pixivBot.StartFollow(20, pixivUpdate)
 
