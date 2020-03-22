@@ -2,14 +2,29 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	"github.com/getsentry/raven-go"
+	"github.com/go-redis/redis"
+	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 
 	"github.com/everpcpc/yubari/bangumi"
 	"github.com/everpcpc/yubari/pixiv"
 	"github.com/everpcpc/yubari/telegram"
 	"github.com/everpcpc/yubari/twitter"
 )
+
+func NewRedisClient(cfg *RedisConfig) (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	})
+
+	_, err := client.Ping().Result()
+	// Output: PONG <nil>
+	return client, err
+}
 
 func main() {
 	flagCfgFile := flag.String("config", "conf/config.json", "Config file")
@@ -41,11 +56,22 @@ func main() {
 	defer redisClient.Close()
 	logger.Debugf("Redis connected: %+v", redisClient)
 
+	queue := &bt.Pool{
+		Dial: func() (*bt.Conn, error) {
+			return bt.Dial(cfg.BeanstalkAddr)
+		},
+		MaxIdle:     10,
+		MaxActive:   100,
+		IdleTimeout: 60 * time.Second,
+		MaxLifetime: 180 * time.Second,
+		Wait:        true,
+	}
+
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
 		logger.Panicf("TelegramBot error: %+v", err)
 	}
-	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithBeanstalkd(cfg.BeanstalkAddr).WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
+	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
 
 	twitterBot := twitter.NewBot(cfg.Twitter)
 	bangumiBot := bangumi.NewBot(cfg.BgmID).WithLogger(logger).WithRedis(redisClient)

@@ -82,17 +82,8 @@ func (b *Bot) WithTwitterImg(imgPath string) *Bot {
 	return b
 }
 
-func (b *Bot) WithBeanstalkd(addr string) *Bot {
-	b.Queue = &bt.Pool{
-		Dial: func() (*bt.Conn, error) {
-			return bt.Dial(addr)
-		},
-		MaxIdle:     10,
-		MaxActive:   100,
-		IdleTimeout: 60 * time.Second,
-		MaxLifetime: 180 * time.Second,
-		Wait:        true,
-	}
+func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
+	b.Queue = queue
 	b.Tube = "tg"
 	return b
 }
