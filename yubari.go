@@ -88,11 +88,14 @@ func main() {
 	pixivUpdate := make(chan uint64)
 	go pixivBot.StartFollow(20, pixivUpdate)
 
-	select {
-	case pID := <-pixivUpdate:
-		go telegramBot.SendPixivIllust(telegramBot.SelfID, pID)
-	case text := <-bgmUpdate:
-		go telegramBot.Send(telegramBot.SelfID, text)
-		go twitterBot.Client.Statuses.Update(text, nil)
+	for {
+		select {
+		case pID := <-pixivUpdate:
+			go telegramBot.SendPixivIllust(telegramBot.SelfID, pID)
+		case text := <-bgmUpdate:
+			go telegramBot.Send(telegramBot.SelfID, text)
+			go twitterBot.Client.Statuses.Update(text, nil)
+		}
 	}
+
 }
