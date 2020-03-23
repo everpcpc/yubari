@@ -147,11 +147,3 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 		b.logger.Errorf("%+v", err)
 	}
 }
-
-func onSearch(b *Bot, message *tgbotapi.Message) {
-	args := message.CommandArguments()
-	msg := tgbotapi.NewMessage(message.Chat.ID, "呀呀呀"+args)
-
-	msg.ReplyToMessageID = message.MessageID
-	b.Client.Send(msg)
-}
