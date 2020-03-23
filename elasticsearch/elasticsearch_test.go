@@ -15,14 +15,14 @@ func TestStoreAndSearch(t *testing.T) {
 
 	idx := fmt.Sprintf("test-%d", time.Now().UnixNano())
 
-	ret, err := checkIndexExist(es, idx)
+	ret, err := CheckIndexExist(es, idx)
 	require.Nil(t, err)
 	require.False(t, ret)
 
-	err = createIndex(es, idx)
+	err = CreateIndex(es, idx)
 	require.Nil(t, err)
 
-	ret, err = checkIndexExist(es, idx)
+	ret, err = CheckIndexExist(es, idx)
 	require.Nil(t, err)
 	require.True(t, ret)
 
@@ -31,10 +31,10 @@ func TestStoreAndSearch(t *testing.T) {
 		Date:      time.Now().Unix(),
 		MessageID: 123456789,
 	}
-	err = storeMessage(es, idx, &message)
+	err = StoreMessage(es, idx, &message)
 	require.Nil(t, err)
 
-	res, err := searchMessage(es, idx, "主机", 0)
+	res, err := SearchMessage(es, idx, "主机", 0)
 	require.Nil(t, err)
 
 	require.Equal(t, "看需求……\nns有<b>主机</b>和掌机模式", res.Hits.Hits[0].Highlight.Content[0])

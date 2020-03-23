@@ -72,7 +72,7 @@ type SearchHit struct {
 	}
 }
 
-func checkIndexExist(es *elasticsearch7.Client, idx string) (bool, error) {
+func CheckIndexExist(es *elasticsearch7.Client, idx string) (bool, error) {
 	res, err := es.Indices.Exists([]string{idx})
 
 	if err != nil {
@@ -86,7 +86,7 @@ func checkIndexExist(es *elasticsearch7.Client, idx string) (bool, error) {
 	return true, nil
 }
 
-func createIndex(es *elasticsearch7.Client, idx string) error {
+func CreateIndex(es *elasticsearch7.Client, idx string) error {
 	res, err := es.Indices.Create(
 		idx,
 		es.Indices.Create.WithBody(strings.NewReader(mapping)),
@@ -103,7 +103,7 @@ func createIndex(es *elasticsearch7.Client, idx string) error {
 	return nil
 }
 
-func storeMessage(es *elasticsearch7.Client, idx string, message *Article) error {
+func StoreMessage(es *elasticsearch7.Client, idx string, message *Article) error {
 	res, err := es.Index(
 		idx,
 		esutil.NewJSONReader(message),
@@ -121,7 +121,7 @@ func storeMessage(es *elasticsearch7.Client, idx string, message *Article) error
 	return nil
 }
 
-func searchMessage(es *elasticsearch7.Client, idx, q string, from int) (r *SearchResponse, err error) {
+func SearchMessage(es *elasticsearch7.Client, idx, q string, from int) (r *SearchResponse, err error) {
 	res, err := es.Search(
 		es.Search.WithContext(context.TODO()),
 		es.Search.WithIndex(idx),
