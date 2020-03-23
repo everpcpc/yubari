@@ -13,7 +13,7 @@ func TestCreateIndex(t *testing.T) {
 	es, err := elasticsearch7.NewDefaultClient()
 	require.Nil(t, err)
 
-	idx := fmt.Sprintf("test-%d", time.Now().Unix())
+	idx := fmt.Sprintf("test-%d", time.Now().UnixNano())
 
 	ret, err := checkIndexExist(es, idx)
 	require.Nil(t, err)
