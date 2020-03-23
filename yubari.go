@@ -104,5 +104,4 @@ func main() {
 			go twitterBot.Client.Statuses.Update(text, nil)
 		}
 	}
-
 }
