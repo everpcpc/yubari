@@ -106,7 +106,7 @@ func createIndex(es *elasticsearch7.Client, idx string) error {
 func storeMessage(es *elasticsearch7.Client, idx string, message *Article) error {
 	res, err := es.Index(
 		idx,
-		esutil.NewJSONReader(&message),
+		esutil.NewJSONReader(message),
 		es.Index.WithRefresh("true"),
 	)
 	if err != nil {
