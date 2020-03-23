@@ -28,8 +28,8 @@ func TestStoreAndSearch(t *testing.T) {
 
 	message := Article{
 		Content:   "看需求……\nns有主机和掌机模式\nlite是阉割轻量版，只有掌机模式",
-		Date:      int(time.Now().Unix()),
-		MessageID: 123456789,
+		Date:      123456789,
+		MessageID: 987654321,
 	}
 	err = StoreMessage(es, idx, &message)
 	require.Nil(t, err)
