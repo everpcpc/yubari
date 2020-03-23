@@ -107,5 +107,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = &button
 	_, err = b.Client.Send(msg)
-
+	if err != nil {
+		b.logger.Errorf("search reaction reply error: %+v", err)
+	}
 }
