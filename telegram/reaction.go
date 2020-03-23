@@ -22,7 +22,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			msg := tgbotapi.NewEditMessageReplyMarkup(
 				callbackQuery.Message.Chat.ID,
 				callbackQuery.Message.MessageID,
-				buildInlineKeyboardMarkup(b.redis, _type, _id),
+				buildLikeButton(b.redis, _type, _id),
 			)
 			_, err = b.Client.Send(msg)
 		} else {
@@ -111,7 +111,7 @@ func buildReactionKey(_type, _id, reaction string) string {
 	return "reaction_" + buildReactionData(_type, _id, reaction)
 }
 
-func buildInlineKeyboardMarkup(rds *redis.Client, _type, _id string) tgbotapi.InlineKeyboardMarkup {
+func buildLikeButton(rds *redis.Client, _type, _id string) tgbotapi.InlineKeyboardMarkup {
 
 	likeCount, _ := rds.SCard(buildReactionKey(_type, _id, "like")).Result()
 	dissCount, _ := rds.SCard(buildReactionKey(_type, _id, "diss")).Result()

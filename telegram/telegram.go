@@ -221,6 +221,8 @@ func (b *Bot) Start() {
 						break
 					}
 					go onReactionSelf(b, update.CallbackQuery)
+				case "search":
+					go onReactionSearch(b, update.CallbackQuery)
 				default:
 				}
 				continue

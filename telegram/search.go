@@ -2,6 +2,8 @@ package telegram
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/everpcpc/yubari/elasticsearch"
 
@@ -10,6 +12,7 @@ import (
 
 func onSearch(b *Bot, message *tgbotapi.Message) {
 	idx := getIndex(message)
+	q := message.CommandArguments()
 
 	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
 	if err != nil {
@@ -21,7 +24,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 		msg.ReplyToMessageID = message.MessageID
 		b.Client.Send(msg)
 	}
-	res, err := elasticsearch.SearchMessage(b.es, idx, message.CommandArguments(), 0)
+	res, err := elasticsearch.SearchMessage(b.es, idx, q, 0)
 	if err != nil {
 		b.logger.Errorf("es search error: %+v", err)
 		return
@@ -31,7 +34,17 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = buildSearchResponseButton(res, 0)
 
-	b.Client.Send(msg)
+	msgSent, err := b.Client.Send(msg)
+	if err != nil {
+		b.logger.Errorf("%+v", err)
+	}
+	if b.redis.Set(getQueryCacheKey(&msgSent), q, 0).Err() != nil {
+		b.logger.Errorf("cache query failed: %+v", err)
+	}
+}
+
+func getQueryCacheKey(msg *tgbotapi.Message) string {
+	return fmt.Sprintf("search_query_%d", msg.MessageID)
 }
 
 func getIndex(message *tgbotapi.Message) string {
@@ -61,4 +74,38 @@ func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int) tgbo
 		tgbotapi.NewInlineKeyboardButtonData("下一页 ➡️", fmt.Sprintf("search:%d", min(uint64(from+5), uint64(total)))),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
+}
+
+func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
+	token := strings.Split(callbackQuery.Data, ":")
+	if len(token) != 2 {
+		b.logger.Errorf("react data error: %s", callbackQuery.Data)
+		return
+	}
+	from, err := strconv.ParseInt(token[1], 10, 0)
+	if err != nil {
+		b.logger.Errorf("react search from error: %s", callbackQuery.Data)
+	}
+	q := b.redis.Get(getQueryCacheKey(callbackQuery.Message)).String()
+	if q == "" {
+		b.logger.Warningf("query not found for reaction: %s", callbackQuery.Data)
+	}
+
+	idx := getIndex(callbackQuery.Message)
+
+	res, err := elasticsearch.SearchMessage(b.es, idx, q, int(from))
+	if err != nil {
+		b.logger.Errorf("es search error: %+v", err)
+		return
+	}
+	msg := tgbotapi.NewEditMessageText(
+		callbackQuery.Message.Chat.ID,
+		callbackQuery.Message.MessageID,
+		buildSearchResponse(res, int(from)),
+	)
+	button := buildSearchResponseButton(res, int(from))
+	msg.ParseMode = tgbotapi.ModeHTML
+	msg.ReplyMarkup = &button
+	_, err = b.Client.Send(msg)
+
 }
