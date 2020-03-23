@@ -1,7 +1,6 @@
 package elasticsearch
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -105,13 +104,9 @@ func createIndex(es *elasticsearch7.Client, idx string) error {
 }
 
 func storeMessage(es *elasticsearch7.Client, idx string, message *Article) error {
-	ret, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
 	res, err := es.Index(
 		idx,
-		bytes.NewReader(ret),
+		esutil.NewJSONReader(&message),
 		es.Index.WithRefresh("true"),
 	)
 	if err != nil {
