@@ -8,6 +8,7 @@ import (
 
 	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"github.com/elastic/go-elasticsearch/v7/esutil"
 )
 
 var (
@@ -28,12 +29,48 @@ var (
 			}
 		}
 	}`
+	query = map[string]interface{}{
+		"highlight": map[string]interface{}{
+			"pre_tags":  []string{"<b>"},
+			"post_tags": []string{"</b>"},
+			"fields": map[string]interface{}{
+				"content": map[string]interface{}{
+					"fragment_size":       15,
+					"number_of_fragments": 3,
+					"fragmenter":          "span",
+				},
+			},
+		},
+	}
 )
 
-type esMessage struct {
+type Article struct {
 	Content   string `json:"content"`
-	MessageID int    `json:"message_id"`
-	Date      int    `json:"date"`
+	MessageID int64  `json:"message_id"`
+	Date      int64  `json:"date"`
+}
+
+type SearchResponse struct {
+	Took int64
+	Hits struct {
+		Total struct {
+			Value int64
+		}
+		Hits []*SearchHit
+	}
+}
+
+type SearchHit struct {
+	Score   float64 `json:"_score"`
+	Index   string  `json:"_index"`
+	Type    string  `json:"_type"`
+	Version int64   `json:"_version,omitempty"`
+
+	Source Article `json:"_source"`
+
+	Highlight struct {
+		Content []string
+	}
 }
 
 func checkIndexExist(es *elasticsearch7.Client, idx string) (bool, error) {
@@ -67,7 +104,7 @@ func createIndex(es *elasticsearch7.Client, idx string) error {
 	return nil
 }
 
-func storeMessage(es *elasticsearch7.Client, idx string, message *esMessage) error {
+func storeMessage(es *elasticsearch7.Client, idx string, message *Article) error {
 	ret, err := json.Marshal(message)
 	if err != nil {
 		return err
@@ -87,4 +124,33 @@ func storeMessage(es *elasticsearch7.Client, idx string, message *esMessage) err
 		return fmt.Errorf("store message %s error: %+v", idx, res)
 	}
 	return nil
+}
+
+func searchMessage(es *elasticsearch7.Client, idx, q string, from int) (r *SearchResponse, err error) {
+	res, err := es.Search(
+		es.Search.WithContext(context.TODO()),
+		es.Search.WithIndex(idx),
+		es.Search.WithDf("content"),
+		es.Search.WithBody(esutil.NewJSONReader(&query)),
+		es.Search.WithTrackTotalHits(true),
+		es.Search.WithQuery(q),
+		es.Search.WithSize(5),
+		es.Search.WithFrom(from),
+		es.Search.WithPretty(),
+	)
+	if err != nil {
+		err = fmt.Errorf("Getting response error: %s", err)
+		return
+	}
+	defer res.Body.Close()
+	if res.IsError() {
+		err = fmt.Errorf("Search error: %s", err)
+		return
+	}
+
+	if err = json.NewDecoder(res.Body).Decode(&r); err != nil {
+		err = fmt.Errorf("Decoding response error: %+v", err)
+	}
+
+	return
 }
