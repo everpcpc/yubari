@@ -23,7 +23,7 @@ var (
 					"type": "long"
 				},
 				"date": {
-					"type": "date"
+					"type": "long"
 				}
 			}
 		}
