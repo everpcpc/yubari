@@ -82,10 +82,12 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		b.logger.Errorf("react data error: %s", callbackQuery.Data)
 		return
 	}
+
 	from, err := strconv.ParseInt(token[1], 10, 0)
 	if err != nil {
 		b.logger.Errorf("react search from error: %s", callbackQuery.Data)
 	}
+
 	q := b.redis.Get(getQueryCacheKey(callbackQuery.Message)).String()
 	if q == "" {
 		b.logger.Warningf("query not found for reaction: %s", callbackQuery.Data)
@@ -98,6 +100,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		b.logger.Errorf("es search error: %+v", err)
 		return
 	}
+
 	msg := tgbotapi.NewEditMessageText(
 		callbackQuery.Message.Chat.ID,
 		callbackQuery.Message.MessageID,
@@ -106,6 +109,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	button := buildSearchResponseButton(res, int(from))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = &button
+
 	_, err = b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("search reaction reply error: %+v", err)
