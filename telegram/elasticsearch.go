@@ -30,7 +30,7 @@ var (
 	}`
 )
 
-type esLog struct {
+type esMessage struct {
 	Content   string `json:"content"`
 	MessageID int    `json:"message_id"`
 	Date      int    `json:"date"`
@@ -67,7 +67,7 @@ func createIndex(es *elasticsearch7.Client, idx string) error {
 	return nil
 }
 
-func storeMessage(es *elasticsearch7.Client, idx string, message *esLog) error {
+func storeMessage(es *elasticsearch7.Client, idx string, message *esMessage) error {
 	ret, err := json.Marshal(message)
 	if err != nil {
 		return err
