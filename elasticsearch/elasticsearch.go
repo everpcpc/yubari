@@ -1,13 +1,13 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
-	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/elastic/go-elasticsearch/v7/esutil"
 )
 
@@ -109,17 +109,17 @@ func storeMessage(es *elasticsearch7.Client, idx string, message *Article) error
 	if err != nil {
 		return err
 	}
-
-	req := esapi.IndexRequest{
-		Index:   idx,
-		Body:    strings.NewReader(string(ret)),
-		Refresh: "true",
-	}
-	res, err := req.Do(context.TODO(), es)
+	res, err := es.Index(
+		idx,
+		bytes.NewReader(ret),
+		es.Index.WithRefresh("true"),
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("store to es error: %+v", err)
 	}
+
 	defer res.Body.Close()
+
 	if res.IsError() {
 		return fmt.Errorf("store message %s error: %+v", idx, res)
 	}
