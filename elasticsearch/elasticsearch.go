@@ -45,8 +45,8 @@ var (
 
 type Article struct {
 	Content   string `json:"content"`
-	MessageID int64  `json:"message_id"`
-	Date      int64  `json:"date"`
+	MessageID int    `json:"message_id"`
+	Date      int    `json:"date"`
 }
 
 type SearchResponse struct {

@@ -229,6 +229,7 @@ func (b *Bot) Start() {
 			} else {
 				continue
 			}
+
 			if message.Chat.IsGroup() {
 				b.logger.Infof(
 					"recv:(%d)[%s:%s]{%s}",
@@ -267,8 +268,9 @@ func (b *Bot) Start() {
 				if message.Text == "" {
 					continue
 				}
-				checkRepeat(b, message)
-				checkPixiv(b, message)
+				go checkRepeat(b, message)
+				go checkPixiv(b, message)
+				go checkSave(b, message)
 			}
 		}
 		b.logger.Warning("tg bot restarted.")
