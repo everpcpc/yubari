@@ -129,4 +129,10 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	if err != nil {
 		b.logger.Errorf("search reaction reply error: %+v", err)
 	}
+
+	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, "OK")
+	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
+	if err != nil {
+		b.logger.Errorf("%+v", err)
+	}
 }
