@@ -28,3 +28,11 @@ func min(a, b int64) int64 {
 	}
 	return b
 }
+
+// t: time in ms
+func prettyDuration(t int64) string {
+	if t/1000 > 0 {
+		return fmt.Sprintf("%.2fs", float64(t)/1000)
+	}
+	return fmt.Sprintf("%dms", t)
+}

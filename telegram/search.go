@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/everpcpc/yubari/elasticsearch"
 
@@ -57,7 +58,7 @@ func getIndex(message *tgbotapi.Message) string {
 
 func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 	total := res.Hits.Total.Value
-	respond := fmt.Sprintf("(%d) results: \n", total)
+	respond := fmt.Sprintf("<b>%d</b> results: \n", total)
 	for i, hit := range res.Hits.Hits {
 		var content string
 		if len(hit.Highlight.Content) == 0 {
@@ -67,9 +68,9 @@ func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 		}
 		// TODO:(everpcpc) send link to target message
 		// respond += fmt.Sprintf("%d. <a href=\"%d\">%s</a>\n", from+i+1, hit.Source.MessageID, content)
-		respond += fmt.Sprintf("%d. %s\n", from+i+1, content)
+		respond += fmt.Sprintf("%d. %s(%s)\n", from+i+1, content, time.Unix(int64(hit.Source.Date), 0))
 	}
-	respond += fmt.Sprintf("duration %.3fs", float64(res.Took)/1000)
+	respond += fmt.Sprintf("duration %s", prettyDuration(res.Took))
 	return respond
 }
 
