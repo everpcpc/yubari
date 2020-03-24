@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"golang.org/x/net/html"
 
 	"github.com/everpcpc/yubari/elasticsearch"
 	"github.com/everpcpc/yubari/pixiv"
@@ -92,7 +93,7 @@ func checkSave(b *Bot, message *tgbotapi.Message) {
 	}
 
 	article := elasticsearch.Article{
-		Content:   message.Text,
+		Content:   html.EscapeString(message.Text),
 		MessageID: message.MessageID,
 		Date:      message.Date,
 	}
