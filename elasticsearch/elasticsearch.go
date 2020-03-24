@@ -131,7 +131,6 @@ func SearchMessage(es *elasticsearch7.Client, idx, q string, from int) (r *Searc
 		es.Search.WithQuery(q),
 		es.Search.WithSize(5),
 		es.Search.WithFrom(from),
-		es.Search.WithPretty(),
 	)
 	if err != nil {
 		err = fmt.Errorf("Getting response error: %s", err)
