@@ -27,9 +27,9 @@ func TestStoreAndSearch(t *testing.T) {
 	require.True(t, ret)
 
 	message := Article{
-		Content:   "看需求……\nns有主机和掌机模式\nlite是阉割轻量版，只有掌机模式",
-		Date:      123456789,
-		MessageID: 987654321,
+		ID:      987654321,
+		Date:    123456789,
+		Content: "看需求……\nns有主机和掌机模式\nlite是阉割轻量版，只有掌机模式",
 	}
 	err = StoreMessage(es, idx, &message)
 	require.Nil(t, err)

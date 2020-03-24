@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
@@ -19,7 +20,7 @@ var (
 					"analyzer": "ik_max_word",
 					"search_analyzer": "ik_smart"
 				},
-				"message_id": {
+				"id": {
 					"type": "long"
 				},
 				"date": {
@@ -44,9 +45,9 @@ var (
 )
 
 type Article struct {
-	Content   string `json:"content"`
-	MessageID int    `json:"message_id"`
-	Date      int    `json:"date"`
+	ID      int    `json:"id"`
+	Date    int    `json:"date"`
+	Content string `json:"content"`
 }
 
 type SearchResponse struct {
@@ -107,6 +108,7 @@ func StoreMessage(es *elasticsearch7.Client, idx string, message *Article) error
 	res, err := es.Index(
 		idx,
 		esutil.NewJSONReader(message),
+		es.Index.WithDocumentID(strconv.FormatInt(int64(message.ID), 10)),
 		es.Index.WithRefresh("true"),
 	)
 	if err != nil {
