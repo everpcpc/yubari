@@ -45,17 +45,13 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 	}
 }
 
-func getQueryCacheKey(msg *tgbotapi.Message) string {
-	return fmt.Sprintf("search_query_%d", msg.MessageID)
-}
-
 func getIndex(message *tgbotapi.Message) string {
 	return fmt.Sprintf("%s-%d", message.Chat.Type, message.Chat.ID)
 }
 
 func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 	total := res.Hits.Total.Value
-	respond := fmt.Sprintf("%d results：\n", total)
+	respond := fmt.Sprintf("(%d) results: \n", total)
 	for i, hit := range res.Hits.Hits {
 		var content string
 		if len(hit.Highlight.Content) == 0 {
@@ -71,11 +67,14 @@ func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 
 func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q string) tgbotapi.InlineKeyboardMarkup {
 	total := res.Hits.Total.Value
+	if total == 0 {
+		total = 1
+	}
 	encodedQ := base64.StdEncoding.EncodeToString([]byte(q))
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⬅️", fmt.Sprintf("search:%d:%s", max(int64(from-5), 0), encodedQ)),
 		tgbotapi.NewInlineKeyboardButtonData("❎", fmt.Sprintf("search:%d:%s", -1, encodedQ)),
-		tgbotapi.NewInlineKeyboardButtonData("➡️", fmt.Sprintf("search:%d:%s", min(int64(from+5), int64(total)), encodedQ)),
+		tgbotapi.NewInlineKeyboardButtonData("➡️", fmt.Sprintf("search:%d:%s", min(int64(from+5), int64(total-1)), encodedQ)),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
