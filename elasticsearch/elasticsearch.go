@@ -138,7 +138,7 @@ func SearchMessage(es *elasticsearch7.Client, idx, q string, from, limit int) (r
 	}
 	defer res.Body.Close()
 	if res.IsError() {
-		err = fmt.Errorf("Search error: %s", err)
+		err = fmt.Errorf("Search error: %+v", err)
 		return
 	}
 
