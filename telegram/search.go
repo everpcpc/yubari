@@ -18,6 +18,12 @@ var (
 func onSearch(b *Bot, message *tgbotapi.Message) {
 	idx := getIndex(message)
 	q := message.CommandArguments()
+	q = strings.TrimSpace(q)
+	if q == "" {
+		msg := tgbotapi.NewMessage(message.Chat.ID, "直接发送你要搜索的内容即可。搜索支持 Lucene 语法")
+		msg.ReplyToMessageID = message.MessageID
+		b.Client.Send(msg)
+	}
 
 	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
 	if err != nil {
@@ -84,14 +90,30 @@ func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q st
 func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	token := strings.Split(callbackQuery.Data, ":")
 	if len(token) != 3 {
-		b.logger.Errorf("react data error: %s", callbackQuery.Data)
+		b.logger.Errorf("illegal react data: %s", callbackQuery.Data)
 		return
 	}
 
 	from, err := strconv.ParseInt(token[1], 10, 0)
 	if err != nil {
-		b.logger.Errorf("react search from error: %s", callbackQuery.Data)
+		b.logger.Errorf("illegal react search from: %s", callbackQuery.Data)
+		return
 	}
+	q, err := base64.StdEncoding.DecodeString(token[2])
+	if err != nil {
+		b.logger.Errorf("illegal react search q: %s", callbackQuery.Data)
+		return
+	}
+
+	var reply string
+	defer func() {
+		callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, reply)
+		_, err = b.Client.AnswerCallbackQuery(callbackMsg)
+		if err != nil {
+			b.logger.Errorf("answer callback error: %+v", err)
+		}
+	}()
+
 	if from < 0 {
 		delMsg := tgbotapi.DeleteMessageConfig{
 			ChatID:    callbackQuery.Message.Chat.ID,
@@ -99,14 +121,10 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		}
 		_, err = b.Client.DeleteMessage(delMsg)
 		if err != nil {
-			b.logger.Errorf("delete search error: %s", callbackQuery.Data)
+			reply = fmt.Sprintf("delete error: %+v", err)
+		} else {
+			reply = "delete OK"
 		}
-		return
-	}
-
-	q, err := base64.StdEncoding.DecodeString(token[2])
-	if err != nil {
-		b.logger.Errorf("react search q error: %s", callbackQuery.Data)
 		return
 	}
 
@@ -114,7 +132,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	res, err := elasticsearch.SearchMessage(b.es, idx, string(q), int(from), page)
 	if err != nil {
-		b.logger.Errorf("es search error: %+v", err)
+		reply = fmt.Sprintf("search error: %+v", err)
 		return
 	}
 
@@ -129,12 +147,8 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("search reaction reply error: %+v", err)
-	}
-
-	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, "OK")
-	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
-	if err != nil {
-		b.logger.Errorf("%+v", err)
+		reply = fmt.Sprintf("update result error: %+v", err)
+	} else {
+		reply = "OK"
 	}
 }
