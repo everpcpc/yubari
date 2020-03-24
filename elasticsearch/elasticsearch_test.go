@@ -34,7 +34,7 @@ func TestStoreAndSearch(t *testing.T) {
 	err = StoreMessage(es, idx, &message)
 	require.Nil(t, err)
 
-	res, err := SearchMessage(es, idx, "主机", 0)
+	res, err := SearchMessage(es, idx, "主机", 0, 5)
 	require.Nil(t, err)
 
 	require.Equal(t, "看需求……\nns有<b>主机</b>和掌机模式", res.Hits.Hits[0].Highlight.Content[0])

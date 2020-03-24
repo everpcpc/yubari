@@ -10,6 +10,10 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+var (
+	page = 5
+)
+
 func onSearch(b *Bot, message *tgbotapi.Message) {
 	idx := getIndex(message)
 	q := message.CommandArguments()
@@ -24,7 +28,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 		msg.ReplyToMessageID = message.MessageID
 		b.Client.Send(msg)
 	}
-	res, err := elasticsearch.SearchMessage(b.es, idx, q, 0)
+	res, err := elasticsearch.SearchMessage(b.es, idx, q, 0, page)
 	if err != nil {
 		b.logger.Errorf("es search error: %+v", err)
 		return
@@ -95,7 +99,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	idx := getIndex(callbackQuery.Message)
 
-	res, err := elasticsearch.SearchMessage(b.es, idx, q, int(from))
+	res, err := elasticsearch.SearchMessage(b.es, idx, q, int(from), page)
 	if err != nil {
 		b.logger.Errorf("es search error: %+v", err)
 		return

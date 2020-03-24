@@ -121,7 +121,7 @@ func StoreMessage(es *elasticsearch7.Client, idx string, message *Article) error
 	return nil
 }
 
-func SearchMessage(es *elasticsearch7.Client, idx, q string, from int) (r *SearchResponse, err error) {
+func SearchMessage(es *elasticsearch7.Client, idx, q string, from, limit int) (r *SearchResponse, err error) {
 	res, err := es.Search(
 		es.Search.WithContext(context.TODO()),
 		es.Search.WithIndex(idx),
@@ -129,7 +129,7 @@ func SearchMessage(es *elasticsearch7.Client, idx, q string, from int) (r *Searc
 		es.Search.WithBody(esutil.NewJSONReader(&query)),
 		es.Search.WithTrackTotalHits(true),
 		es.Search.WithQuery(q),
-		es.Search.WithSize(5),
+		es.Search.WithSize(limit),
 		es.Search.WithFrom(from),
 	)
 	if err != nil {
