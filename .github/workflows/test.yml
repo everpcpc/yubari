@@ -30,7 +30,7 @@ jobs:
         sudo sysctl -w vm.max_map_count=262144
 
     - name: Setup Elasticsearch with Plugins
-      uses: everpcpc/elasticsearch-action@v1
+      uses: everpcpc/elasticsearch-action@v2
       with:
         version: 7.6.1
         plugins: |
