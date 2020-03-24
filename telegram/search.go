@@ -74,6 +74,7 @@ func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q st
 	encodedQ := base64.StdEncoding.EncodeToString([]byte(q))
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⬅️", fmt.Sprintf("search:%d:%s", max(int64(from-5), 0), encodedQ)),
+		tgbotapi.NewInlineKeyboardButtonData("❎", fmt.Sprintf("search:%d:%s", -1, encodedQ)),
 		tgbotapi.NewInlineKeyboardButtonData("➡️", fmt.Sprintf("search:%d:%s", min(int64(from+5), int64(total)), encodedQ)),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
@@ -90,6 +91,18 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	if err != nil {
 		b.logger.Errorf("react search from error: %s", callbackQuery.Data)
 	}
+	if from < 0 {
+		delMsg := tgbotapi.DeleteMessageConfig{
+			ChatID:    callbackQuery.Message.Chat.ID,
+			MessageID: callbackQuery.Message.MessageID,
+		}
+		_, err = b.Client.DeleteMessage(delMsg)
+		if err != nil {
+			b.logger.Errorf("delete search error: %s", callbackQuery.Data)
+		}
+		return
+	}
+
 	q, err := base64.StdEncoding.DecodeString(token[2])
 	if err != nil {
 		b.logger.Errorf("react search q error: %s", callbackQuery.Data)
