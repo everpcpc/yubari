@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -36,14 +37,11 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, buildSearchResponse(res, 0))
 	msg.ParseMode = tgbotapi.ModeHTML
-	msg.ReplyMarkup = buildSearchResponseButton(res, 0)
+	msg.ReplyMarkup = buildSearchResponseButton(res, 0, q)
 
-	msgSent, err := b.Client.Send(msg)
+	_, err = b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
-	}
-	if b.redis.Set(getQueryCacheKey(&msgSent), q, 0).Err() != nil {
-		b.logger.Errorf("cache query failed: %+v", err)
 	}
 }
 
@@ -57,7 +55,7 @@ func getIndex(message *tgbotapi.Message) string {
 
 func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 	total := res.Hits.Total.Value
-	respond := fmt.Sprintf("搜素到 %d 个结果：\n", total)
+	respond := fmt.Sprintf("%d results：\n", total)
 	for i, hit := range res.Hits.Hits {
 		var content string
 		if len(hit.Highlight.Content) == 0 {
@@ -67,22 +65,23 @@ func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 		}
 		respond += fmt.Sprintf("%d. <a href=\"%d\">%s</a>\n", from+i+1, hit.Source.MessageID, content)
 	}
-	respond += fmt.Sprintf("耗时 %.3f 秒。", float64(res.Took)/1000)
+	respond += fmt.Sprintf("duration %.3fs", float64(res.Took)/1000)
 	return respond
 }
 
-func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int) tgbotapi.InlineKeyboardMarkup {
+func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q string) tgbotapi.InlineKeyboardMarkup {
 	total := res.Hits.Total.Value
+	encodedQ := base64.StdEncoding.EncodeToString([]byte(q))
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("⬅️ 上一页", fmt.Sprintf("search:%d", max(uint64(from-5), 0))),
-		tgbotapi.NewInlineKeyboardButtonData("下一页 ➡️", fmt.Sprintf("search:%d", min(uint64(from+5), uint64(total)))),
+		tgbotapi.NewInlineKeyboardButtonData("⬅️", fmt.Sprintf("search:%d:%s", max(int64(from-5), 0), encodedQ)),
+		tgbotapi.NewInlineKeyboardButtonData("➡️", fmt.Sprintf("search:%d:%s", min(int64(from+5), int64(total)), encodedQ)),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
 func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	token := strings.Split(callbackQuery.Data, ":")
-	if len(token) != 2 {
+	if len(token) != 3 {
 		b.logger.Errorf("react data error: %s", callbackQuery.Data)
 		return
 	}
@@ -91,15 +90,15 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	if err != nil {
 		b.logger.Errorf("react search from error: %s", callbackQuery.Data)
 	}
-
-	q := b.redis.Get(getQueryCacheKey(callbackQuery.Message)).String()
-	if q == "" {
-		b.logger.Warningf("query not found for reaction: %s", callbackQuery.Data)
+	q, err := base64.StdEncoding.DecodeString(token[2])
+	if err != nil {
+		b.logger.Errorf("react search q error: %s", callbackQuery.Data)
+		return
 	}
 
 	idx := getIndex(callbackQuery.Message)
 
-	res, err := elasticsearch.SearchMessage(b.es, idx, q, int(from), page)
+	res, err := elasticsearch.SearchMessage(b.es, idx, string(q), int(from), page)
 	if err != nil {
 		b.logger.Errorf("es search error: %+v", err)
 		return
@@ -110,7 +109,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackQuery.Message.MessageID,
 		buildSearchResponse(res, int(from)),
 	)
-	button := buildSearchResponseButton(res, int(from))
+	button := buildSearchResponseButton(res, int(from), string(q))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = &button
 

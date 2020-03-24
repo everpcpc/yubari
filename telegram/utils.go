@@ -15,14 +15,14 @@ func byteCountBinary(b int64) string {
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func max(a, b uint64) uint64 {
+func max(a, b int64) int64 {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func min(a, b uint64) uint64 {
+func min(a, b int64) int64 {
 	if a < b {
 		return a
 	}
