@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
@@ -38,6 +39,7 @@ type Bot struct {
 	Tube           string
 	logger         *logging.Logger
 	redis          *redis.Client
+	es             *elasticsearch7.Client
 }
 
 func NewBot(cfg *Config) (b *Bot, err error) {
@@ -84,6 +86,11 @@ func (b *Bot) WithTwitterImg(imgPath string) *Bot {
 func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
 	b.Queue = queue
 	b.Tube = "tg"
+	return b
+}
+
+func (b *Bot) WithES(es *elasticsearch7.Client) *Bot {
+	b.es = es
 	return b
 }
 
@@ -214,12 +221,15 @@ func (b *Bot) Start() {
 						break
 					}
 					go onReactionSelf(b, update.CallbackQuery)
+				case "search":
+					go onReactionSearch(b, update.CallbackQuery)
 				default:
 				}
 				continue
 			} else {
 				continue
 			}
+
 			if message.Chat.IsGroup() {
 				b.logger.Infof(
 					"recv:(%d)[%s:%s]{%s}",
@@ -248,6 +258,8 @@ func (b *Bot) Start() {
 					go onPic(b, message)
 				case "pixiv":
 					go onPixiv(b, message)
+				case "search":
+					go onSearch(b, message)
 				default:
 					b.logger.Infof("ignore unknown cmd: %+v", message.Command())
 					continue
@@ -256,8 +268,9 @@ func (b *Bot) Start() {
 				if message.Text == "" {
 					continue
 				}
-				checkRepeat(b, message)
-				checkPixiv(b, message)
+				go checkRepeat(b, message)
+				go checkPixiv(b, message)
+				go checkSave(b, message)
 			}
 		}
 		b.logger.Warning("tg bot restarted.")

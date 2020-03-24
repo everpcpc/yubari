@@ -63,7 +63,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
-	msg.ReplyMarkup = buildInlineKeyboardMarkup(b.redis, "comic", number)
+	msg.ReplyMarkup = buildLikeButton(b.redis, "comic", number)
 
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := b.Client.Send(msg)
@@ -95,7 +95,7 @@ func onPic(b *Bot, message *tgbotapi.Message) {
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = buildInlineKeyboardMarkup(b.redis, "pic", filepath.Base(file))
+	msg.ReplyMarkup = buildLikeButton(b.redis, "pic", filepath.Base(file))
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
@@ -139,7 +139,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 	file := files[rand.Intn(len(files))]
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = buildInlineKeyboardMarkup(b.redis, "pixiv", filepath.Base(file))
+	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
 
 	_, err = b.Client.Send(msg)

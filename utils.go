@@ -12,13 +12,6 @@ func getFileName(file string) string {
 	return tokens[len(tokens)-1]
 }
 
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func downloadFile(url string, path string) (string, error) {
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]

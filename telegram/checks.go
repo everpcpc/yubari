@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/everpcpc/yubari/pixiv"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	"github.com/everpcpc/yubari/elasticsearch"
+	"github.com/everpcpc/yubari/pixiv"
 )
 
 func checkRepeat(b *Bot, message *tgbotapi.Message) {
@@ -30,7 +32,7 @@ func checkRepeat(b *Bot, message *tgbotapi.Message) {
 		b.redis.Del(key)
 		b.logger.Infof("repeat: %s", strconv.Quote(message.Text))
 		msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
-		go b.Client.Send(msg)
+		b.Client.Send(msg)
 	}
 }
 
@@ -63,5 +65,39 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 	_, err := b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
+	}
+}
+
+func checkSave(b *Bot, message *tgbotapi.Message) {
+	enabled, err := b.redis.SIsMember("chats_save", message.Chat.ID).Result()
+	if err != nil {
+		b.logger.Errorf("%+v", err)
+		return
+	}
+	if !enabled {
+		return
+	}
+	idx := getIndex(message)
+	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
+	if err != nil {
+		b.logger.Errorf("%+v", err)
+		return
+	}
+	if !exists {
+		err = elasticsearch.CreateIndex(b.es, idx)
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			return
+		}
+	}
+
+	article := elasticsearch.Article{
+		Content:   message.Text,
+		MessageID: message.MessageID,
+		Date:      message.Date,
+	}
+	err = elasticsearch.StoreMessage(b.es, idx, &article)
+	if err != nil {
+		b.logger.Errorf("save message error: %+v", err)
 	}
 }
