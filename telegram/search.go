@@ -67,7 +67,7 @@ func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 		}
 		// TODO:(everpcpc) send link to target message
 		// respond += fmt.Sprintf("%d. <a href=\"%d\">%s</a>\n", from+i+1, hit.Source.MessageID, content)
-		respond += fmt.Sprintf("%d. %s(%s)\n", from+i+1, content, time.Unix(int64(hit.Source.Date), 0))
+		respond += fmt.Sprintf("%d. %s(%s)\n", from+i+1, content, time.Unix(int64(hit.Source.Date/1000), 0))
 	}
 	return respond
 }
