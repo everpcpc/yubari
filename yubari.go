@@ -67,7 +67,7 @@ func main() {
 		MaxLifetime: 180 * time.Second,
 		Wait:        true,
 	}
-	es, err := elasticsearch7.NewClient(elasticsearch7.Config{Addresses: []string{"localhost:9200"}})
+	es, err := elasticsearch7.NewDefaultClient()
 	if err != nil {
 		logger.Panic(err)
 		return
