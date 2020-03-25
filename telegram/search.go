@@ -24,6 +24,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 		msg := tgbotapi.NewMessage(message.Chat.ID, "直接发送你要搜索的内容即可。搜索支持 Lucene 语法")
 		msg.ReplyToMessageID = message.MessageID
 		b.Client.Send(msg)
+		return
 	}
 
 	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
