@@ -57,7 +57,9 @@ func getIndex(message *tgbotapi.Message) string {
 }
 
 func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
-	respond := fmt.Sprintf("<b>%d</b> results in %s: \n", res.Hits.Total.Value, prettyDuration(res.Took))
+	total := res.Hits.Total.Value
+	respond := fmt.Sprintf(
+		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.Took))
 	for i, hit := range res.Hits.Hits {
 		var content string
 		if len(hit.Highlight.Content) == 0 {
@@ -65,9 +67,11 @@ func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 		} else {
 			content = hit.Highlight.Content[0]
 		}
+		t := time.Unix(int64(hit.Source.Date/1000), 0)
+
 		// TODO:(everpcpc) send link to target message
 		// respond += fmt.Sprintf("%d. <a href=\"%d\">%s</a>\n", from+i+1, hit.Source.MessageID, content)
-		respond += fmt.Sprintf("%d. %s(%s)\n", from+i+1, content, time.Unix(int64(hit.Source.Date/1000), 0))
+		respond += fmt.Sprintf("%d. %s <code>[%s]</code>\n", from+i+1, content, t.Format("2006-01-02 15:04:05"))
 	}
 	return respond
 }
@@ -76,9 +80,9 @@ func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q st
 	total := res.Hits.Total.Value
 	encodedQ := base64.StdEncoding.EncodeToString([]byte(q))
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("⬅️", fmt.Sprintf("search:%d:%s", max(int64(from-5), 0), encodedQ)),
+		tgbotapi.NewInlineKeyboardButtonData("⬅️", fmt.Sprintf("search:%d:%s", max(int64(from-page), 0), encodedQ)),
 		tgbotapi.NewInlineKeyboardButtonData("❎", fmt.Sprintf("search:%d:%s", -1, encodedQ)),
-		tgbotapi.NewInlineKeyboardButtonData("➡️", fmt.Sprintf("search:%d:%s", max(min(int64(from+5), int64(total-1)), 0), encodedQ)),
+		tgbotapi.NewInlineKeyboardButtonData("➡️", fmt.Sprintf("search:%d:%s", max(min(int64(from+page), int64(total-1)), 0), encodedQ)),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
