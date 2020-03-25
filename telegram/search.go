@@ -36,6 +36,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 		msg := tgbotapi.NewMessage(message.Chat.ID, "还没有启用哦")
 		msg.ReplyToMessageID = message.MessageID
 		b.Client.Send(msg)
+		return
 	}
 	res, err := elasticsearch.SearchMessage(b.es, idx, q, 0, page)
 	if err != nil {
