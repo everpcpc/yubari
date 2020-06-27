@@ -119,7 +119,9 @@ func (b *Bot) isAuthedChat(c *tgbotapi.Chat) bool {
 
 func (b *Bot) Send(chat int64, msg string) (tgbotapi.Message, error) {
 	b.logger.Debugf("[%d]%s", chat, msg)
-	return b.Client.Send(tgbotapi.NewMessage(chat, msg))
+	message := tgbotapi.NewMessage(chat, msg)
+	message.DisableNotification = true
+	return b.Client.Send(message)
 }
 
 func (b *Bot) SendPixivIllust(target int64, id uint64) {
@@ -129,6 +131,7 @@ func (b *Bot) SendPixivIllust(target int64, id uint64) {
 	)
 	msg := tgbotapi.NewMessage(target, pixiv.URLWithID(id))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
+	msg.DisableNotification = true
 	_, err := b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
