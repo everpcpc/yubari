@@ -14,6 +14,8 @@ import (
 func onStart(b *Bot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "呀呀呀")
 	msg.ReplyToMessageID = message.MessageID
+	msg.DisableNotification = true
+
 	b.Client.Send(msg)
 }
 
@@ -42,6 +44,8 @@ func onRoll(b *Bot, message *tgbotapi.Message) {
 	rand.Seed(time.Now().UnixNano())
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(rand.Intn(limit)))
 	msg.ReplyToMessageID = message.MessageID
+	msg.DisableNotification = true
+
 	_, err = b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -64,6 +68,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 
 	msg.ReplyMarkup = buildLikeButton(b.redis, "comic", number)
+	msg.DisableNotification = true
 
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := b.Client.Send(msg)
@@ -96,6 +101,7 @@ func onPic(b *Bot, message *tgbotapi.Message) {
 
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pic", filepath.Base(file))
+	msg.DisableNotification = true
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
@@ -141,6 +147,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
+	msg.DisableNotification = true
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
