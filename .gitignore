@@ -2,3 +2,5 @@ config.json
 venv/
 .vscode/
 *.session
+
+/scripts
