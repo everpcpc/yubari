@@ -1,14 +1,14 @@
 package telegram
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-
-	"yubari/pixiv"
 )
 
 func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
@@ -69,36 +69,39 @@ func onReactionSelf(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "failed parsing pixiv id"
 			break
 		}
-		sizes, errs := pixiv.Download(id, b.PixivPath)
-		for i := range sizes {
-			if errs[i] != nil {
-				callbackText += fmt.Sprintf("p%d: error;", i)
-				continue
-			}
-			if sizes[i] == 0 {
-				callbackText += fmt.Sprintf("p%d: exists;", i)
-				continue
-			}
-			b.logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
-			callbackText += fmt.Sprintf("p%d: %s;", i, byteCountBinary(sizes[i]))
+		conn, err := b.Queue.Get()
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			callbackText = "get btd error: " + err.Error()
+			break
+		}
+		data, err := json.Marshal(DownloadPixiv{
+			ChatID:    callbackQuery.Message.Chat.ID,
+			MessageID: callbackQuery.Message.MessageID,
+			PixivID:   id,
+		})
+		_, err = conn.Put(data, 1, 0, 10*time.Minute)
+		if err != nil {
+			callbackText = fmt.Sprintf("queue pixiv error: %s", err)
+		} else {
+			callbackText = fmt.Sprintf("queued: %d", id)
 		}
 
 	case "diss":
+		delMsg := tgbotapi.DeleteMessageConfig{
+			ChatID:    callbackQuery.Message.Chat.ID,
+			MessageID: callbackQuery.Message.MessageID,
+		}
+		_, err := b.Client.DeleteMessage(delMsg)
+		if err != nil {
+			b.logger.Errorf("failed deleting msg: %+v", err)
+		}
 	default:
 		callbackText = fmt.Sprintf("react type error: %s", reaction)
 	}
 
-	delMsg := tgbotapi.DeleteMessageConfig{
-		ChatID:    callbackQuery.Message.Chat.ID,
-		MessageID: callbackQuery.Message.MessageID,
-	}
-	_, err := b.Client.DeleteMessage(delMsg)
-	if err != nil {
-		b.logger.Errorf("failed deleting msg: %+v", err)
-	}
-
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
+	_, err := b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
 	}

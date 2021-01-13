@@ -81,7 +81,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 		b.logger.Errorf("%+v", err)
 		return
 	}
-	b.putQueue(data)
+	b.putQueue(data, tgDeleteTube)
 }
 
 func onPic(b *Bot, message *tgbotapi.Message) {
@@ -129,7 +129,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 			b.logger.Errorf("%+v", err)
 			return
 		}
-		b.putQueue(data)
+		b.putQueue(data, tgDeleteTube)
 		return
 	}
 	files, err := filepath.Glob(filepath.Join(b.PixivPath, "*"))

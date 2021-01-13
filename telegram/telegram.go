@@ -18,12 +18,23 @@ import (
 	"yubari/pixiv"
 )
 
+const (
+	tgDeleteTube = "tg_delete"
+	tgPixivTube  = "tg_pixiv"
+)
+
 type Config struct {
 	Token          string  `json:"token"`
 	SelfID         int64   `json:"selfID"`
 	WhitelistChats []int64 `json:"whitelistChats"`
 	ComicPath      string  `json:"comicPath"`
 	DeleteDelay    string  `json:"deleteDelay"`
+}
+
+type DownloadPixiv struct {
+	ChatID    int64
+	MessageID int
+	PixivID   uint64
 }
 
 type Bot struct {
@@ -36,7 +47,6 @@ type Bot struct {
 	DeleteDelay    time.Duration
 	Client         *tgbotapi.BotAPI
 	Queue          *bt.Pool
-	Tube           string
 	logger         *logging.Logger
 	redis          *redis.Client
 	es             *elasticsearch7.Client
@@ -85,7 +95,6 @@ func (b *Bot) WithTwitterImg(imgPath string) *Bot {
 
 func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
 	b.Queue = queue
-	b.Tube = "tg"
 	return b
 }
 
@@ -94,13 +103,13 @@ func (b *Bot) WithES(es *elasticsearch7.Client) *Bot {
 	return b
 }
 
-func (b *Bot) putQueue(msg []byte) {
+func (b *Bot) putQueue(msg []byte, tube string) {
 	conn, err := b.Queue.Get()
 	if err != nil {
 		b.logger.Errorf("%+v: %s", err, string(msg))
 		return
 	}
-	conn.Use(b.Tube)
+	conn.Use(tube)
 	_, err = conn.Put(msg, 1, b.DeleteDelay, time.Minute)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -138,6 +147,72 @@ func (b *Bot) SendPixivIllust(target int64, id uint64) {
 	}
 }
 
+func (b *Bot) startDownloadPixiv() {
+	for {
+		conn, err := b.Queue.Get()
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		conn.Watch(tgPixivTube)
+		job, err := conn.Reserve()
+		if err != nil {
+			b.logger.Warningf("%+v", err)
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		msg := &DownloadPixiv{}
+		err = json.Unmarshal(job.Body, msg)
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			err = conn.Bury(job.ID, 0)
+			if err != nil {
+				b.logger.Errorf("%+v", err)
+			}
+			time.Sleep(3 * time.Second)
+			continue
+		}
+
+		sizes, errs := pixiv.Download(msg.PixivID, b.PixivPath)
+		for i := range sizes {
+			if errs[i] != nil {
+				err = errs[i]
+				break
+			}
+			if sizes[i] == 0 {
+				continue
+			}
+			b.logger.Debugf("download pixiv %d_p%d: %d bytes", msg.PixivID, i, sizes[i])
+		}
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			continue
+		}
+
+		delMsg := tgbotapi.DeleteMessageConfig{
+			ChatID:    msg.ChatID,
+			MessageID: msg.MessageID,
+		}
+		_, err = b.Client.DeleteMessage(delMsg)
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			err = conn.Bury(job.ID, 0)
+			if err != nil {
+				b.logger.Errorf("%+v", err)
+			}
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		err = conn.Delete(job.ID)
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			time.Sleep(3 * time.Second)
+		}
+		b.Queue.Release(conn, false)
+	}
+}
+
 func (b *Bot) startDeleteMessage() {
 	for {
 		conn, err := b.Queue.Get()
@@ -146,7 +221,7 @@ func (b *Bot) startDeleteMessage() {
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		conn.Watch(b.Tube)
+		conn.Watch(tgDeleteTube)
 		job, err := conn.Reserve()
 		if err != nil {
 			b.logger.Warningf("%+v", err)
@@ -191,6 +266,7 @@ func (b *Bot) startDeleteMessage() {
 
 func (b *Bot) Start() {
 	go b.startDeleteMessage()
+	go b.startDownloadPixiv()
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
