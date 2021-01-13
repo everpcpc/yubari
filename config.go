@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/everpcpc/yubari/pixiv"
-	"github.com/everpcpc/yubari/qq"
-	"github.com/everpcpc/yubari/telegram"
-	"github.com/everpcpc/yubari/twitter"
+	"yubari/pixiv"
+	"yubari/qq"
+	"yubari/telegram"
+	"yubari/twitter"
 )
 
 type Config struct {

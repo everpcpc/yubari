@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/everpcpc/yubari/elasticsearch"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	"yubari/elasticsearch"
 )
 
 var (

@@ -8,8 +8,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"golang.org/x/net/html"
 
-	"github.com/everpcpc/yubari/elasticsearch"
-	"github.com/everpcpc/yubari/pixiv"
+	"yubari/elasticsearch"
+	"yubari/pixiv"
 )
 
 func checkRepeat(b *Bot, message *tgbotapi.Message) {

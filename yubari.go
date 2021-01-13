@@ -9,10 +9,10 @@ import (
 	"github.com/go-redis/redis"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 
-	"github.com/everpcpc/yubari/bangumi"
-	"github.com/everpcpc/yubari/pixiv"
-	"github.com/everpcpc/yubari/telegram"
-	"github.com/everpcpc/yubari/twitter"
+	"yubari/bangumi"
+	"yubari/pixiv"
+	"yubari/telegram"
+	"yubari/twitter"
 )
 
 func NewRedisClient(cfg *RedisConfig) (*redis.Client, error) {

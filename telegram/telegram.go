@@ -15,7 +15,7 @@ import (
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	logging "github.com/op/go-logging"
 
-	"github.com/everpcpc/yubari/pixiv"
+	"yubari/pixiv"
 )
 
 type Config struct {

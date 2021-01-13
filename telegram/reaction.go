@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
-	"github.com/everpcpc/yubari/pixiv"
+	"yubari/pixiv"
 )
 
 func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
