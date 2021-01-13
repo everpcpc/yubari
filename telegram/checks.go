@@ -70,14 +70,10 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 }
 
 func checkSave(b *Bot, message *tgbotapi.Message) {
-	enabled, err := b.redis.SIsMember("chats_save", message.Chat.ID).Result()
-	if err != nil {
-		b.logger.Errorf("%+v", err)
+	if !b.isAuthedChat(message.Chat) {
 		return
 	}
-	if !enabled {
-		return
-	}
+
 	idx := getIndex(message)
 	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
 	if err != nil {
