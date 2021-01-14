@@ -228,38 +228,42 @@ func (b *Bot) startDeleteMessage() {
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		msg := &tgbotapi.Message{}
-		err = json.Unmarshal(job.Body, msg)
-		if err != nil {
-			b.logger.Errorf("%+v", err)
-			err = conn.Bury(job.ID, 0)
-			if err != nil {
-				b.logger.Errorf("%+v", err)
-			}
-			time.Sleep(3 * time.Second)
-			continue
-		}
-		delMsg := tgbotapi.DeleteMessageConfig{
-			ChatID:    msg.Chat.ID,
-			MessageID: msg.MessageID,
-		}
-		b.logger.Infof(":[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
 
-		_, err = b.Client.DeleteMessage(delMsg)
-		if err != nil {
-			b.logger.Errorf("%+v", err)
-			err = conn.Bury(job.ID, 0)
+		func() {
+			var err error
+			defer func() {
+				if err != nil {
+					b.logger.Errorf("%+v", err)
+					if e := conn.Bury(job.ID, 0); e != nil {
+						b.logger.Errorf("%+v", err)
+					}
+					time.Sleep(3 * time.Second)
+				} else {
+					if e := conn.Delete(job.ID); e != nil {
+						b.logger.Errorf("%+v", err)
+						time.Sleep(3 * time.Second)
+					}
+				}
+			}()
+
+			msg := &tgbotapi.Message{}
+			err = json.Unmarshal(job.Body, msg)
 			if err != nil {
-				b.logger.Errorf("%+v", err)
+				return
 			}
-			time.Sleep(3 * time.Second)
-			continue
-		}
-		err = conn.Delete(job.ID)
-		if err != nil {
-			b.logger.Errorf("%+v", err)
-			time.Sleep(3 * time.Second)
-		}
+
+			if msg.Chat == nil {
+				err = fmt.Errorf("err msg with no chat: %+v", msg)
+				return
+			}
+			delMsg := tgbotapi.DeleteMessageConfig{
+				ChatID:    msg.Chat.ID,
+				MessageID: msg.MessageID,
+			}
+			b.logger.Infof("del:[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
+			_, err = b.Client.DeleteMessage(delMsg)
+
+		}()
 		b.Queue.Release(conn, false)
 	}
 }
