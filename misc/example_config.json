@@ -1,19 +1,10 @@
 {
-  "redis":{
+  "redis": {
     "addr": "localhost:6379",
     "password": "",
     "db": 0
   },
-  "qq":{
-    "selfID": "000000000",
-    "botID": "0000000000",
-    "qqPrivateIgnore": [],
-    "qqGroupIgnore": [],
-    "selfNames": [],
-    "sendMaxRetry": 10,
-    "imgPath": ""
-  },
-  "twitter":{
+  "twitter": {
     "selfID": "",
     "consumerKey": "",
     "consumerSecret": "",
@@ -21,14 +12,14 @@
     "accessSecret": "",
     "imgPath": ""
   },
-  "telegram":{
+  "telegram": {
     "token": "",
     "selfID": 0,
     "whitelistChats": [],
     "comicPath": "",
     "deleteDelay": "1h"
   },
-  "pixiv":{
+  "pixiv": {
     "username": "",
     "password": "",
     "ImgPath": ""
