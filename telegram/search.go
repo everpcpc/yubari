@@ -17,6 +17,8 @@ var (
 )
 
 func onSearch(b *Bot, message *tgbotapi.Message) {
+	b.setChatAction(message.Chat.ID, "typing")
+
 	idx := getIndex(message)
 	q := message.CommandArguments()
 	q = strings.TrimSpace(q)
@@ -90,6 +92,8 @@ func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q st
 }
 
 func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
+	b.setChatAction(callbackQuery.Message.Chat.ID, "typing")
+
 	token := strings.Split(callbackQuery.Data, ":")
 	if len(token) != 3 {
 		b.logger.Errorf("illegal react data: %s", callbackQuery.Data)

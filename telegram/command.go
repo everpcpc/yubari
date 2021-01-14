@@ -20,11 +20,14 @@ func onStart(b *Bot, message *tgbotapi.Message) {
 }
 
 func onRoll(b *Bot, message *tgbotapi.Message) {
-	var err error
-	var limit int
+	b.setChatAction(message.Chat.ID, "typing")
+
+	var (
+		err   error
+		limit int
+	)
 
 	args := message.CommandArguments()
-
 	if args != "" {
 		limit, err = strconv.Atoi(args)
 		if err != nil {
@@ -53,6 +56,8 @@ func onRoll(b *Bot, message *tgbotapi.Message) {
 }
 
 func onComic(b *Bot, message *tgbotapi.Message) {
+	b.setChatAction(message.Chat.ID, "typing")
+
 	files, err := filepath.Glob(filepath.Join(b.ComicPath, "*.epub"))
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -62,6 +67,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 		b.logger.Error("find no comic")
 		return
 	}
+
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
@@ -85,6 +91,8 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 }
 
 func onPic(b *Bot, message *tgbotapi.Message) {
+	b.setChatAction(message.Chat.ID, "typing")
+
 	files, err := filepath.Glob(filepath.Join(b.TwitterImgPath, "*"))
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -103,6 +111,8 @@ func onPic(b *Bot, message *tgbotapi.Message) {
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pic", filepath.Base(file))
 	msg.DisableNotification = true
 
+	b.setChatAction(message.Chat.ID, "upload_photo")
+
 	_, err = b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -110,8 +120,9 @@ func onPic(b *Bot, message *tgbotapi.Message) {
 }
 
 func onPixiv(b *Bot, message *tgbotapi.Message) {
-	args := message.CommandArguments()
+	b.setChatAction(message.Chat.ID, "typing")
 
+	args := message.CommandArguments()
 	if args != "" {
 		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
 			b.SendPixivIllust(message.Chat.ID, id)
@@ -148,6 +159,8 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
+
+	b.setChatAction(message.Chat.ID, "upload_photo")
 
 	_, err = b.Client.Send(msg)
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 )
 
 func checkRepeat(b *Bot, message *tgbotapi.Message) {
+
 	key := "tg_last_" + strconv.FormatInt(message.Chat.ID, 10)
 	flattendMsg := strings.TrimSpace(message.Text)
 	defer b.redis.LTrim(key, 0, 10)
@@ -30,6 +31,8 @@ func checkRepeat(b *Bot, message *tgbotapi.Message) {
 		}
 	}
 	if i > 1 {
+		b.setChatAction(message.Chat.ID, "typing")
+
 		b.redis.Del(key)
 		b.logger.Infof("repeat: %s", strconv.Quote(message.Text))
 		msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
@@ -45,6 +48,9 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 	if id == 0 {
 		return
 	}
+
+	b.setChatAction(message.Chat.ID, "typing")
+
 	var callbackText string
 	sizes, errs := pixiv.Download(id, b.PixivPath)
 	for i := range sizes {

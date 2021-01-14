@@ -385,6 +385,15 @@ func (b *Bot) probate(_type, _id string) error {
 	}
 }
 
+func (b *Bot) setChatAction(chatID int64, action string) error {
+	a := tgbotapi.NewChatAction(chatID, action)
+	_, err := b.Client.Send(a)
+	if err != nil {
+		b.logger.Errorf("set action %s failed: %+v", action, err)
+	}
+	return err
+}
+
 func getMsgTitle(m *tgbotapi.Message) string {
 	if m.Chat.IsGroup() {
 		return m.Chat.Title
