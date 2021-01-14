@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 
 	"yubari/pixiv"
-	"yubari/qq"
 	"yubari/telegram"
 	"yubari/twitter"
 )
@@ -14,7 +13,6 @@ type Config struct {
 	File          string
 	BeanstalkAddr string           `json:"beanstalkAddr"`
 	Redis         *RedisConfig     `json:"redis"`
-	QQ            *qq.Config       `json:"qq"`
 	Twitter       *twitter.Config  `json:"twitter"`
 	Telegram      *telegram.Config `json:"telegram"`
 	Pixiv         *pixiv.Config    `json:"pixiv"`
@@ -32,9 +30,6 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 	cfg = &Config{
 		File:          *cfgfile,
 		BeanstalkAddr: "localhost:11300",
-		QQ: &qq.Config{
-			SendMaxRetry: 10,
-		},
 		Redis: &RedisConfig{
 			Addr:     "localhost:6379",
 			Password: "",
