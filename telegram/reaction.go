@@ -80,6 +80,12 @@ func onReactionSelf(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			MessageID: callbackQuery.Message.MessageID,
 			PixivID:   id,
 		})
+		err = conn.Use(tgPixivTube)
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			callbackText = "use tube error: " + err.Error()
+			break
+		}
 		_, err = conn.Put(data, 1, 0, 10*time.Minute)
 		if err != nil {
 			callbackText = fmt.Sprintf("queue pixiv error: %s", err)
