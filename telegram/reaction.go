@@ -80,6 +80,11 @@ func onReactionSelf(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			MessageID: callbackQuery.Message.MessageID,
 			PixivID:   id,
 		})
+		if err != nil {
+			b.logger.Errorf("%+v", err)
+			callbackText = "marshal message error: " + err.Error()
+			break
+		}
 		err = conn.Use(tgPixivTube)
 		if err != nil {
 			b.logger.Errorf("%+v", err)
