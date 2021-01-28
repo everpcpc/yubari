@@ -197,17 +197,12 @@ func (b *Bot) startDownloadPixiv() {
 		}
 		_, err = b.Client.DeleteMessage(delMsg)
 		if err != nil {
-			b.logger.Errorf("%+v", err)
-			err = conn.Bury(job.ID, 0)
-			if err != nil {
-				b.logger.Errorf("%+v", err)
-			}
-			time.Sleep(3 * time.Second)
-			continue
+			b.logger.Warningf("delete message failed: %+v", err)
 		}
+
 		err = conn.Delete(job.ID)
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("delete job error: %+v", err)
 			time.Sleep(3 * time.Second)
 		}
 		b.Queue.Release(conn, false)
