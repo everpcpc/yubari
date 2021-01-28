@@ -148,6 +148,7 @@ func (b *Bot) SendPixivIllust(target int64, id uint64) {
 }
 
 func (b *Bot) startDownloadPixiv() {
+	time.Sleep(10 * time.Second)
 	for {
 		conn, err := b.Queue.Get()
 		if err != nil {
@@ -214,6 +215,7 @@ func (b *Bot) startDownloadPixiv() {
 }
 
 func (b *Bot) startDeleteMessage() {
+	time.Sleep(10 * time.Second)
 	for {
 		conn, err := b.Queue.Get()
 		if err != nil {
