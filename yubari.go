@@ -89,11 +89,11 @@ func main() {
 
 	logger.Debugf("Bot: bangumi: %+v", bangumiBot)
 	bgmUpdate := make(chan string)
-	go bangumiBot.StartTrack(10, bgmUpdate)
+	go bangumiBot.StartTrack(60, bgmUpdate)
 
 	logger.Debugf("Bot: pixiv: %+v", pixivBot)
 	pixivUpdate := make(chan uint64)
-	go pixivBot.StartFollow(20, pixivUpdate)
+	go pixivBot.StartFollow(60, pixivUpdate)
 
 	for {
 		select {
