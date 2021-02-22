@@ -18,7 +18,7 @@ var (
 
 func GetLogger(name, level string, flags byte) *logging.Logger {
 	log := logging.MustGetLogger(name)
-	formatString := `%{level:.4s} ▶ %{shortfunc} %{message}`
+	formatString := `%{level:.4s} ▶ %{message}`
 	if (flags & LOGTIME) != 0 {
 		formatString = `%{time:15:04:05.000} ` + formatString
 	}
@@ -47,7 +47,7 @@ func GetLogger(name, level string, flags byte) *logging.Logger {
 
 	if (flags & LOGSYS) != 0 {
 		_sysLogger, _ := logging.NewSyslogBackend(name)
-		sysFormat := logging.MustStringFormatter(`%{level:.4s} %{shortfunc} ▶ %{message}`)
+		sysFormat := logging.MustStringFormatter(`%{level:.4s} ▶ %{message}`)
 		sysLogger := logging.AddModuleLevel(logging.NewBackendFormatter(_sysLogger, sysFormat))
 		sysLogger.SetLevel(logging.INFO, "")
 		logging.SetBackend(logger, sysLogger)
