@@ -37,7 +37,7 @@ func (b *Bot) StartTrack(ttl int, output chan string) {
 	if ttl < 10 {
 		ttl = 10
 	}
-	b.logger.Debugf("%s: %d", rssURL, ttl)
+	b.logger.Debugf("bangumi subscribed %s: %d", rssURL, ttl)
 	keyLock := "bgm_lock_" + b.selfID
 	keyLast := "bgm_last_" + b.selfID
 	for {

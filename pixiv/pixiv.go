@@ -55,14 +55,14 @@ func (b *Bot) init() error {
 	var account *pixiv.Account
 	var err error
 	if token+refreshToken == "" {
-		b.logger.Debugf("login with %s", b.config.Username)
+		b.logger.Debugf("pixiv login with %s", b.config.Username)
 		account, err = pixiv.Login(b.config.Username, b.config.Password)
 	} else {
-		b.logger.Debugf("load auth with %+v", tokenDeadline)
+		b.logger.Debugf("pixiv auth loaded with %+v", tokenDeadline)
 		account, err = pixiv.LoadAuth(token, refreshToken, tokenDeadline)
 	}
 	if err == nil {
-		b.logger.Debugf("pixiv: %+v", account)
+		b.logger.Debugf("pixiv started for %s", account.Name)
 	}
 	return err
 }

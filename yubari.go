@@ -40,7 +40,7 @@ func main() {
 	logger = GetLogger("yubari", *flagLogLevel, logFlags|LOGCOLOR)
 
 	cfg := ReadConfig(flagCfgFile)
-	logger.Debugf("Starting with config: %+v", cfg)
+	logger.Debugf("starting with config: %s", cfg.File)
 
 	if cfg.SentryDSN != "" {
 		raven.SetDSN(cfg.SentryDSN)
@@ -55,7 +55,7 @@ func main() {
 		return
 	}
 	defer redisClient.Close()
-	logger.Debugf("Redis connected: %+v", redisClient)
+	logger.Debugf("redis connected: %s", redisClient)
 
 	queue := &bt.Pool{
 		Dial: func() (*bt.Conn, error) {
@@ -75,7 +75,7 @@ func main() {
 
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
-		logger.Panicf("TelegramBot error: %+v", err)
+		logger.Panicf("telegramBot error: %+v", err)
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithES(es)
 	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
@@ -84,14 +84,14 @@ func main() {
 	bangumiBot := bangumi.NewBot(cfg.BgmID).WithLogger(logger).WithRedis(redisClient)
 	pixivBot := pixiv.NewBot(cfg.Pixiv).WithLogger(logger).WithRedis(redisClient)
 
-	logger.Debugf("Bot: telegram: %+v", telegramBot)
+	logger.Debugf("bot: telegram: %s", telegramBot.Name)
 	go telegramBot.Start()
 
-	logger.Debugf("Bot: bangumi: %+v", bangumiBot)
+	logger.Debugf("bot: bangumi: %s", cfg.BgmID)
 	bgmUpdate := make(chan string)
 	go bangumiBot.StartTrack(60, bgmUpdate)
 
-	logger.Debugf("Bot: pixiv: %+v", pixivBot)
+	logger.Debugf("bot: pixiv: %s", cfg.Pixiv.Username)
 	pixivUpdate := make(chan uint64)
 	go pixivBot.StartFollow(60, pixivUpdate)
 
