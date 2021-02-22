@@ -62,7 +62,7 @@ func (b *Bot) init() error {
 		account, err = pixiv.LoadAuth(token, refreshToken, tokenDeadline)
 	}
 	if err == nil {
-		b.logger.Debugf("pixiv started for %s", account.Name)
+		b.logger.Debugf("pixiv started for %+v", account)
 	}
 	return err
 }
