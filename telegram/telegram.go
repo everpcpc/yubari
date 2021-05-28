@@ -325,7 +325,9 @@ func (b *Bot) Start() {
 					strconv.Quote(message.Text),
 				)
 			}
-
+			if !b.checkInWhitelist(message.Chat.ID) {
+				continue
+			}
 			if message.IsCommand() {
 				switch message.Command() {
 				case "start":
@@ -356,6 +358,15 @@ func (b *Bot) Start() {
 		b.logger.Warning("tg bot restarted.")
 		time.Sleep(3 * time.Second)
 	}
+}
+
+func (b *Bot) checkInWhitelist(id int64) bool {
+	for _, c := range b.WhitelistChats {
+		if c == id {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *Bot) probate(_type, _id string) error {
