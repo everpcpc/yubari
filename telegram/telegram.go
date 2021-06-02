@@ -310,6 +310,9 @@ func (b *Bot) Start() {
 				continue
 			}
 
+			if !b.checkInWhitelist(message.Chat.ID) {
+				continue
+			}
 			if message.Chat.IsGroup() {
 				b.logger.Infof(
 					"recv:(%d)[%s:%s]{%s}",
@@ -324,9 +327,6 @@ func (b *Bot) Start() {
 					message.From.String(),
 					strconv.Quote(message.Text),
 				)
-			}
-			if !b.checkInWhitelist(message.Chat.ID) {
-				continue
 			}
 			if message.IsCommand() {
 				switch message.Command() {
