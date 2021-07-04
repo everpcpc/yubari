@@ -76,9 +76,8 @@ func buildSearchResponse(b *Bot, chatID int64, res *elasticsearch.SearchResponse
 		if err != nil {
 			b.logger.Warningf("get username error: %+v", err)
 		}
-		// TODO:(everpcpc) send link to target message
-		// respond += fmt.Sprintf("%d. <a href=\"%d\">%s</a>\n", from+i+1, hit.Source.MessageID, content)
-		respond += fmt.Sprintf("%d. <code>[%s]%s</code>: %s\n", from+i+1, t.Format("2006-01-02 15:04:05"), author, content)
+		respond += fmt.Sprintf("%d. <a href=\"tg://privatepost?channel=%d&post=%d\">[%s]</a><code>%s</code>: %s\n",
+			from+i+1, getSuperGroupChatID(chatID), hit.Source.ID, t.Format("2006-01-02 15:04:05"), author, content)
 	}
 	return respond
 }

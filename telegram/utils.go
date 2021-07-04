@@ -36,3 +36,10 @@ func prettyDuration(t int64) string {
 	}
 	return fmt.Sprintf("%dms", t)
 }
+
+func getSuperGroupChatID(id int64) int64 {
+	if id < 0 {
+		return -id - 1000000000000
+	}
+	return id
+}
