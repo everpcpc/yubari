@@ -133,6 +133,31 @@ func (b *Bot) Send(chat int64, msg string) (tgbotapi.Message, error) {
 	return b.Client.Send(message)
 }
 
+func (b *Bot) GetUserName(chatID int64, userID int) (name string, err error) {
+	cacheKey := fmt.Sprintf("tg:user:%d", userID)
+	cache, err := b.redis.Get(cacheKey).Result()
+	if err == nil {
+		name = cache
+		return
+	} else {
+		if err != redis.Nil {
+			return
+		}
+	}
+	member, err := b.Client.GetChatMember(tgbotapi.ChatConfigWithUser{
+		ChatID: chatID,
+		UserID: userID,
+	})
+	if err != nil {
+		return
+	}
+	name = member.User.String()
+	if name != "" {
+		b.redis.Set(cacheKey, name, 0)
+	}
+	return
+}
+
 func (b *Bot) SendPixivIllust(target int64, id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "like")),

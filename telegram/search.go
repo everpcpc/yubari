@@ -46,7 +46,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 		return
 	}
 
-	msg := tgbotapi.NewMessage(message.Chat.ID, buildSearchResponse(res, 0))
+	msg := tgbotapi.NewMessage(message.Chat.ID, buildSearchResponse(b, message.Chat.ID, res, 0))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = buildSearchResponseButton(res, 0, q)
 
@@ -60,7 +60,7 @@ func getIndex(message *tgbotapi.Message) string {
 	return fmt.Sprintf("%s-%d", message.Chat.Type, message.Chat.ID)
 }
 
-func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
+func buildSearchResponse(b *Bot, chatID int64, res *elasticsearch.SearchResponse, from int) string {
 	total := res.Hits.Total.Value
 	respond := fmt.Sprintf(
 		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.Took))
@@ -72,10 +72,13 @@ func buildSearchResponse(res *elasticsearch.SearchResponse, from int) string {
 			content = hit.Highlight.Content[0]
 		}
 		t := time.Unix(int64(hit.Source.Date/1000), 0)
-
+		author, err := b.GetUserName(chatID, hit.Source.User)
+		if err != nil {
+			b.logger.Warningf("get username error: %+v", err)
+		}
 		// TODO:(everpcpc) send link to target message
 		// respond += fmt.Sprintf("%d. <a href=\"%d\">%s</a>\n", from+i+1, hit.Source.MessageID, content)
-		respond += fmt.Sprintf("%d. %s <code>[%s]</code>\n", from+i+1, content, t.Format("2006-01-02 15:04:05"))
+		respond += fmt.Sprintf("%d. <code>[%s]%s</code>: %s\n", from+i+1, t.Format("2006-01-02 15:04:05"), author, content)
 	}
 	return respond
 }
@@ -145,7 +148,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	msg := tgbotapi.NewEditMessageText(
 		callbackQuery.Message.Chat.ID,
 		callbackQuery.Message.MessageID,
-		buildSearchResponse(res, int(from)),
+		buildSearchResponse(b, callbackQuery.Message.Chat.ID, res, int(from)),
 	)
 	button := buildSearchResponseButton(res, int(from), string(q))
 	msg.ParseMode = tgbotapi.ModeHTML

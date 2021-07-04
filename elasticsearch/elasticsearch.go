@@ -23,6 +23,9 @@ var (
 				"id": {
 					"type": "long"
 				},
+				"user": {
+					"type": "long"
+				},
 				"date": {
 					"type": "long"
 				}
@@ -47,6 +50,7 @@ var (
 type Article struct {
 	ID      int    `json:"id"`
 	Date    int    `json:"date"`
+	User    int    `json:"user"`
 	Content string `json:"content"`
 }
 
@@ -135,17 +139,17 @@ func SearchMessage(es *elasticsearch7.Client, idx, q string, from, limit int) (r
 		es.Search.WithFrom(from),
 	)
 	if err != nil {
-		err = fmt.Errorf("Getting response error: %s", err)
+		err = fmt.Errorf("getting response error: %s", err)
 		return
 	}
 	defer res.Body.Close()
 	if res.IsError() {
-		err = fmt.Errorf("Search error: %+v", err)
+		err = fmt.Errorf("search error: %+v", err)
 		return
 	}
 
 	if err = json.NewDecoder(res.Body).Decode(&r); err != nil {
-		err = fmt.Errorf("Decoding response error: %+v", err)
+		err = fmt.Errorf("decoding response error: %+v", err)
 	}
 
 	return
