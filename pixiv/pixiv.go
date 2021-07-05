@@ -8,7 +8,7 @@ import (
 
 	"github.com/everpcpc/pixiv"
 	"github.com/go-redis/redis"
-	logging "github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -19,7 +19,7 @@ type Config struct {
 
 type Bot struct {
 	redis  *redis.Client
-	logger *logging.Logger
+	logger *logrus.Logger
 	config *Config
 }
 
@@ -28,7 +28,7 @@ func NewBot(cfg *Config) *Bot {
 	return b
 }
 
-func (b *Bot) WithLogger(logger *logging.Logger) *Bot {
+func (b *Bot) WithLogger(logger *logrus.Logger) *Bot {
 	b.logger = logger
 	return b
 }

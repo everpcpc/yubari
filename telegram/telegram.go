@@ -13,7 +13,7 @@ import (
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
-	logging "github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 
 	"yubari/pixiv"
 )
@@ -47,7 +47,7 @@ type Bot struct {
 	DeleteDelay    time.Duration
 	Client         *tgbotapi.BotAPI
 	Queue          *bt.Pool
-	logger         *logging.Logger
+	logger         *logrus.Logger
 	redis          *redis.Client
 	es             *elasticsearch7.Client
 }
@@ -73,7 +73,7 @@ func NewBot(cfg *Config) (b *Bot, err error) {
 	return
 }
 
-func (b *Bot) WithLogger(logger *logging.Logger) *Bot {
+func (b *Bot) WithLogger(logger *logrus.Logger) *Bot {
 	b.logger = logger
 	return b
 }
@@ -395,7 +395,7 @@ func (b *Bot) checkInWhitelist(id int64) bool {
 }
 
 func (b *Bot) probate(_type, _id string) error {
-	b.logger.Noticef("%s: %s", _type, _id)
+	b.logger.Infof("%s: %s", _type, _id)
 	switch _type {
 	case "comic":
 		fileName := "nhentai.net@" + _id + ".epub"

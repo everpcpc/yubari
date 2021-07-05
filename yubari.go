@@ -33,11 +33,7 @@ func main() {
 	flagLogLevel := flag.String("loglevel", "debug", "debug, info, notice, warning, error")
 	flag.Parse()
 
-	var logFlags byte
-	if *flagSyslog {
-		logFlags = logFlags | LOGSYS
-	}
-	logger = GetLogger("yubari", *flagLogLevel, logFlags|LOGCOLOR)
+	logger = GetLogger("yubari", *flagLogLevel, *flagSyslog)
 
 	cfg := ReadConfig(flagCfgFile)
 	logger.Debugf("starting with config: %s", cfg.File)

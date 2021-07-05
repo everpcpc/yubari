@@ -8,12 +8,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-redis/redis"
 	"github.com/mmcdole/gofeed"
-	logging "github.com/op/go-logging"
+	"github.com/sirupsen/logrus"
 )
 
 type Bot struct {
 	redis  *redis.Client
-	logger *logging.Logger
+	logger *logrus.Logger
 	selfID string
 }
 
@@ -22,7 +22,7 @@ func NewBot(id string) *Bot {
 	return b
 }
 
-func (b *Bot) WithLogger(logger *logging.Logger) *Bot {
+func (b *Bot) WithLogger(logger *logrus.Logger) *Bot {
 	b.logger = logger
 	return b
 }
