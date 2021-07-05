@@ -295,7 +295,7 @@ func (b *Bot) Start() {
 	go b.startDownloadPixiv()
 
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 30
 	for {
 		updates, err := b.Client.GetUpdatesChan(u)
 		if err != nil {
