@@ -96,6 +96,7 @@ func checkSave(b *Bot, message *tgbotapi.Message) {
 
 	article := elasticsearch.Article{
 		ID:      message.MessageID,
+		User:    message.From.ID,
 		Date:    message.Date * 1000,
 		Content: html.EscapeString(message.Text),
 	}

@@ -28,6 +28,7 @@ func TestStoreAndSearch(t *testing.T) {
 
 	message := Article{
 		ID:      987654321,
+		User:    1234,
 		Date:    123456789,
 		Content: "看需求……\nns有主机和掌机模式\nlite是阉割轻量版，只有掌机模式",
 	}
