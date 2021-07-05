@@ -80,7 +80,7 @@ func buildSearchResponse(b *Bot, chatID int64, res *elasticsearch.SearchResponse
 			respond += fmt.Sprintf("%d. <a href=\"tg://privatepost?channel=%d&post=%d\">[%s]</a><code>%s</code>: %s\n",
 				from+i+1, getSuperGroupChatID(chatID), hit.Source.ID, t.Format("2006-01-02 15:04:05"), author, content)
 		} else {
-			respond += fmt.Sprintf("%d. <code>[%s]%s</code>: %s\n",
+			respond += fmt.Sprintf("%d. [%s]<code>%s</code>: %s\n",
 				from+i+1, t.Format("2006-01-02 15:04:05"), author, content)
 		}
 	}
