@@ -91,7 +91,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 }
 
 func onPic(b *Bot, message *tgbotapi.Message) {
-	b.setChatAction(message.Chat.ID, "typing")
+	// b.setChatAction(message.Chat.ID, "typing")
 
 	files, err := filepath.Glob(filepath.Join(b.TwitterImgPath, "*"))
 	if err != nil {
@@ -120,7 +120,7 @@ func onPic(b *Bot, message *tgbotapi.Message) {
 }
 
 func onPixiv(b *Bot, message *tgbotapi.Message) {
-	b.setChatAction(message.Chat.ID, "typing")
+	// b.setChatAction(message.Chat.ID, "typing")
 
 	args := message.CommandArguments()
 	if args != "" {
