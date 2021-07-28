@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +22,12 @@ import (
 const (
 	tgDeleteTube = "tg_delete"
 	tgPixivTube  = "tg_pixiv"
+
+	pixivSplitWidth = 10000000
+)
+
+var (
+	rePixivFileName = regexp.MustCompile(`(?P<ID>\d+)_p(\P<Seq>d+)\.(?P<Ext>\w+)`)
 )
 
 type Config struct {
@@ -391,6 +398,7 @@ func (b *Bot) checkInWhitelist(id int64) bool {
 			return true
 		}
 	}
+	b.logger.Debugf("ignore msg from %d", id)
 	return false
 }
 
