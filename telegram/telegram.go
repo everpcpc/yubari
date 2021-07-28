@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	rePixivFileName = regexp.MustCompile(`(?P<ID>\d+)_p(\P<Seq>d+)\.(?P<Ext>\w+)`)
+	rePixivFileName = regexp.MustCompile(`(?P<id>\d+)_p(?P<seq>d+)\.(?P<ext>\w+)`)
 )
 
 type Config struct {
