@@ -5,7 +5,7 @@ import (
 	"time"
 
 	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
-	"github.com/getsentry/raven-go"
+	sentry "github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 
@@ -39,16 +39,17 @@ func main() {
 	logger.Debugf("starting with config: %s", cfg.File)
 
 	if cfg.SentryDSN != "" {
-		raven.SetDSN(cfg.SentryDSN)
-		raven.CapturePanic(func() {
-			// do all of the scary things here
-		}, nil)
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn: cfg.SentryDSN,
+		})
+		if err != nil {
+			logger.Fatalf("Sentry initialization failed: %s", err)
+		}
 	}
 
 	redisClient, err := NewRedisClient(cfg.Redis)
 	if err != nil {
-		logger.Panic(err)
-		return
+		logger.Fatal(err)
 	}
 	defer redisClient.Close()
 	logger.Debugf("redis connected: %s", redisClient)
@@ -65,13 +66,13 @@ func main() {
 	}
 	es, err := elasticsearch7.NewDefaultClient()
 	if err != nil {
-		logger.Panic(err)
+		logger.Fatal(err)
 		return
 	}
 
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
-		logger.Panicf("telegramBot error: %+v", err)
+		logger.Fatalf("telegramBot error: %+v", err)
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithES(es)
 	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
