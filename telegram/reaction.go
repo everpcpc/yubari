@@ -98,41 +98,23 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = fmt.Sprintf("queued: %d", id)
 		}
 
-		newText = fmt.Sprintf("%s recruited pixiv:\n%s",
+		newText = fmt.Sprintf("%s recruited:\n%s",
 			callbackQuery.From,
 			callbackQuery.Message.Text,
 		)
 
 	case "diss":
-		delMsg := tgbotapi.DeleteMessageConfig{
-			ChatID:    callbackQuery.Message.Chat.ID,
-			MessageID: callbackQuery.Message.MessageID,
-		}
-		_, err := b.Client.DeleteMessage(delMsg)
-		if err != nil {
-			b.logger.Errorf("failed deleting msg: %+v", err)
-		}
-
-		newText = fmt.Sprintf("%s persuaded pixiv %d to quit", callbackQuery.From, id)
+		newText = fmt.Sprintf("%s expelled pixiv %d", callbackQuery.From, id)
 
 	default:
-		callbackText = fmt.Sprintf("react type error: %s", reaction)
+		b.logger.Errorf("react type error: %s", reaction)
+		return
 	}
 
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
 	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
-	}
-
-	delBtnMsg := tgbotapi.NewEditMessageReplyMarkup(
-		callbackQuery.Message.Chat.ID,
-		callbackQuery.Message.MessageID,
-		tgbotapi.NewInlineKeyboardMarkup(),
-	)
-	_, err = b.Client.Send(delBtnMsg)
-	if err != nil {
-		b.logger.Errorf("error delete inline markup %s", err)
 	}
 
 	updateTextMsg := tgbotapi.NewEditMessageText(

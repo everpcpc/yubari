@@ -226,13 +226,12 @@ func (b *Bot) startDownloadPixiv() {
 			continue
 		}
 
-		delMsg := tgbotapi.DeleteMessageConfig{
-			ChatID:    msg.ChatID,
-			MessageID: msg.MessageID,
-		}
-		_, err = b.Client.DeleteMessage(delMsg)
+		editMsg := tgbotapi.NewEditMessageCaption(
+			msg.ChatID, msg.MessageID, "succeed",
+		)
+		_, err = b.Client.Send(editMsg)
 		if err != nil {
-			b.logger.Warningf("delete message failed: %+v", err)
+			b.logger.Warningf("set success caption failed: %+v", err)
 		}
 
 		err = conn.Delete(job.ID)
