@@ -52,23 +52,23 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 }
 
 func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
-
-	var callbackText string
-
 	token := strings.Split(callbackQuery.Data, ":")
 	if len(token) != 3 {
 		b.logger.Errorf("react data error: %s", callbackQuery.Data)
 		return
 	}
+
 	_id := token[1]
+	id, err := strconv.ParseUint(_id, 10, 0)
+	if err != nil {
+		b.logger.Errorf("failed parsing pixiv id (%s): %s", err, callbackQuery.Data)
+		return
+	}
 	reaction := token[2]
+
+	var newText, callbackText string
 	switch reaction {
 	case "like":
-		id, err := strconv.ParseUint(_id, 10, 0)
-		if err != nil {
-			callbackText = "failed parsing pixiv id"
-			break
-		}
 		conn, err := b.Queue.Get()
 		if err != nil {
 			b.logger.Errorf("%+v", err)
@@ -98,6 +98,11 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = fmt.Sprintf("queued: %d", id)
 		}
 
+		newText = fmt.Sprintf("%s recruited pixiv:\n%s",
+			callbackQuery.From,
+			callbackQuery.Message.Text,
+		)
+
 	case "diss":
 		delMsg := tgbotapi.DeleteMessageConfig{
 			ChatID:    callbackQuery.Message.Chat.ID,
@@ -107,14 +112,37 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		if err != nil {
 			b.logger.Errorf("failed deleting msg: %+v", err)
 		}
+
+		newText = fmt.Sprintf("%s persuaded pixiv %d to quit", callbackQuery.From, id)
+
 	default:
 		callbackText = fmt.Sprintf("react type error: %s", reaction)
 	}
 
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err := b.Client.AnswerCallbackQuery(callbackMsg)
+	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
+	}
+
+	delBtnMsg := tgbotapi.NewEditMessageReplyMarkup(
+		callbackQuery.Message.Chat.ID,
+		callbackQuery.Message.MessageID,
+		tgbotapi.NewInlineKeyboardMarkup(),
+	)
+	_, err = b.Client.Send(delBtnMsg)
+	if err != nil {
+		b.logger.Errorf("error delete inline markup %s", err)
+	}
+
+	updateTextMsg := tgbotapi.NewEditMessageText(
+		callbackQuery.Message.Chat.ID,
+		callbackQuery.Message.MessageID,
+		newText,
+	)
+	_, err = b.Client.Send(updateTextMsg)
+	if err != nil {
+		b.logger.Errorf("error update message text %s", err)
 	}
 }
 
