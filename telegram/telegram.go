@@ -33,6 +33,7 @@ var (
 type Config struct {
 	Token          string  `json:"token"`
 	SelfID         int64   `json:"selfID"`
+	AdmissionID    int64   `json:"admissionID"`
 	WhitelistChats []int64 `json:"whitelistChats"`
 	ComicPath      string  `json:"comicPath"`
 	DeleteDelay    string  `json:"deleteDelay"`
@@ -47,6 +48,7 @@ type DownloadPixiv struct {
 type Bot struct {
 	Name           string
 	SelfID         int64
+	AdmissionID    int64
 	WhitelistChats []int64
 	ComicPath      string
 	PixivPath      string
@@ -72,6 +74,7 @@ func NewBot(cfg *Config) (b *Bot, err error) {
 	b = &Bot{
 		Name:           bot.Self.UserName,
 		SelfID:         cfg.SelfID,
+		AdmissionID:    cfg.AdmissionID,
 		WhitelistChats: cfg.WhitelistChats,
 		ComicPath:      cfg.ComicPath,
 		DeleteDelay:    delay,
@@ -165,10 +168,10 @@ func (b *Bot) GetUserName(chatID int64, userID int) (name string, err error) {
 	return
 }
 
-func (b *Bot) SendPixivIllust(target int64, id uint64) {
+func (b *Bot) SendPixivCandidate(target int64, id uint64) {
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "like")),
-		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivIllust", strconv.FormatUint(id, 10), "diss")),
+		tgbotapi.NewInlineKeyboardButtonData("⭕️", buildReactionData("pixivCandidate", strconv.FormatUint(id, 10), "like")),
+		tgbotapi.NewInlineKeyboardButtonData("❌", buildReactionData("pixivCandidate", strconv.FormatUint(id, 10), "diss")),
 	)
 	msg := tgbotapi.NewMessage(target, pixiv.URLWithID(id))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(row)
@@ -327,12 +330,12 @@ func (b *Bot) Start() {
 				switch data[0] {
 				case "comic", "pic", "pixiv":
 					go onReaction(b, update.CallbackQuery)
-				case "pixivIllust":
+				case "pixivCandidate":
 					if !b.isAuthedChat(update.CallbackQuery.Message.Chat) {
 						b.logger.Warning("reaction from illegal chat, ignore")
 						break
 					}
-					go onReactionSelf(b, update.CallbackQuery)
+					go onReactionCandidate(b, update.CallbackQuery)
 				case "search":
 					go onReactionSearch(b, update.CallbackQuery)
 				default:

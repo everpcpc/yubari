@@ -51,7 +51,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	}
 }
 
-func onReactionSelf(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
+func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	var callbackText string
 

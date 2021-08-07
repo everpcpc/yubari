@@ -94,7 +94,7 @@ func main() {
 	for {
 		select {
 		case pID := <-pixivUpdate:
-			go telegramBot.SendPixivIllust(telegramBot.SelfID, pID)
+			go telegramBot.SendPixivCandidate(telegramBot.AdmissionID, pID)
 		case text := <-bgmUpdate:
 			go telegramBot.Send(telegramBot.SelfID, text)
 			go twitterBot.Client.Statuses.Update(text, nil)

@@ -125,7 +125,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 	args := message.CommandArguments()
 	if args != "" {
 		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
-			b.SendPixivIllust(message.Chat.ID, id)
+			b.SendPixivCandidate(message.Chat.ID, id)
 			return
 		}
 		msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
