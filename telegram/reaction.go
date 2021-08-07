@@ -141,6 +141,7 @@ func buildLikeButton(rds *redis.Client, _type, _id string) tgbotapi.InlineKeyboa
 
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData(likeText, buildReactionData(_type, _id, "like")),
+		tgbotapi.NewInlineKeyboardButtonData("♻️", buildReactionData(_type, _id, "reset")),
 		tgbotapi.NewInlineKeyboardButtonData(dissText, buildReactionData(_type, _id, "diss")),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
@@ -169,6 +170,15 @@ func saveReaction(rds *redis.Client, key string, user int) (_type, _id, reaction
 		}
 	case "diss":
 		dissCount := pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
+		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		_, err = pipe.Exec()
+		if err == nil {
+			if likeCount.Val()+dissCount.Val() == 0 {
+				err = fmt.Errorf("not modified")
+			}
+		}
+	case "reset":
+		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
 		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
 		_, err = pipe.Exec()
 		if err == nil {
