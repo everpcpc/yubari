@@ -226,14 +226,6 @@ func (b *Bot) startDownloadPixiv() {
 			continue
 		}
 
-		editMsg := tgbotapi.NewEditMessageCaption(
-			msg.ChatID, msg.MessageID, "succeed",
-		)
-		_, err = b.Client.Send(editMsg)
-		if err != nil {
-			b.logger.Warningf("set success caption failed: %+v", err)
-		}
-
 		err = conn.Delete(job.ID)
 		if err != nil {
 			b.logger.Errorf("delete job error: %+v", err)
