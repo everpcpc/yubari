@@ -107,7 +107,7 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 }
 
 func URLWithID(id uint64) string {
-	return "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + strconv.FormatUint(id, 10)
+	return "https://www.pixiv.net/artworks/" + strconv.FormatUint(id, 10)
 }
 
 func ParseURL(s string) uint64 {

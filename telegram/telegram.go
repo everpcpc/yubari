@@ -43,6 +43,7 @@ type DownloadPixiv struct {
 	ChatID    int64
 	MessageID int
 	PixivID   uint64
+	Text      string
 }
 
 type Bot struct {
@@ -211,6 +212,7 @@ func (b *Bot) startDownloadPixiv() {
 		}
 
 		sizes, errs := pixiv.Download(msg.PixivID, b.PixivPath)
+		msg.Text += "\ndownloaded: "
 		for i := range sizes {
 			if errs[i] != nil {
 				err = errs[i]
@@ -220,10 +222,21 @@ func (b *Bot) startDownloadPixiv() {
 				continue
 			}
 			b.logger.Debugf("download pixiv %d_p%d: %d bytes", msg.PixivID, i, sizes[i])
+			msg.Text += fmt.Sprintf("%d_p%d - %d bytes\n", msg.PixivID, i, sizes[i])
 		}
 		if err != nil {
 			b.logger.Errorf("%+v", err)
 			continue
+		}
+
+		updateTextMsg := tgbotapi.NewEditMessageText(
+			msg.ChatID,
+			msg.MessageID,
+			msg.Text,
+		)
+		_, err = b.Client.Send(updateTextMsg)
+		if err != nil {
+			b.logger.Errorf("error update message text %s", err)
 		}
 
 		err = conn.Delete(job.ID)

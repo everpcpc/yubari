@@ -75,10 +75,15 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "get btd error: " + err.Error()
 			break
 		}
+		newText = fmt.Sprintf("%s recruited:\n%s",
+			callbackQuery.From,
+			callbackQuery.Message.Text,
+		)
 		data, err := json.Marshal(DownloadPixiv{
 			ChatID:    callbackQuery.Message.Chat.ID,
 			MessageID: callbackQuery.Message.MessageID,
 			PixivID:   id,
+			Text:      newText,
 		})
 		if err != nil {
 			b.logger.Errorf("%+v", err)
