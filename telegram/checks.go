@@ -62,7 +62,7 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 			callbackText += fmt.Sprintf("p%d: exists😋 ", i)
 			continue
 		}
-		b.logger.Debugf("download pixiv %d_p%d: %d bytes", id, i, sizes[i])
+		b.logger.Debugf("download pixiv %d_p%d: %s", id, i, ByteCountIEC(sizes[i]))
 		callbackText += fmt.Sprintf("p%d: %s😊 ", i, byteCountBinary(sizes[i]))
 	}
 
