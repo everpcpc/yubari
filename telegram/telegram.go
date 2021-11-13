@@ -218,6 +218,7 @@ func (b *Bot) startDownloadPixiv() {
 				break
 			}
 			if sizes[i] == 0 {
+				msg.Text += fmt.Sprintf("\np%d - exists", i)
 				continue
 			}
 			b.logger.Debugf("download pixiv %d_p%d: %s", msg.PixivID, i, ByteCountIEC(sizes[i]))
