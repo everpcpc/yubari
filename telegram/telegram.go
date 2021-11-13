@@ -193,9 +193,8 @@ func (b *Bot) startDownloadPixiv() {
 			continue
 		}
 		conn.Watch(tgPixivTube)
-		job, err := conn.Reserve()
+		job, err := conn.Reserve(60 * time.Second)
 		if err != nil {
-			b.logger.Warningf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -258,9 +257,8 @@ func (b *Bot) startDeleteMessage() {
 			continue
 		}
 		conn.Watch(tgDeleteTube)
-		job, err := conn.Reserve()
+		job, err := conn.Reserve(60 * time.Second)
 		if err != nil {
-			b.logger.Warningf("%+v", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
