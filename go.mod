@@ -7,7 +7,7 @@ require (
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e
 	github.com/dghubble/oauth1 v0.7.0
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
-	github.com/everpcpc/pixiv v0.0.0-20210128034500-a54eb720d8f3
+	github.com/everpcpc/pixiv v0.0.0-20211114161155-a51b0f35e073
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible

@@ -125,6 +125,6 @@ func ParseURL(s string) uint64 {
 }
 
 func Download(id uint64, dir string) ([]int64, []error) {
-	papp := pixiv.NewApp()
+	papp := pixiv.NewApp().WithDownloadTimeout(time.Minute)
 	return papp.Download(id, dir)
 }
