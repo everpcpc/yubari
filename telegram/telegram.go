@@ -186,7 +186,7 @@ func (b *Bot) SendPixivCandidate(target int64, id uint64) {
 func (b *Bot) startDownloadPixiv() {
 	time.Sleep(10 * time.Second)
 	for {
-		conn, err := b.Queue.Get()
+		conn, err := b.Queue.Dial()
 		if err != nil {
 			b.logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
@@ -249,7 +249,7 @@ func (b *Bot) startDownloadPixiv() {
 func (b *Bot) startDeleteMessage() {
 	time.Sleep(10 * time.Second)
 	for {
-		conn, err := b.Queue.Get()
+		conn, err := b.Queue.Dial()
 		if err != nil {
 			b.logger.Errorf("%+v", err)
 			time.Sleep(3 * time.Second)
