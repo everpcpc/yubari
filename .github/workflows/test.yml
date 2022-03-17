@@ -13,9 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Setup Meilisearch
-      run: docker run -d -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --no-analytics=true
-
     - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
@@ -24,6 +21,9 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+
+    - name: Setup Meilisearch
+      run: docker run -d -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --no-analytics
 
     - name: Test
       run: go test -v -race -covermode=atomic ./...
