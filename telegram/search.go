@@ -53,7 +53,7 @@ func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, 
 		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.ProcessingTimeMs))
 	hits, err := meili.DecodeArticles(res.Hits)
 	if err != nil {
-		b.logger.Error("search error: %+v", err)
+		b.logger.Errorf("search error: %+v", err)
 	}
 	for i, hit := range hits {
 		t := time.Unix(hit.Date, 0)
