@@ -13,28 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.13
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.13
+        go-version: 1.17
       id: go
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Configure sysctl limits
-      run: |
-        sudo swapoff -a
-        sudo sysctl -w vm.swappiness=1
-        sudo sysctl -w fs.file-max=262144
-        sudo sysctl -w vm.max_map_count=262144
-
-    - name: Setup Elasticsearch with Plugins
-      uses: everpcpc/elasticsearch-action@v2
-      with:
-        version: 7.6.1
-        plugins: |
-          https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v7.6.1/elasticsearch-analysis-ik-7.6.1.zip
+    - name: Setup Meilisearch
+      run: docker run -d --net=host getmeili/meilisearch:latest ./meilisearch --no-analytics=true --master-key=masterKey
 
     - name: Test
       run: go test -v -race -covermode=atomic ./...

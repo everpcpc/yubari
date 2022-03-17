@@ -24,6 +24,10 @@
     "password": "",
     "ImgPath": ""
   },
+  "meilisearch": {
+    "host": "http://127.0.0.1:7700",
+    "apiKey": ""
+  },
   "beanstalkAddr": "localhost:11300",
   "bgmID": "",
   "sentry": ""

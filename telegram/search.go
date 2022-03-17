@@ -6,41 +6,32 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"yubari/meili"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-
-	"yubari/elasticsearch"
+	meilisearch "github.com/meilisearch/meilisearch-go"
 )
 
 var (
-	page = 5
+	page = int64(5)
 )
 
 func onSearch(b *Bot, message *tgbotapi.Message) {
 	b.setChatAction(message.Chat.ID, "typing")
 
-	idx := getIndex(message)
 	q := message.CommandArguments()
 	q = strings.TrimSpace(q)
 	if q == "" {
-		msg := tgbotapi.NewMessage(message.Chat.ID, "直接发送你要搜索的内容即可。搜索支持 Lucene 语法")
+		msg := tgbotapi.NewMessage(message.Chat.ID, "直接发送你要搜索的内容即可")
 		msg.ReplyToMessageID = message.MessageID
 		b.Client.Send(msg)
 		return
 	}
 
-	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
-	if err != nil {
-		b.logger.Errorf("check es index exists error: %+v", err)
-		return
-	}
-	if !exists {
-		msg := tgbotapi.NewMessage(message.Chat.ID, "还没有启用哦")
-		msg.ReplyToMessageID = message.MessageID
-		b.Client.Send(msg)
-		return
-	}
-	res, err := elasticsearch.SearchMessage(b.es, idx, q, 0, page)
+	idx := b.getIndex(message)
+	res, err := idx.Search(q, &meilisearch.SearchRequest{
+		Limit: page,
+	})
 	if err != nil {
 		b.logger.Errorf("es search error: %+v", err)
 		return
@@ -48,7 +39,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, buildSearchResponse(b, message.Chat.ID, res, 0))
 	msg.ParseMode = tgbotapi.ModeHTML
-	msg.ReplyMarkup = buildSearchResponseButton(res, 0, q)
+	msg.ReplyMarkup = buildSearchResponseButton(res.NbHits, 0, q)
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
@@ -56,29 +47,24 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 	}
 }
 
-func getIndex(message *tgbotapi.Message) string {
-	return fmt.Sprintf("%s-%d", message.Chat.Type, message.Chat.ID)
-}
-
-func buildSearchResponse(b *Bot, chatID int64, res *elasticsearch.SearchResponse, from int) string {
-	total := res.Hits.Total.Value
+func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, from int) string {
+	total := res.NbHits
 	respond := fmt.Sprintf(
-		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.Took))
-	for i, hit := range res.Hits.Hits {
+		"<code>[%d]</code> results in %sms: \n", total, prettyDuration(res.ProcessingTimeMs))
+	hits, err := meili.DecodeArticles(res.Hits)
+	if err != nil {
+		b.logger.Error("search error: %+v", err)
+	}
+	for i, hit := range hits {
 		var content string
-		if len(hit.Highlight.Content) == 0 {
-			content = hit.Source.Content[:15]
-		} else {
-			content = hit.Highlight.Content[0]
-		}
-		t := time.Unix(int64(hit.Source.Date/1000), 0)
-		author, err := b.GetUserName(chatID, hit.Source.User)
+		t := time.Unix(hit.Date, 0)
+		author, err := b.GetUserName(chatID, int(hit.User))
 		if err != nil {
 			b.logger.Warningf("get username error: %+v", err)
 		}
-		if hit.Source.ID > 0 {
+		if hit.ID > 0 {
 			respond += fmt.Sprintf("%d. <a href=\"tg://privatepost?channel=%d&post=%d\">[%s]</a><code>%s</code>: %s\n",
-				from+i+1, getSuperGroupChatID(chatID), hit.Source.ID, t.Format("2006-01-02 15:04:05"), author, content)
+				from+i+1, getSuperGroupChatID(chatID), hit.ID, t.Format("2006-01-02 15:04:05"), author, content)
 		} else {
 			respond += fmt.Sprintf("%d. [%s]<code>%s</code>: %s\n",
 				from+i+1, t.Format("2006-01-02 15:04:05"), author, content)
@@ -87,8 +73,7 @@ func buildSearchResponse(b *Bot, chatID int64, res *elasticsearch.SearchResponse
 	return respond
 }
 
-func buildSearchResponseButton(res *elasticsearch.SearchResponse, from int, q string) tgbotapi.InlineKeyboardMarkup {
-	total := res.Hits.Total.Value
+func buildSearchResponseButton(total, from int64, q string) tgbotapi.InlineKeyboardMarkup {
 	encodedQ := base64.StdEncoding.EncodeToString([]byte(q))
 	row := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("⬅️", fmt.Sprintf("search:%d:%s", max(int64(from-page), 0), encodedQ)),
@@ -141,9 +126,11 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	idx := getIndex(callbackQuery.Message)
-
-	res, err := elasticsearch.SearchMessage(b.es, idx, string(q), int(from), page)
+	idx := b.getIndex(callbackQuery.Message)
+	res, err := idx.Search(string(q), &meilisearch.SearchRequest{
+		Offset: from,
+		Limit:  page,
+	})
 	if err != nil {
 		reply = fmt.Sprintf("search error: %+v", err)
 		return
@@ -154,7 +141,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackQuery.Message.MessageID,
 		buildSearchResponse(b, callbackQuery.Message.Chat.ID, res, int(from)),
 	)
-	button := buildSearchResponseButton(res, int(from), string(q))
+	button := buildSearchResponseButton(res.NbHits, from, string(q))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = &button
 

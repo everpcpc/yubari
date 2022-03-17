@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
+	meilisearch "github.com/meilisearch/meilisearch-go"
 	"github.com/sirupsen/logrus"
 
 	"yubari/pixiv"
@@ -59,7 +59,7 @@ type Bot struct {
 	Queue          *bt.Pool
 	logger         *logrus.Logger
 	redis          *redis.Client
-	es             *elasticsearch7.Client
+	meili          *meilisearch.Client
 }
 
 func NewBot(cfg *Config) (b *Bot, err error) {
@@ -109,8 +109,8 @@ func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
 	return b
 }
 
-func (b *Bot) WithES(es *elasticsearch7.Client) *Bot {
-	b.es = es
+func (b *Bot) WithMeilisearch(meili *meilisearch.Client) *Bot {
+	b.meili = meili
 	return b
 }
 
@@ -167,6 +167,10 @@ func (b *Bot) GetUserName(chatID int64, userID int) (name string, err error) {
 		b.redis.Set(cacheKey, name, 0)
 	}
 	return
+}
+
+func (b *Bot) getIndex(message *tgbotapi.Message) *meilisearch.Index {
+	return b.meili.Index(fmt.Sprintf("%s-%d", message.Chat.Type, message.Chat.ID))
 }
 
 func (b *Bot) SendPixivCandidate(target int64, id uint64) {

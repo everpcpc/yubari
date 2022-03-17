@@ -4,10 +4,10 @@ import (
 	"flag"
 	"time"
 
-	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
+	meilisearch "github.com/meilisearch/meilisearch-go"
 
 	"yubari/bangumi"
 	"yubari/pixiv"
@@ -64,17 +64,17 @@ func main() {
 		MaxLifetime: 180 * time.Second,
 		Wait:        true,
 	}
-	es, err := elasticsearch7.NewDefaultClient()
-	if err != nil {
-		logger.Fatal(err)
-		return
-	}
+
+	meili := meilisearch.NewClient(meilisearch.ClientConfig{
+		Host:   cfg.Meilisearch.Host,
+		APIKey: cfg.Meilisearch.APIKey,
+	})
 
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
 		logger.Fatalf("telegramBot error: %+v", err)
 	}
-	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithES(es)
+	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithMeilisearch(meili)
 	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
 
 	twitterBot := twitter.NewBot(cfg.Twitter)

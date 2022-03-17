@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"yubari/meili"
 	"yubari/pixiv"
 	"yubari/telegram"
 	"yubari/twitter"
@@ -16,6 +17,7 @@ type Config struct {
 	Twitter       *twitter.Config  `json:"twitter"`
 	Telegram      *telegram.Config `json:"telegram"`
 	Pixiv         *pixiv.Config    `json:"pixiv"`
+	Meilisearch   *meili.Config    `json:"meilisearch"`
 	BgmID         string           `json:"bgmID"`
 	SentryDSN     string           `json:"sentry"`
 }
@@ -35,8 +37,9 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 			Password: "",
 			DB:       0,
 		},
-		Twitter:  &twitter.Config{},
-		Telegram: &telegram.Config{},
+		Twitter:     &twitter.Config{},
+		Telegram:    &telegram.Config{},
+		Meilisearch: &meili.Config{},
 	}
 	file, e := ioutil.ReadFile(*cfgfile)
 	if e != nil {

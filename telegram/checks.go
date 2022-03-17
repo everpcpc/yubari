@@ -8,7 +8,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"golang.org/x/net/html"
 
-	"yubari/elasticsearch"
+	"yubari/meili"
 	"yubari/pixiv"
 )
 
@@ -76,31 +76,15 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 }
 
 func checkSave(b *Bot, message *tgbotapi.Message) {
-	if !b.isAuthedChat(message.Chat) {
-		return
-	}
+	idx := b.getIndex(message)
 
-	idx := getIndex(message)
-	exists, err := elasticsearch.CheckIndexExist(b.es, idx)
-	if err != nil {
-		b.logger.Errorf("%+v", err)
-		return
-	}
-	if !exists {
-		err = elasticsearch.CreateIndex(b.es, idx)
-		if err != nil {
-			b.logger.Errorf("%+v", err)
-			return
-		}
-	}
-
-	article := elasticsearch.Article{
-		ID:      message.MessageID,
-		User:    message.From.ID,
-		Date:    message.Date * 1000,
+	article := meili.Article{
+		ID:      int64(message.MessageID),
+		User:    int64(message.From.ID),
+		Date:    int64(message.Date),
 		Content: html.EscapeString(message.Text),
 	}
-	err = elasticsearch.StoreMessage(b.es, idx, &article)
+	_, err := idx.AddDocuments(&article, "id")
 	if err != nil {
 		b.logger.Errorf("save message error: %+v", err)
 	}
