@@ -50,13 +50,12 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, from int) string {
 	total := res.NbHits
 	respond := fmt.Sprintf(
-		"<code>[%d]</code> results in %sms: \n", total, prettyDuration(res.ProcessingTimeMs))
+		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.ProcessingTimeMs))
 	hits, err := meili.DecodeArticles(res.Hits)
 	if err != nil {
 		b.logger.Error("search error: %+v", err)
 	}
 	for i, hit := range hits {
-		var content string
 		t := time.Unix(hit.Date, 0)
 		author, err := b.GetUserName(chatID, int(hit.User))
 		if err != nil {
@@ -64,10 +63,10 @@ func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, 
 		}
 		if hit.ID > 0 {
 			respond += fmt.Sprintf("%d. <a href=\"tg://privatepost?channel=%d&post=%d\">[%s]</a><code>%s</code>: %s\n",
-				from+i+1, getSuperGroupChatID(chatID), hit.ID, t.Format("2006-01-02 15:04:05"), author, content)
+				from+i+1, getSuperGroupChatID(chatID), hit.ID, t.Format("2006-01-02 15:04:05"), author, hit.Content)
 		} else {
 			respond += fmt.Sprintf("%d. [%s]<code>%s</code>: %s\n",
-				from+i+1, t.Format("2006-01-02 15:04:05"), author, content)
+				from+i+1, t.Format("2006-01-02 15:04:05"), author, hit.Content)
 		}
 	}
 	return respond
