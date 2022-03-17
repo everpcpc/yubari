@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Setup Meilisearch
-      run: docker run -d --net=host getmeili/meilisearch:latest ./meilisearch --no-analytics=true --master-key=masterKey
+      run: docker run -d -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --no-analytics=true
 
     - name: Test
       run: go test -v -race -covermode=atomic ./...

@@ -11,8 +11,7 @@ import (
 
 func TestStoreAndSearch(t *testing.T) {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
-		Host:   "http://localhost:7700",
-		APIKey: "masterKey",
+		Host: "http://localhost:7700",
 	})
 
 	idx := client.Index(fmt.Sprintf("test-%d", time.Now().UnixNano()))
