@@ -7,6 +7,7 @@ import (
 	"yubari/mastodon"
 	"yubari/meili"
 	"yubari/pixiv"
+	"yubari/rss"
 	"yubari/telegram"
 )
 
@@ -17,8 +18,8 @@ type Config struct {
 	Mastodon      *mastodon.Config `json:"mastodon"`
 	Telegram      *telegram.Config `json:"telegram"`
 	Pixiv         *pixiv.Config    `json:"pixiv"`
+	RSS           *rss.Config      `json:"rss"`
 	Meilisearch   *meili.Config    `json:"meilisearch"`
-	BgmID         string           `json:"bgmID"`
 	SentryDSN     string           `json:"sentry"`
 }
 

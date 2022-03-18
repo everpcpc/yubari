@@ -9,9 +9,9 @@ import (
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	meilisearch "github.com/meilisearch/meilisearch-go"
 
-	"yubari/bangumi"
 	"yubari/mastodon"
 	"yubari/pixiv"
+	"yubari/rss"
 	"yubari/telegram"
 )
 
@@ -78,15 +78,14 @@ func main() {
 	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath)
 
 	mastodonBot := mastodon.NewBot(cfg.Mastodon)
-	bangumiBot := bangumi.NewBot(cfg.BgmID).WithLogger(logger).WithRedis(redisClient)
 	pixivBot := pixiv.NewBot(cfg.Pixiv).WithLogger(logger).WithRedis(redisClient)
+
+	rssUpdate := make(chan string)
+	logger.Debugf("bot: rss: %+v", cfg.RSS.Feeds)
+	rss.NewBot(cfg.RSS, rssUpdate).WithLogger(logger).WithRedis(redisClient).Start()
 
 	logger.Debugf("bot: telegram: %s", telegramBot.Name)
 	go telegramBot.Start()
-
-	logger.Debugf("bot: bangumi: %s", cfg.BgmID)
-	bgmUpdate := make(chan string)
-	go bangumiBot.StartTrack(300, bgmUpdate)
 
 	logger.Debugf("bot: pixiv: %s", cfg.Pixiv.Username)
 	pixivUpdate := make(chan uint64)
@@ -96,7 +95,7 @@ func main() {
 		select {
 		case pID := <-pixivUpdate:
 			go telegramBot.SendPixivCandidate(telegramBot.AdmissionID, pID)
-		case text := <-bgmUpdate:
+		case text := <-rssUpdate:
 			go telegramBot.Send(telegramBot.SelfID, text)
 			go mastodonBot.NewStatus(text, true)
 		}
