@@ -371,7 +371,12 @@ func (b *Bot) Start() {
 				case "comic":
 					go onComic(b, message)
 				case "pixiv":
-					go onPixiv(b, message)
+					args := message.CommandArguments()
+					if args != "" {
+						go onPixivWithArgs(args, b, message)
+					} else {
+						go onPixivNoArgs(b, message)
+					}
 				case "search":
 					go onSearch(b, message)
 				default:

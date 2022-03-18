@@ -90,30 +90,27 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	b.putQueue(data, tgDeleteTube)
 }
 
-func onPixiv(b *Bot, message *tgbotapi.Message) {
-	// b.setChatAction(message.Chat.ID, "typing")
-
-	args := message.CommandArguments()
-	if args != "" {
-		if id, err := strconv.ParseUint(args, 10, 0); err == nil {
-			b.SendPixivCandidate(message.Chat.ID, id)
-			return
-		}
-		msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
-		msg.ReplyToMessageID = message.MessageID
-		msgSent, err := b.Client.Send(msg)
-		if err != nil {
-			b.logger.Errorf("%+v", err)
-			return
-		}
-		data, err := json.Marshal(msgSent)
-		if err != nil {
-			b.logger.Errorf("%+v", err)
-			return
-		}
-		b.putQueue(data, tgDeleteTube)
+func onPixivWithArgs(args string, b *Bot, message *tgbotapi.Message) {
+	if id, err := strconv.ParseUint(args, 10, 0); err == nil {
+		b.SendPixivCandidate(message.Chat.ID, id)
 		return
 	}
+	msg := tgbotapi.NewMessage(message.Chat.ID, "输入不对啦")
+	msg.ReplyToMessageID = message.MessageID
+	msgSent, err := b.Client.Send(msg)
+	if err != nil {
+		b.logger.Errorf("%+v", err)
+		return
+	}
+	data, err := json.Marshal(msgSent)
+	if err != nil {
+		b.logger.Errorf("%+v", err)
+		return
+	}
+	b.putQueue(data, tgDeleteTube)
+}
+
+func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 	files, err := filepath.Glob(filepath.Join(b.PixivPath, "*"))
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -126,7 +123,7 @@ func onPixiv(b *Bot, message *tgbotapi.Message) {
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
 	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
-	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
+	msg := tgbotapi.NewPhotoUpload(message.Chat.ID, file)
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
