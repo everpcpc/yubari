@@ -3,5 +3,4 @@ venv/
 .vscode/
 *.session
 *.session-journal
-
-/scripts
+local_config.py
