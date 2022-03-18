@@ -79,6 +79,7 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 	maxIDKey := "pixiv:" + b.config.Username + ":follow"
 	for {
 		<-ticker.C
+		b.logger.Debugf("fetching %s", maxIDKey)
 		maxID, err := b.redis.Get(maxIDKey).Uint64()
 		if err != nil && err != redis.Nil {
 			b.logger.Error(err)
@@ -97,7 +98,7 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 			if maxID >= illusts[i].ID {
 				break
 			}
-			b.logger.Infof("post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, URLWithID(illusts[i].ID))
+			b.logger.Infof("pixiv post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, URLWithID(illusts[i].ID))
 			output <- illusts[i].ID
 		}
 		if err := b.redis.Set(maxIDKey, illusts[0].ID, 0).Err(); err != nil {

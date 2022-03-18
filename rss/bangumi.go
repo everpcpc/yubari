@@ -2,6 +2,7 @@ package rss
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -57,7 +58,15 @@ func getBangumiUpdate(item *gofeed.Item) (output string, err error) {
 }
 
 func getBangumiSubjectTitleFromURL(url string) (string, error) {
-	doc, err := goquery.NewDocument(url)
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return "", fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		return "", err
 	}
