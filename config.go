@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"yubari/mastodon"
 	"yubari/meili"
 	"yubari/pixiv"
 	"yubari/telegram"
-	"yubari/twitter"
 )
 
 type Config struct {
 	File          string
 	BeanstalkAddr string           `json:"beanstalkAddr"`
 	Redis         *RedisConfig     `json:"redis"`
-	Twitter       *twitter.Config  `json:"twitter"`
+	Mastodon      *mastodon.Config `json:"mastodon"`
 	Telegram      *telegram.Config `json:"telegram"`
 	Pixiv         *pixiv.Config    `json:"pixiv"`
 	Meilisearch   *meili.Config    `json:"meilisearch"`
@@ -37,7 +37,6 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 			Password: "",
 			DB:       0,
 		},
-		Twitter:     &twitter.Config{},
 		Telegram:    &telegram.Config{},
 		Meilisearch: &meili.Config{},
 	}

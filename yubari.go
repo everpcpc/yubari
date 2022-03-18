@@ -10,9 +10,9 @@ import (
 	meilisearch "github.com/meilisearch/meilisearch-go"
 
 	"yubari/bangumi"
+	"yubari/mastodon"
 	"yubari/pixiv"
 	"yubari/telegram"
-	"yubari/twitter"
 )
 
 func NewRedisClient(cfg *RedisConfig) (*redis.Client, error) {
@@ -75,9 +75,9 @@ func main() {
 		logger.Fatalf("telegramBot error: %+v", err)
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithMeilisearch(meili)
-	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath).WithTwitterImg(cfg.Twitter.ImgPath)
+	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath)
 
-	twitterBot := twitter.NewBot(cfg.Twitter)
+	mastodonBot := mastodon.NewBot(cfg.Mastodon)
 	bangumiBot := bangumi.NewBot(cfg.BgmID).WithLogger(logger).WithRedis(redisClient)
 	pixivBot := pixiv.NewBot(cfg.Pixiv).WithLogger(logger).WithRedis(redisClient)
 
@@ -98,7 +98,7 @@ func main() {
 			go telegramBot.SendPixivCandidate(telegramBot.AdmissionID, pID)
 		case text := <-bgmUpdate:
 			go telegramBot.Send(telegramBot.SelfID, text)
-			go twitterBot.Client.Statuses.Update(text, nil)
+			go mastodonBot.NewStatus(text, true)
 		}
 	}
 }

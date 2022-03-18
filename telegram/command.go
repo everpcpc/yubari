@@ -90,35 +90,6 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	b.putQueue(data, tgDeleteTube)
 }
 
-func onPic(b *Bot, message *tgbotapi.Message) {
-	// b.setChatAction(message.Chat.ID, "typing")
-
-	files, err := filepath.Glob(filepath.Join(b.TwitterImgPath, "*"))
-	if err != nil {
-		b.logger.Errorf("%+v", err)
-		return
-	}
-	if files == nil {
-		b.logger.Error("find no pic")
-		return
-	}
-	rand.Seed(time.Now().UnixNano())
-	file := files[rand.Intn(len(files))]
-
-	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
-
-	msg := tgbotapi.NewDocumentUpload(message.Chat.ID, file)
-	msg.ReplyMarkup = buildLikeButton(b.redis, "pic", filepath.Base(file))
-	msg.DisableNotification = true
-
-	b.setChatAction(message.Chat.ID, "upload_photo")
-
-	_, err = b.Client.Send(msg)
-	if err != nil {
-		b.logger.Errorf("%+v", err)
-	}
-}
-
 func onPixiv(b *Bot, message *tgbotapi.Message) {
 	// b.setChatAction(message.Chat.ID, "typing")
 

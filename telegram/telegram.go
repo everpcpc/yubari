@@ -53,7 +53,6 @@ type Bot struct {
 	WhitelistChats []int64
 	ComicPath      string
 	PixivPath      string
-	TwitterImgPath string
 	DeleteDelay    time.Duration
 	Client         *tgbotapi.BotAPI
 	Queue          *bt.Pool
@@ -96,11 +95,6 @@ func (b *Bot) WithRedis(rds *redis.Client) *Bot {
 
 func (b *Bot) WithPixivImg(imgPath string) *Bot {
 	b.PixivPath = imgPath
-	return b
-}
-
-func (b *Bot) WithTwitterImg(imgPath string) *Bot {
-	b.TwitterImgPath = imgPath
 	return b
 }
 
@@ -376,8 +370,6 @@ func (b *Bot) Start() {
 					go onRoll(b, message)
 				case "comic":
 					go onComic(b, message)
-				case "pic":
-					go onPic(b, message)
 				case "pixiv":
 					go onPixiv(b, message)
 				case "search":
@@ -418,11 +410,6 @@ func (b *Bot) probate(_type, _id string) error {
 		return os.Rename(
 			filepath.Join(b.ComicPath, fileName),
 			filepath.Join(b.ComicPath, "probation", fileName),
-		)
-	case "pic":
-		return os.Rename(
-			filepath.Join(b.TwitterImgPath, _id),
-			filepath.Join(b.TwitterImgPath, "probation", _id),
 		)
 	case "pixiv":
 		return os.Rename(

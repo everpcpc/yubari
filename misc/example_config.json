@@ -4,20 +4,18 @@
     "password": "",
     "db": 0
   },
-  "twitter": {
-    "selfID": "",
-    "consumerKey": "",
-    "consumerSecret": "",
-    "accessToken": "",
-    "accessSecret": "",
-    "imgPath": ""
-  },
   "telegram": {
     "token": "",
     "selfID": 0,
     "whitelistChats": [],
     "comicPath": "",
     "deleteDelay": "1h"
+  },
+  "mastodon": {
+    "server": "",
+    "clientID": "",
+    "clientSecret": "",
+    "accessToken": ""
   },
   "pixiv": {
     "username": "",
