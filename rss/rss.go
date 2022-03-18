@@ -70,7 +70,6 @@ func (b *Bot) trackFeed(feed *Feed) {
 			msg, err := fp.ParseURL(feed.URL)
 			if err != nil {
 				b.logger.Errorf("%+v", err)
-				time.Sleep(time.Second)
 				continue
 			}
 			last, err := b.redis.Get(lastKey).Int64()
@@ -78,6 +77,7 @@ func (b *Bot) trackFeed(feed *Feed) {
 				b.logger.Warningf("get last error: %+v", err)
 				last = 0
 			}
+			// latest: largest id in feed items
 			var latest int64
 			for _, item := range msg.Items {
 				if item.GUID == "" {
@@ -91,7 +91,6 @@ func (b *Bot) trackFeed(feed *Feed) {
 					b.logger.Errorf("guid: %+v", item.GUID)
 					continue
 				}
-				// latest: largest id in feed items
 				if id > latest {
 					latest = id
 				}
@@ -104,10 +103,17 @@ func (b *Bot) trackFeed(feed *Feed) {
 				if id <= last {
 					break
 				}
-				text, err := getBangumiUpdate(item)
+				var text string
+				switch feed.Type {
+				case "bangumi":
+					text, err = getBangumiUpdate(item)
+				case "douban":
+					text, err = getDoubanUpdate(item)
+				default:
+					err = fmt.Errorf("feed %s not supported", feed.Type)
+				}
 				if err != nil {
 					b.logger.Errorf("%+v", err)
-					time.Sleep(time.Second)
 					continue
 				}
 				b.logger.Infof("rss: %s", text)

@@ -35,19 +35,3 @@ func TestGetBangumiUpdate(t *testing.T) {
 		output,
 	)
 }
-
-// func TestGetItem(t *testing.T) {
-// 	fp := gofeed.NewParser()
-// 	msg, err := fp.ParseURL("https://www.douban.com/feed/people/everpcpc/interests")
-// 	assert.Nil(t, err)
-
-// 	item := msg.Items[0]
-// 	r := strings.NewReader(item.Description)
-// 	doc, err := goquery.NewDocumentFromReader(r)
-// 	assert.Nil(t, err)
-
-// 	sel := doc.Find("a")
-// 	url, exists := sel.Attr("href")
-// 	assert.True(t, exists)
-// 	assert.Nil(t, url)
-// }
