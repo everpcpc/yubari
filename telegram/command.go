@@ -11,7 +11,7 @@ import (
 	"yubari/pixiv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/h2non/bimg"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 func onStart(b *Bot, message *tgbotapi.Message) {
@@ -135,31 +135,30 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		return
 	}
 
-	buffer, err := bimg.Read(filePath)
+	mw := imagick.NewMagickWand()
+	defer mw.Destroy()
+
+	err = mw.ReadImage(filePath)
 	if err != nil {
 		b.logger.Errorf("read image failed: %+v", err)
 		return
 	}
-	img := bimg.NewImage(buffer)
-	size, err := img.Size()
+	width := mw.GetImageWidth()
+	height := mw.GetImageHeight()
+
+	err = mw.ResizeImage(640, 640*height/width, 0)
 	if err != nil {
-		b.logger.Errorf("get image size failed: %+v", err)
+		b.logger.Errorf("resize image failed: %+v", err)
 		return
-	}
-	thumbnail, err := img.Thumbnail(640)
-	if err != nil {
-		b.logger.Errorf("make thumbnail failed: %+v", err)
-		return
-	}
-	file := tgbotapi.FileBytes{
-		Name:  fileName,
-		Bytes: thumbnail,
 	}
 
-	msg := tgbotapi.NewPhotoUpload(message.Chat.ID, file)
+	msg := tgbotapi.NewPhotoUpload(message.Chat.ID, tgbotapi.FileBytes{
+		Name:  fileName,
+		Bytes: mw.GetImageBlob(),
+	})
 	msg.Caption = fmt.Sprintf(
 		"<a href=\"%s\">pixiv:%d</a>(%dx%d)",
-		pixiv.URLWithID(pid), pid, size.Width, size.Height,
+		pixiv.URLWithID(pid), pid, width, height,
 	)
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", fileName)

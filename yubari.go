@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	meilisearch "github.com/meilisearch/meilisearch-go"
+	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"yubari/mastodon"
 	"yubari/pixiv"
@@ -32,6 +33,9 @@ func main() {
 	flagSyslog := flag.Bool("syslog", false, "also log to syslog")
 	flagLogLevel := flag.String("loglevel", "debug", "debug, info, notice, warning, error")
 	flag.Parse()
+
+	imagick.Initialize()
+	defer imagick.Terminate()
 
 	logger = GetLogger("yubari", *flagLogLevel, *flagSyslog)
 
