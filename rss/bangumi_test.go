@@ -31,7 +31,7 @@ func TestGetBangumiUpdate(t *testing.T) {
 	output, err := getBangumiUpdate(item)
 	require.Nil(t, err)
 	assert.Equal(t,
-		"♪(๑ᴖ◡ᴖ๑)♪ 读过「先生は恋を教えられない」第45话 #Bangumi https://bgm.tv/subject/250377",
+		"♪(๑ᴖ◡ᴖ๑)♪ 读过「先生は恋を教えられない」第45话\nhttps://bgm.tv/subject/250377\n#Bangumi",
 		output,
 	)
 }

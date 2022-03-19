@@ -53,7 +53,7 @@ func getBangumiUpdate(item *gofeed.Item) (output string, err error) {
 	default:
 		output = item.Title
 	}
-	output += " #Bangumi " + url
+	output += "\n" + url + "\n#Bangumi"
 	return
 }
 

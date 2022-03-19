@@ -21,7 +21,7 @@ func TestGetDoubanUpdate(t *testing.T) {
 	output, err := getDoubanUpdate(item)
 	require.Nil(t, err)
 	assert.Equal(t,
-		"看过蜘蛛侠：英雄无归「Spider-Man: No Way Home」 #Douban https://movie.douban.com/subject/26933210/",
+		"看过蜘蛛侠：英雄无归「Spider-Man: No Way Home」\nhttps://movie.douban.com/subject/26933210/\n#Douban",
 		output,
 	)
 }

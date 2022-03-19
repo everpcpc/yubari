@@ -24,6 +24,6 @@ func getDoubanUpdate(item *gofeed.Item) (output string, err error) {
 		err = fmt.Errorf("no title for douban update item: %s", item.Title)
 		return
 	}
-	output = item.Title + "「" + title + "」" + " #Douban " + url
+	output = item.Title + "「" + title + "」" + "\n" + url + "\n#Douban"
 	return
 }
