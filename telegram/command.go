@@ -76,7 +76,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	msg.ReplyMarkup = buildLikeButton(b.redis, "comic", number)
 	msg.DisableNotification = true
 
-	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	b.logger.Infof("send comic:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
@@ -122,8 +122,9 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 	}
 	rand.Seed(time.Now().UnixNano())
 	file := files[rand.Intn(len(files))]
-	b.logger.Infof("send:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	b.logger.Infof("send pixiv:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msg := tgbotapi.NewPhotoUpload(message.Chat.ID, file)
+	msg.Caption = "pixiv:" + strings.Split(filepath.Base(file), "_")[0]
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filepath.Base(file))
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
