@@ -2,13 +2,16 @@ package telegram
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+	"yubari/pixiv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/h2non/bimg"
 )
 
 func onStart(b *Bot, message *tgbotapi.Message) {
@@ -121,11 +124,45 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
-	file := files[rand.Intn(len(files))]
-	b.logger.Infof("send pixiv:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
+	filePath := files[rand.Intn(len(files))]
+	fileName := filepath.Base(filePath)
+
+	b.logger.Infof("send pixiv:[%s]{%s}", getMsgTitle(message), strconv.Quote(filePath))
+
+	pid, err := strconv.ParseUint(strings.Split(fileName, "_")[0], 10, 0)
+	if err != nil {
+		b.logger.Errorf("parse pid from file name failed: %+v", err)
+		return
+	}
+
+	buffer, err := bimg.Read(filePath)
+	if err != nil {
+		b.logger.Errorf("read image failed: %+v", err)
+		return
+	}
+	img := bimg.NewImage(buffer)
+	size, err := img.Size()
+	if err != nil {
+		b.logger.Errorf("get image size failed: %+v", err)
+		return
+	}
+	thumbnail, err := img.Thumbnail(640)
+	if err != nil {
+		b.logger.Errorf("make thumbnail failed: %+v", err)
+		return
+	}
+	file := tgbotapi.FileBytes{
+		Name:  fileName,
+		Bytes: thumbnail,
+	}
+
 	msg := tgbotapi.NewPhotoUpload(message.Chat.ID, file)
-	msg.Caption = "pixiv:" + strings.Split(filepath.Base(file), "_")[0]
-	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filepath.Base(file))
+	msg.Caption = fmt.Sprintf(
+		"<a href=\"%s\">pixiv:%d</a>(%dx%d)",
+		pixiv.URLWithID(pid), pid, size.Width, size.Height,
+	)
+	msg.ParseMode = tgbotapi.ModeHTML
+	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", fileName)
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
 
@@ -133,6 +170,6 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("send pixiv failed: %+v", err)
 	}
 }

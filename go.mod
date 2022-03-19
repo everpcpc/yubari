@@ -8,6 +8,7 @@ require (
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
+	github.com/h2non/bimg v1.1.7
 	github.com/ikool-cn/gobeanstalk-connection-pool v0.0.0-20170511054316-6c091c21a74e
 	github.com/mattn/go-mastodon v0.0.5-0.20211214115546-7745e19ff787
 	github.com/meilisearch/meilisearch-go v0.19.0
