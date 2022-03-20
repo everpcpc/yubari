@@ -40,6 +40,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(message.Chat.ID, buildSearchResponse(b, message.Chat.ID, res, 0))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = buildSearchResponseButton(res.NbHits, 0, q)
+	msg.DisableWebPagePreview = true
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
@@ -143,6 +144,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	button := buildSearchResponseButton(res.NbHits, from, string(q))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = &button
+	msg.DisableWebPagePreview = true
 
 	_, err = b.Client.Send(msg)
 	if err != nil {

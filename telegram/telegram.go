@@ -230,6 +230,7 @@ func (b *Bot) startDownloadPixiv() {
 			msg.MessageID,
 			msg.Text,
 		)
+		updateTextMsg.DisableWebPagePreview = true
 		_, err = b.Client.Send(updateTextMsg)
 		if err != nil {
 			b.logger.Errorf("error update message text %s", err)
