@@ -127,6 +127,7 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackQuery.Message.MessageID,
 		newText,
 	)
+	updateTextMsg.DisableWebPagePreview = true
 	_, err = b.Client.Send(updateTextMsg)
 	if err != nil {
 		b.logger.Errorf("error update message text %s", err)
