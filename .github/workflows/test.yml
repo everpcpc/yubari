@@ -26,7 +26,7 @@ jobs:
       run: docker run -d -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --no-analytics
 
     - name: Install imagemagick
-      run: sudo apt-get install imagemagick
+      run: sudo apt-get install libmagickwand-dev
 
     - name: Test
       run: go test -v -race -covermode=atomic ./...
