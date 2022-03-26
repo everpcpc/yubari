@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	meilisearch "github.com/meilisearch/meilisearch-go"
-	"gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v2/imagick"
 
 	"yubari/mastodon"
 	"yubari/pixiv"

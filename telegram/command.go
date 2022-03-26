@@ -11,7 +11,7 @@ import (
 	"yubari/pixiv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 func onStart(b *Bot, message *tgbotapi.Message) {
@@ -146,7 +146,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 	width := mw.GetImageWidth()
 	height := mw.GetImageHeight()
 
-	err = mw.ResizeImage(640, 640*height/width, 0)
+	err = mw.ResizeImage(640, 640*height/width, 0, 1)
 	if err != nil {
 		b.logger.Errorf("resize image failed: %+v", err)
 		return

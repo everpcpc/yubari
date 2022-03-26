@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/text v0.3.7
-	gopkg.in/gographics/imagick.v3 v3.4.0
+	gopkg.in/gographics/imagick.v2 v2.6.0
 )
 
 require (
