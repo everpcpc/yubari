@@ -3,9 +3,11 @@ package rss
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/everpcpc/chobits/chii"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -21,6 +23,7 @@ var (
 		"抛弃":  "Σ(-᷅_-᷄๑)",
 		"完成了": "(ฅ´ω`ฅ)",
 	}
+	bgmClient = chii.NewClient(&http.Client{})
 )
 
 func getBangumiUpdate(item *gofeed.Item) (output string, err error) {
@@ -35,6 +38,8 @@ func getBangumiUpdate(item *gofeed.Item) (output string, err error) {
 		return
 	}
 
+	output = item.Title
+
 	tokensURL := strings.Split(url, "/")
 	targetType := tokensURL[len(tokensURL)-2]
 	switch targetType {
@@ -43,7 +48,18 @@ func getBangumiUpdate(item *gofeed.Item) (output string, err error) {
 		action := tokensTitle[0]
 		emoji := bangumiProgressEmoji[action]
 		update := tokensTitle[1]
-		title, _ := getBangumiSubjectTitleFromURL(url)
+		var sid int
+		sid, err = strconv.Atoi(tokensURL[len(tokensURL)-1])
+		if err != nil {
+			err = fmt.Errorf("get bangumi id failed with: %s", url)
+			return
+		}
+		var title string
+		title, err = getBangumiSubjectTitle(sid, targetType)
+		if err != nil {
+			err = fmt.Errorf("get subject title failed with %s: %s", url, err)
+			return
+		}
 		if !strings.HasPrefix(update, title) {
 			output = emoji + " " + action + "「" + title + "」" + update
 		} else {
@@ -51,24 +67,22 @@ func getBangumiUpdate(item *gofeed.Item) (output string, err error) {
 			output = emoji + " " + action + "「" + title + "」" + ext
 		}
 	default:
-		output = item.Title
 	}
 	output += "\n" + url + "\n#Bangumi"
 	return
 }
 
-func getBangumiSubjectTitleFromURL(url string) (string, error) {
-	res, err := http.Get(url)
+func getBangumiSubjectTitle(id int, target string) (string, error) {
+	if target == "ep" {
+		ep, _, err := bgmClient.Episode.Get(id)
+		if err != nil {
+			return "", err
+		}
+		id = ep.SubjectID
+	}
+	subject, _, err := bgmClient.Subject.Get(id)
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return "", fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
-	}
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return "", err
-	}
-	return doc.Find("div#headerSubject h1.nameSingle a").Text(), nil
+	return subject.Name, nil
 }

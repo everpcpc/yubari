@@ -36,6 +36,8 @@ github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2/go.mod h1:SqUrOPUn
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/etcd-io/bbolt v1.3.3/go.mod h1:ZF2nL25h33cCyBtcyWeZ2/I3HQOfTP+0PIEvHjkjCrw=
+github.com/everpcpc/chobits v0.0.0-20220404065101-4efca02f7e81 h1:h3S6oZ5qZFwMcCAvQ0ispbZiUl12xovvkdrc7lCY7Jo=
+github.com/everpcpc/chobits v0.0.0-20220404065101-4efca02f7e81/go.mod h1:S9PhuakK67QTZwai01UiqzYJ87YCJVpqeNdkL0/WCIA=
 github.com/everpcpc/pixiv v0.0.0-20211114161155-a51b0f35e073 h1:G3H5UR74Zz5kioji/jNEzZF1kniaJMLNcIh4tX80GT0=
 github.com/everpcpc/pixiv v0.0.0-20211114161155-a51b0f35e073/go.mod h1:eyDA4rMBAj5bE62uH1ZeLYYit/kMXurILhbC3UwKdsw=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=

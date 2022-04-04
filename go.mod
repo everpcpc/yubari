@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/everpcpc/chobits v0.0.0-20220404065101-4efca02f7e81
 	github.com/everpcpc/pixiv v0.0.0-20211114161155-a51b0f35e073
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-redis/redis v6.15.9+incompatible

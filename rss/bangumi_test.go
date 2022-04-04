@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSubjectTitleFromURL(t *testing.T) {
-	ret, err := getBangumiSubjectTitleFromURL("https://bgm.tv/ep/648826")
+func TestGetSubjectTitle(t *testing.T) {
+	ret, err := getBangumiSubjectTitle(648826, "ep")
 	require.Nil(t, err)
 	assert.Equal(t, "3月のライオン", ret)
 
-	ret, err = getBangumiSubjectTitleFromURL("https://bgm.tv/subject/86517")
+	ret, err = getBangumiSubjectTitle(86517, "subject")
 	require.Nil(t, err)
 	assert.Equal(t, "放課後のプレアデス", ret)
 }
