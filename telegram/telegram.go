@@ -211,6 +211,7 @@ func (b *Bot) startDownloadPixiv() {
 		sizes, errs := pixiv.Download(msg.PixivID, b.PixivPath)
 		for i := range sizes {
 			if errs[i] != nil {
+				b.logger.Errorf("failed downloading pixiv %d_p%d: %+v", msg.PixivID, i, err)
 				err = errs[i]
 				break
 			}
@@ -221,7 +222,6 @@ func (b *Bot) startDownloadPixiv() {
 			msg.Text += fmt.Sprintf("\n✅ p%d - %s", i, ByteCountIEC(sizes[i]))
 		}
 		if err != nil {
-			b.logger.Errorf("%+v", err)
 			continue
 		}
 
