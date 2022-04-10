@@ -105,7 +105,7 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 		newText = fmt.Sprintf("%s recruited:\n%s",
 			callbackQuery.From,
-			callbackQuery.Message.Text,
+			"⏳ "+callbackQuery.Message.Text,
 		)
 
 	case "diss":

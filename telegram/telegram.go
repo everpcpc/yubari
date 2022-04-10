@@ -218,7 +218,7 @@ func (b *Bot) startDownloadPixiv() {
 				continue
 			}
 			b.logger.Debugf("download pixiv %d_p%d: %s", msg.PixivID, i, ByteCountIEC(sizes[i]))
-			msg.Text += fmt.Sprintf("\np%d - %s", i, ByteCountIEC(sizes[i]))
+			msg.Text += fmt.Sprintf("\n✅ p%d - %s", i, ByteCountIEC(sizes[i]))
 		}
 		if err != nil {
 			b.logger.Errorf("%+v", err)
