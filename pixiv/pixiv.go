@@ -1,7 +1,6 @@
 package pixiv
 
 import (
-	"net/url"
 	"regexp"
 	"strconv"
 	"time"
@@ -112,13 +111,12 @@ func URLWithID(id uint64) string {
 }
 
 func ParseURL(s string) uint64 {
-	urlPattern := regexp.MustCompile(`https:\/\/www\.pixiv\.net\/member_illust\.php\?(illust_id=\d+|mode=medium|\&)+`)
-	matchURL := urlPattern.FindString(s)
-	u, err := url.Parse(matchURL)
-	if err != nil {
+	urlPattern := regexp.MustCompile(`https:\/\/www\.pixiv\.net\/artworks\/(\d+)`)
+	matches := urlPattern.FindStringSubmatch(s)
+	if len(matches) < 2 {
 		return 0
 	}
-	r, err := strconv.ParseUint(u.Query().Get("illust_id"), 10, 0)
+	r, err := strconv.ParseUint(matches[1], 10, 0)
 	if err != nil {
 		return 0
 	}
