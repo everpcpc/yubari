@@ -52,24 +52,24 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 	b.setChatAction(message.Chat.ID, "typing")
 
 	var callbackText string
-	sizes, errs := pixiv.Download(id, b.PixivPath)
-	for i := range sizes {
-		if errs[i] != nil {
-			callbackText += fmt.Sprintf("p%d: error😕 ", i)
-			continue
+	sizes, err := pixiv.Download(id, b.PixivPath)
+	if err != nil {
+		callbackText += fmt.Sprintf("😕 download error: %s", err)
+	} else {
+		for i := range sizes {
+			if sizes[i] == 0 {
+				callbackText += fmt.Sprintf("p%d: exists😋 ", i)
+				continue
+			}
+			b.logger.Debugf("download pixiv %d_p%d: %s", id, i, ByteCountIEC(sizes[i]))
+			callbackText += fmt.Sprintf("p%d: %s😊 ", i, byteCountBinary(sizes[i]))
 		}
-		if sizes[i] == 0 {
-			callbackText += fmt.Sprintf("p%d: exists😋 ", i)
-			continue
-		}
-		b.logger.Debugf("download pixiv %d_p%d: %s", id, i, ByteCountIEC(sizes[i]))
-		callbackText += fmt.Sprintf("p%d: %s😊 ", i, byteCountBinary(sizes[i]))
 	}
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, callbackText)
 	msg.ReplyToMessageID = message.MessageID
 
-	_, err := b.Client.Send(msg)
+	_, err = b.Client.Send(msg)
 	if err != nil {
 		b.logger.Errorf("%+v", err)
 	}

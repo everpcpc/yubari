@@ -208,21 +208,20 @@ func (b *Bot) startDownloadPixiv() {
 			continue
 		}
 
-		sizes, errs := pixiv.Download(msg.PixivID, b.PixivPath)
+		sizes, err := pixiv.Download(msg.PixivID, b.PixivPath)
+		if err != nil {
+			b.logger.Errorf("failed downloading pixiv %d_p%d: %+v", msg.PixivID, err)
+			conn.Release(job.ID, 0, 10*time.Second)
+			b.Queue.Release(conn, false)
+			continue
+		}
+
 		for i := range sizes {
-			if errs[i] != nil {
-				err = errs[i]
-				b.logger.Errorf("failed downloading pixiv %d_p%d: %+v", msg.PixivID, i, err)
-				break
-			}
 			if sizes[i] == 0 {
 				continue
 			}
 			b.logger.Debugf("download pixiv %d_p%d: %s", msg.PixivID, i, ByteCountIEC(sizes[i]))
 			msg.Text += fmt.Sprintf("\n✅ p%d - %s", i, ByteCountIEC(sizes[i]))
-		}
-		if err != nil {
-			continue
 		}
 
 		updateTextMsg := tgbotapi.NewEditMessageText(
