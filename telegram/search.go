@@ -33,7 +33,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 		Limit: page,
 	})
 	if err != nil {
-		b.logger.Errorf("es search error: %+v", err)
+		b.logger.Errorf("es search error: %s", err)
 		return
 	}
 
@@ -44,7 +44,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 	}
 }
 
@@ -54,13 +54,13 @@ func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, 
 		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.ProcessingTimeMs))
 	hits, err := meili.DecodeArticles(res.Hits)
 	if err != nil {
-		b.logger.Errorf("search error: %+v", err)
+		b.logger.Errorf("search error: %s", err)
 	}
 	for i, hit := range hits {
 		t := time.Unix(hit.Date, 0)
 		author, err := b.GetUserName(chatID, int(hit.User))
 		if err != nil {
-			b.logger.Warningf("get username error: %+v", err)
+			b.logger.Warningf("get username error: %s", err)
 		}
 		if hit.ID > 0 {
 			respond += fmt.Sprintf("%d. <a href=\"tg://privatepost?channel=%d&post=%d\">[%s]</a><code>%s</code>: %s\n",
@@ -108,7 +108,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, reply)
 		_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 		if err != nil {
-			b.logger.Errorf("answer callback error: %+v", err)
+			b.logger.Errorf("answer callback error: %s", err)
 		}
 	}()
 
@@ -119,7 +119,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		}
 		_, err = b.Client.DeleteMessage(delMsg)
 		if err != nil {
-			reply = fmt.Sprintf("delete error: %+v", err)
+			reply = fmt.Sprintf("delete error: %s", err)
 		} else {
 			reply = "delete OK"
 		}
@@ -132,7 +132,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		Limit:  page,
 	})
 	if err != nil {
-		reply = fmt.Sprintf("search error: %+v", err)
+		reply = fmt.Sprintf("search error: %s", err)
 		return
 	}
 
@@ -148,7 +148,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		reply = fmt.Sprintf("update result error: %+v", err)
+		reply = fmt.Sprintf("update result error: %s", err)
 	} else {
 		reply = "OK"
 	}

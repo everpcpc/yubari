@@ -21,7 +21,7 @@ func checkRepeat(b *Bot, message *tgbotapi.Message) {
 
 	lastMsgs, err := b.redis.LRange(key, 0, 6).Result()
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	i := 0
@@ -71,7 +71,7 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 	}
 }
 
@@ -86,6 +86,6 @@ func checkSave(b *Bot, message *tgbotapi.Message) {
 	}
 	_, err := idx.AddDocuments(&article, "id")
 	if err != nil {
-		b.logger.Errorf("save message error: %+v", err)
+		b.logger.Errorf("save message error: %s", err)
 	}
 }

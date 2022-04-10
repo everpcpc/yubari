@@ -69,26 +69,26 @@ func (b *Bot) trackFeed(feed *Feed) {
 			b.logger.Debugf("checking rss: %s", feed)
 			msg, err := fp.ParseURL(feed.URL)
 			if err != nil {
-				b.logger.Errorf("%+v", err)
+				b.logger.Errorf("%s", err)
 				continue
 			}
 			last, err := b.redis.Get(lastKey).Int64()
 			if err != nil {
-				b.logger.Warningf("get last error: %+v", err)
+				b.logger.Warningf("get last error: %s", err)
 				last = 0
 			}
 			// latest: largest id in feed items
 			var latest int64
 			for _, item := range msg.Items {
 				if item.GUID == "" {
-					b.logger.Errorf("guid not found for %+v", item.Title)
+					b.logger.Errorf("guid not found for %s", item.Title)
 					continue
 				}
 				tokens := strings.Split(item.GUID, "/")
 				guid := tokens[len(tokens)-1]
 				id, err := strconv.ParseInt(guid, 10, 64)
 				if err != nil {
-					b.logger.Errorf("guid: %+v", item.GUID)
+					b.logger.Errorf("guid: %s", item.GUID)
 					continue
 				}
 				if id > latest {
@@ -113,14 +113,14 @@ func (b *Bot) trackFeed(feed *Feed) {
 					err = fmt.Errorf("feed %s not supported", feed.Type)
 				}
 				if err != nil {
-					b.logger.Errorf("%+v", err)
+					b.logger.Errorf("%s", err)
 					continue
 				}
 				b.logger.Infof("rss: %s", text)
 				b.output <- text
 			}
 			if b.redis.Set(lastKey, latest, 0).Err() != nil {
-				b.logger.Errorf("set last %+v", err)
+				b.logger.Errorf("set last %s", err)
 			}
 		}
 	}

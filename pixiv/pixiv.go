@@ -58,7 +58,7 @@ func (b *Bot) init() error {
 		b.logger.Debugf("pixiv login with %s", b.config.Username)
 		account, err = pixiv.Login(b.config.Username, b.config.Password)
 	} else {
-		b.logger.Debugf("pixiv auth loaded with %+v", tokenDeadline)
+		b.logger.Debugf("pixiv auth loaded with %s", tokenDeadline)
 		account, err = pixiv.LoadAuth(token, refreshToken, tokenDeadline)
 	}
 	if err == nil {

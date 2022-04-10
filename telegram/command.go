@@ -38,7 +38,7 @@ func onRoll(b *Bot, message *tgbotapi.Message) {
 			msg.ReplyToMessageID = message.MessageID
 			_, err := b.Client.Send(msg)
 			if err != nil {
-				b.logger.Errorf("%+v", err)
+				b.logger.Errorf("%s", err)
 			}
 			return
 		}
@@ -54,7 +54,7 @@ func onRoll(b *Bot, message *tgbotapi.Message) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 	}
 }
 
@@ -63,7 +63,7 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 
 	files, err := filepath.Glob(filepath.Join(b.ComicPath, "*.epub"))
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	if files == nil {
@@ -82,12 +82,12 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 	b.logger.Infof("send comic:[%s]{%s}", getMsgTitle(message), strconv.Quote(file))
 	msgSent, err := b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	data, err := json.Marshal(msgSent)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	b.putQueue(data, tgDeleteTube)
@@ -102,12 +102,12 @@ func onPixivWithArgs(args string, b *Bot, message *tgbotapi.Message) {
 	msg.ReplyToMessageID = message.MessageID
 	msgSent, err := b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	data, err := json.Marshal(msgSent)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	b.putQueue(data, tgDeleteTube)
@@ -116,7 +116,7 @@ func onPixivWithArgs(args string, b *Bot, message *tgbotapi.Message) {
 func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 	files, err := filepath.Glob(filepath.Join(b.PixivPath, "*"))
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 	if files == nil {
@@ -131,7 +131,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 
 	pid, err := strconv.ParseUint(strings.Split(fileName, "_")[0], 10, 0)
 	if err != nil {
-		b.logger.Errorf("parse pid from file name failed: %+v", err)
+		b.logger.Errorf("parse pid from file name failed: %s", err)
 		return
 	}
 
@@ -140,7 +140,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 
 	err = mw.ReadImage(filePath)
 	if err != nil {
-		b.logger.Errorf("read image failed: %+v", err)
+		b.logger.Errorf("read image failed: %s", err)
 		return
 	}
 	width := mw.GetImageWidth()
@@ -148,7 +148,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 
 	err = mw.ResizeImage(640, 640*height/width, 0, 1)
 	if err != nil {
-		b.logger.Errorf("resize image failed: %+v", err)
+		b.logger.Errorf("resize image failed: %s", err)
 		return
 	}
 
@@ -169,6 +169,6 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 
 	_, err = b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("send pixiv failed: %+v", err)
+		b.logger.Errorf("send pixiv failed: %s", err)
 	}
 }

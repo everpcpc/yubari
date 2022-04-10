@@ -38,7 +38,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	}
 
 	if err != nil {
-		b.logger.Debugf("%+v", err)
+		b.logger.Debugf("%s", err)
 		callbackText = err.Error()
 	} else {
 		callbackText = reaction + " " + _id + "!"
@@ -47,7 +47,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
 	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 	}
 }
 
@@ -71,7 +71,7 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	case "like":
 		conn, err := b.Queue.Get()
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			callbackText = "get btd error: " + err.Error()
 			break
 		}
@@ -86,13 +86,13 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			Text:      newText,
 		})
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			callbackText = "marshal message error: " + err.Error()
 			break
 		}
 		err = conn.Use(tgPixivTube)
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			callbackText = "use tube error: " + err.Error()
 			break
 		}
@@ -119,7 +119,7 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
 	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 	}
 
 	updateTextMsg := tgbotapi.NewEditMessageText(

@@ -64,11 +64,11 @@ type Bot struct {
 func NewBot(cfg *Config) (b *Bot, err error) {
 	bot, err := tgbotapi.NewBotAPI(cfg.Token)
 	if err != nil {
-		return nil, fmt.Errorf("tg bot init failed: %+v", err)
+		return nil, fmt.Errorf("tg bot init failed: %s", err)
 	}
 	delay, err := time.ParseDuration(cfg.DeleteDelay)
 	if err != nil {
-		return nil, fmt.Errorf("delete delay error: %+v", err)
+		return nil, fmt.Errorf("delete delay error: %s", err)
 	}
 
 	b = &Bot{
@@ -111,13 +111,13 @@ func (b *Bot) WithMeilisearch(meili *meilisearch.Client) *Bot {
 func (b *Bot) putQueue(msg []byte, tube string) {
 	conn, err := b.Queue.Get()
 	if err != nil {
-		b.logger.Errorf("%+v: %s", err, string(msg))
+		b.logger.Errorf("%s: %s", err, string(msg))
 		return
 	}
 	conn.Use(tube)
 	_, err = conn.Put(msg, 1, b.DeleteDelay, time.Minute)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 		return
 	}
 }
@@ -177,7 +177,7 @@ func (b *Bot) SendPixivCandidate(target int64, id uint64) {
 	msg.DisableNotification = true
 	_, err := b.Client.Send(msg)
 	if err != nil {
-		b.logger.Errorf("%+v", err)
+		b.logger.Errorf("%s", err)
 	}
 }
 
@@ -186,7 +186,7 @@ func (b *Bot) startDownloadPixiv() {
 	for {
 		conn, err := b.Queue.Dial()
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -199,10 +199,10 @@ func (b *Bot) startDownloadPixiv() {
 		msg := &DownloadPixiv{}
 		err = json.Unmarshal(job.Body, msg)
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			err = conn.Bury(job.ID, 0)
 			if err != nil {
-				b.logger.Errorf("%+v", err)
+				b.logger.Errorf("%s", err)
 			}
 			time.Sleep(3 * time.Second)
 			continue
@@ -210,7 +210,7 @@ func (b *Bot) startDownloadPixiv() {
 
 		sizes, err := pixiv.Download(msg.PixivID, b.PixivPath)
 		if err != nil {
-			b.logger.Errorf("failed downloading pixiv %d_p%d: %+v", msg.PixivID, err)
+			b.logger.Errorf("failed downloading pixiv %d: %s", msg.PixivID, err)
 			conn.Release(job.ID, 0, 10*time.Second)
 			b.Queue.Release(conn, false)
 			continue
@@ -237,7 +237,7 @@ func (b *Bot) startDownloadPixiv() {
 
 		err = conn.Delete(job.ID)
 		if err != nil {
-			b.logger.Errorf("delete job error: %+v", err)
+			b.logger.Errorf("delete job error: %s", err)
 			time.Sleep(3 * time.Second)
 		}
 		b.Queue.Release(conn, false)
@@ -249,7 +249,7 @@ func (b *Bot) startDeleteMessage() {
 	for {
 		conn, err := b.Queue.Dial()
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -264,14 +264,14 @@ func (b *Bot) startDeleteMessage() {
 			var err error
 			defer func() {
 				if err != nil {
-					b.logger.Errorf("%+v", err)
+					b.logger.Errorf("%s", err)
 					if e := conn.Bury(job.ID, 0); e != nil {
-						b.logger.Errorf("%+v", err)
+						b.logger.Errorf("%s", err)
 					}
 					time.Sleep(3 * time.Second)
 				} else {
 					if e := conn.Delete(job.ID); e != nil {
-						b.logger.Errorf("%+v", err)
+						b.logger.Errorf("%s", err)
 						time.Sleep(3 * time.Second)
 					}
 				}
@@ -308,7 +308,7 @@ func (b *Bot) Start() {
 	for {
 		updates, err := b.Client.GetUpdatesChan(u)
 		if err != nil {
-			b.logger.Errorf("%+v", err)
+			b.logger.Errorf("%s", err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -380,7 +380,7 @@ func (b *Bot) Start() {
 				case "search":
 					go onSearch(b, message)
 				default:
-					b.logger.Infof("ignore unknown cmd: %+v", message.Command())
+					b.logger.Infof("ignore unknown cmd: %s", message.Command())
 					continue
 				}
 			} else {
@@ -430,7 +430,7 @@ func (b *Bot) setChatAction(chatID int64, action string) error {
 	a := tgbotapi.NewChatAction(chatID, action)
 	_, err := b.Client.Send(a)
 	if err != nil {
-		b.logger.Errorf("set action %s failed: %+v", action, err)
+		b.logger.Errorf("set action %s failed: %s", action, err)
 	}
 	return err
 }

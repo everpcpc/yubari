@@ -76,7 +76,7 @@ func main() {
 
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
-		logger.Fatalf("telegramBot error: %+v", err)
+		logger.Fatalf("telegramBot error: %s", err)
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithMeilisearch(meili)
 	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath)
