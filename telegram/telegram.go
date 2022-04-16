@@ -218,10 +218,12 @@ func (b *Bot) startDownloadPixiv() {
 
 		for i := range sizes {
 			if sizes[i] == 0 {
-				continue
+				b.logger.Debugf("pixiv %d_p%d: exists", msg.PixivID, i)
+				msg.Text += fmt.Sprintf("\n🈶 p%d - %s", i, ByteCountIEC(sizes[i]))
+			} else {
+				b.logger.Debugf("download pixiv %d_p%d: %s", msg.PixivID, i, ByteCountIEC(sizes[i]))
+				msg.Text += fmt.Sprintf("\n✅ p%d - %s", i, ByteCountIEC(sizes[i]))
 			}
-			b.logger.Debugf("download pixiv %d_p%d: %s", msg.PixivID, i, ByteCountIEC(sizes[i]))
-			msg.Text += fmt.Sprintf("\n✅ p%d - %s", i, ByteCountIEC(sizes[i]))
 		}
 
 		updateTextMsg := tgbotapi.NewEditMessageText(
