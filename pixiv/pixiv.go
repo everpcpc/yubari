@@ -1,6 +1,7 @@
 package pixiv
 
 import (
+	"net/url"
 	"regexp"
 	"strconv"
 	"time"
@@ -10,10 +11,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	proxy *url.URL
+)
+
 type Config struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	ImgPath  string `json:"imgPath"`
+	Proxy    string `json:"proxy"`
 }
 
 type Bot struct {
@@ -50,6 +56,13 @@ func (b *Bot) init() error {
 		}
 		return b.redis.HMSet(tokenKey, v).Err()
 	})
+	if b.config.Proxy != "" {
+		if u, err := url.Parse(b.config.Proxy); err != nil {
+			return err
+		} else {
+			proxy = u
+		}
+	}
 
 	var account *pixiv.Account
 	var err error
@@ -125,5 +138,8 @@ func ParseURL(s string) uint64 {
 
 func Download(id uint64, dir string) ([]int64, error) {
 	papp := pixiv.NewApp().WithDownloadTimeout(time.Minute)
+	if proxy != nil {
+		papp = papp.WithDownloadProxy(proxy)
+	}
 	return papp.Download(id, dir)
 }

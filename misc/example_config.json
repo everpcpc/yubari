@@ -20,7 +20,8 @@
   "pixiv": {
     "username": "",
     "password": "",
-    "ImgPath": ""
+    "imgPath": "",
+    "proxy": ""
   },
   "rss": {
     "feeds": [
