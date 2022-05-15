@@ -10,7 +10,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/ikool-cn/gobeanstalk-connection-pool v0.0.0-20170511054316-6c091c21a74e
-	github.com/mattn/go-mastodon v0.0.4
+	github.com/mattn/go-mastodon v0.0.5-0.20220503131638-87278bda2ea5
 	github.com/meilisearch/meilisearch-go v0.19.1
 	github.com/mmcdole/gofeed v1.1.3
 	github.com/sirupsen/logrus v1.8.1
@@ -27,7 +27,7 @@ require (
 	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/gorilla/websocket v1.4.0 // indirect
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
