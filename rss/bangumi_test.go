@@ -1,24 +1,21 @@
 package rss
 
 import (
-	"testing"
-
 	"github.com/mmcdole/gofeed"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSubjectTitle(t *testing.T) {
+func TestGetSubjectTitle(t require.TestingT) {
 	ret, err := getBangumiSubjectTitle(648826, "ep")
 	require.Nil(t, err)
-	assert.Equal(t, "3月のライオン", ret)
+	require.Equal(t, "3月のライオン", ret)
 
 	ret, err = getBangumiSubjectTitle(86517, "subject")
 	require.Nil(t, err)
-	assert.Equal(t, "放課後のプレアデス", ret)
+	require.Equal(t, "放課後のプレアデス", ret)
 }
 
-func TestGetBangumiUpdate(t *testing.T) {
+func TestGetBangumiUpdate(t require.TestingT) {
 	item := &gofeed.Item{
 		Title:       "读过 先生は恋を教えられない  第45话",
 		Description: "\n读过 <a href=\"https://bgm.tv/subject/250377\" class=\"l\">先生は恋を教えられない</a>  第45话",
@@ -30,7 +27,7 @@ func TestGetBangumiUpdate(t *testing.T) {
 	}
 	output, err := getBangumiUpdate(item)
 	require.Nil(t, err)
-	assert.Equal(t,
+	require.Equal(t,
 		"♪(๑ᴖ◡ᴖ๑)♪ 读过「先生は恋を教えられない」第45话\nhttps://bgm.tv/subject/250377\n#Bangumi",
 		output,
 	)
