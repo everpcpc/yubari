@@ -17,7 +17,7 @@ func TestGetSubjectTitle(t *testing.T) {
 	require.Equal(t, "放課後のプレアデス", ret)
 }
 
-func TestGetBangumiUpdate(t require.TestingT) {
+func TestGetBangumiUpdate(t *testing.T) {
 	item := &gofeed.Item{
 		Title:       "读过 先生は恋を教えられない  第45话",
 		Description: "\n读过 <a href=\"https://bgm.tv/subject/250377\" class=\"l\">先生は恋を教えられない</a>  第45话",
