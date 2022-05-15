@@ -14,7 +14,7 @@ func TestStoreAndSearch(t *testing.T) {
 		Host: "http://localhost:7700",
 	})
 	health, err := client.Health()
-	fmt.println(health)
+	fmt.Println(health)
 	require.Nil(t, err)
 
 	idx := client.Index(fmt.Sprintf("test-%d", time.Now().UnixNano()))
