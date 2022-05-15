@@ -13,6 +13,9 @@ func TestStoreAndSearch(t *testing.T) {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
 		Host: "http://localhost:7700",
 	})
+	health, err := client.Health()
+	fmt.println(health)
+	require.Nil(t, err)
 
 	idx := client.Index(fmt.Sprintf("test-%d", time.Now().UnixNano()))
 
