@@ -1,11 +1,13 @@
 package rss
 
 import (
+	"testing"
+
 	"github.com/mmcdole/gofeed"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSubjectTitle(t require.TestingT) {
+func TestGetSubjectTitle(t *testing.T) {
 	ret, err := getBangumiSubjectTitle(648826, "ep")
 	require.Nil(t, err)
 	require.Equal(t, "3月のライオン", ret)

@@ -2,13 +2,14 @@ package meili
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	meilisearch "github.com/meilisearch/meilisearch-go"
 	"github.com/stretchr/testify/require"
 )
 
-func TestStoreAndSearch(t require.TestingT) {
+func TestStoreAndSearch(t *testing.T) {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
 		Host: "http://localhost:7700",
 	})
