@@ -13,6 +13,7 @@ require (
 	github.com/mattn/go-mastodon v0.0.5-0.20220503131638-87278bda2ea5
 	github.com/meilisearch/meilisearch-go v0.19.1
 	github.com/mmcdole/gofeed v1.1.3
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/net v0.0.0-20220513224357-95641704303c
@@ -37,7 +38,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 // indirect

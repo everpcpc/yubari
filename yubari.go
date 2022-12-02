@@ -74,15 +74,18 @@ func main() {
 		APIKey: cfg.Meilisearch.APIKey,
 	})
 
+	mastodonBot := mastodon.NewBot(cfg.Mastodon)
+	pixivBot, err := pixiv.NewBot(cfg.Pixiv, redisClient, logger)
+	if err != nil {
+		logger.Fatalf("pixivBot error: %s", err)
+	}
+
 	telegramBot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
 		logger.Fatalf("telegramBot error: %s", err)
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithMeilisearch(meili)
-	telegramBot = telegramBot.WithPixivImg(cfg.Pixiv.ImgPath, cfg.Pixiv.TmpDir)
-
-	mastodonBot := mastodon.NewBot(cfg.Mastodon)
-	pixivBot := pixiv.NewBot(cfg.Pixiv).WithLogger(logger).WithRedis(redisClient)
+	telegramBot = telegramBot.WithPixiv(pixivBot)
 
 	rssUpdate := make(chan string)
 	logger.Debugf("bot: rss: %+v", cfg.RSS.Feeds)

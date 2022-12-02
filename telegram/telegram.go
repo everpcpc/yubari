@@ -52,14 +52,15 @@ type Bot struct {
 	AdmissionID    int64
 	WhitelistChats []int64
 	ComicPath      string
-	PixivPath      string
-	PixivTmp       string
-	DeleteDelay    time.Duration
-	Client         *tgbotapi.BotAPI
-	Queue          *bt.Pool
-	logger         *logrus.Logger
-	redis          *redis.Client
-	meili          *meilisearch.Client
+
+	DeleteDelay time.Duration
+	Client      *tgbotapi.BotAPI
+	Queue       *bt.Pool
+	logger      *logrus.Logger
+	redis       *redis.Client
+	meili       *meilisearch.Client
+
+	pixivBot *pixiv.Bot
 }
 
 func NewBot(cfg *Config) (b *Bot, err error) {
@@ -94,9 +95,8 @@ func (b *Bot) WithRedis(rds *redis.Client) *Bot {
 	return b
 }
 
-func (b *Bot) WithPixivImg(imgPath, tmpDir string) *Bot {
-	b.PixivPath = imgPath
-	b.PixivTmp = tmpDir
+func (b *Bot) WithPixiv(bot *pixiv.Bot) *Bot {
+	b.pixivBot = bot
 	return b
 }
 
@@ -210,7 +210,7 @@ func (b *Bot) startDownloadPixiv() {
 			continue
 		}
 
-		sizes, err := pixiv.Download(msg.PixivID, b.PixivPath, b.PixivTmp)
+		sizes, err := b.pixivBot.Download(msg.PixivID)
 		if err != nil {
 			b.logger.Errorf("failed downloading pixiv %d: %s", msg.PixivID, err)
 			conn.Release(job.ID, 0, 10*time.Second)
@@ -421,10 +421,7 @@ func (b *Bot) probate(_type, _id string) error {
 			filepath.Join(b.ComicPath, "probation", fileName),
 		)
 	case "pixiv":
-		return os.Rename(
-			filepath.Join(b.PixivPath, _id),
-			filepath.Join(b.PixivPath, "probation", _id),
-		)
+		return b.pixivBot.Probate(_id)
 	default:
 		return fmt.Errorf("prohibit unkown type")
 	}

@@ -1,13 +1,17 @@
 package pixiv
 
 import (
+	"math/rand"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/everpcpc/pixiv"
 	"github.com/go-redis/redis"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,11 +31,30 @@ type Bot struct {
 	redis  *redis.Client
 	logger *logrus.Logger
 	config *Config
+	papp   *pixiv.AppPixivAPI
 }
 
-func NewBot(cfg *Config) *Bot {
-	b := &Bot{config: cfg}
-	return b
+func NewBot(cfg *Config, redisClient *redis.Client, logger *logrus.Logger) (*Bot, error) {
+	b := &Bot{
+		redis:  redisClient,
+		logger: logger,
+		config: cfg,
+	}
+
+	if err := b.init(); err != nil {
+		return nil, err
+	}
+
+	papp := pixiv.NewApp().WithDownloadTimeout(2 * time.Minute).WithTmpdir(cfg.TmpDir)
+	if cfg.Proxy != "" {
+		if u, err := url.Parse(cfg.Proxy); err != nil {
+			return nil, err
+		} else {
+			papp = papp.WithDownloadProxy(u)
+		}
+	}
+	b.papp = papp
+	return b, nil
 }
 
 func (b *Bot) WithLogger(logger *logrus.Logger) *Bot {
@@ -81,13 +104,9 @@ func (b *Bot) init() error {
 }
 
 func (b *Bot) StartFollow(ttl int, output chan uint64) {
-	if err := b.init(); err != nil {
-		b.logger.Fatal(err)
-	}
 	if ttl < 10 {
 		ttl = 10
 	}
-	papp := pixiv.NewApp()
 	ticker := time.NewTicker(time.Duration(ttl) * time.Second)
 	maxIDKey := "pixiv:" + b.config.Username + ":follow"
 	for {
@@ -99,7 +118,7 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 			continue
 		}
 
-		illusts, _, err := papp.IllustFollow("public", 0)
+		illusts, _, err := b.papp.IllustFollow("public", 0)
 		if err != nil {
 			b.logger.Error(err)
 			continue
@@ -120,6 +139,33 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 	}
 }
 
+func (b *Bot) Download(id uint64) ([]int64, error) {
+	return b.papp.Download(id, b.config.ImgPath)
+}
+
+func (b *Bot) RandomPic() (filePath string, fileName string, err error) {
+	files, err := filepath.Glob(filepath.Join(b.config.ImgPath, "*"))
+	if err != nil {
+		err = errors.Wrap(err, "glob")
+		return
+	}
+	if files == nil {
+		err = errors.New("no files")
+		return
+	}
+	rand.Seed(time.Now().UnixNano())
+	filePath = files[rand.Intn(len(files))]
+	fileName = filepath.Base(filePath)
+	return
+}
+
+func (b *Bot) Probate(_id string) error {
+	return os.Rename(
+		filepath.Join(b.config.ImgPath, _id),
+		filepath.Join(b.config.ImgPath, "probation", _id),
+	)
+}
+
 func URLWithID(id uint64) string {
 	return "https://www.pixiv.net/artworks/" + strconv.FormatUint(id, 10)
 }
@@ -135,12 +181,4 @@ func ParseURL(s string) uint64 {
 		return 0
 	}
 	return r
-}
-
-func Download(id uint64, dir, tmp string) ([]int64, error) {
-	papp := pixiv.NewApp().WithDownloadTimeout(2 * time.Minute).WithTmpdir(tmp)
-	if proxy != nil {
-		papp = papp.WithDownloadProxy(proxy)
-	}
-	return papp.Download(id, dir)
 }

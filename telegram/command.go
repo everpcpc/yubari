@@ -114,18 +114,11 @@ func onPixivWithArgs(args string, b *Bot, message *tgbotapi.Message) {
 }
 
 func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
-	files, err := filepath.Glob(filepath.Join(b.PixivPath, "*"))
+	filePath, fileName, err := b.pixivBot.RandomPic()
 	if err != nil {
-		b.logger.Errorf("%s", err)
+		b.logger.Errorf("random pixiv error: %s", err)
 		return
 	}
-	if files == nil {
-		b.logger.Error("find no pic")
-		return
-	}
-	rand.Seed(time.Now().UnixNano())
-	filePath := files[rand.Intn(len(files))]
-	fileName := filepath.Base(filePath)
 
 	b.logger.Infof("send pixiv:[%s]{%s}", getMsgTitle(message), strconv.Quote(filePath))
 

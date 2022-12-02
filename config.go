@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"yubari/mastodon"
 	"yubari/meili"
@@ -41,7 +41,7 @@ func ReadConfig(cfgfile *string) (cfg *Config) {
 		Telegram:    &telegram.Config{},
 		Meilisearch: &meili.Config{},
 	}
-	file, e := ioutil.ReadFile(*cfgfile)
+	file, e := os.ReadFile(*cfgfile)
 	if e != nil {
 		logger.Fatalf("Configfile error (%v)\n", e)
 	}
