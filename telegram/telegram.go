@@ -53,6 +53,7 @@ type Bot struct {
 	WhitelistChats []int64
 	ComicPath      string
 	PixivPath      string
+	PixivTmp       string
 	DeleteDelay    time.Duration
 	Client         *tgbotapi.BotAPI
 	Queue          *bt.Pool
@@ -93,8 +94,9 @@ func (b *Bot) WithRedis(rds *redis.Client) *Bot {
 	return b
 }
 
-func (b *Bot) WithPixivImg(imgPath string) *Bot {
+func (b *Bot) WithPixivImg(imgPath, tmpDir string) *Bot {
 	b.PixivPath = imgPath
+	b.PixivTmp = tmpDir
 	return b
 }
 
@@ -208,7 +210,7 @@ func (b *Bot) startDownloadPixiv() {
 			continue
 		}
 
-		sizes, err := pixiv.Download(msg.PixivID, b.PixivPath)
+		sizes, err := pixiv.Download(msg.PixivID, b.PixivPath, b.PixivTmp)
 		if err != nil {
 			b.logger.Errorf("failed downloading pixiv %d: %s", msg.PixivID, err)
 			conn.Release(job.ID, 0, 10*time.Second)

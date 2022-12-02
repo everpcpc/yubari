@@ -19,6 +19,7 @@ type Config struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	ImgPath  string `json:"imgPath"`
+	TmpDir   string `json:"tmpDir"`
 	Proxy    string `json:"proxy"`
 }
 
@@ -136,8 +137,8 @@ func ParseURL(s string) uint64 {
 	return r
 }
 
-func Download(id uint64, dir string) ([]int64, error) {
-	papp := pixiv.NewApp().WithDownloadTimeout(time.Minute)
+func Download(id uint64, dir, tmp string) ([]int64, error) {
+	papp := pixiv.NewApp().WithDownloadTimeout(time.Minute).WithTmpdir(tmp)
 	if proxy != nil {
 		papp = papp.WithDownloadProxy(proxy)
 	}

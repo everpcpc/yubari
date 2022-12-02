@@ -52,7 +52,7 @@ func checkPixiv(b *Bot, message *tgbotapi.Message) {
 	b.setChatAction(message.Chat.ID, "typing")
 
 	var callbackText string
-	sizes, err := pixiv.Download(id, b.PixivPath)
+	sizes, err := pixiv.Download(id, b.PixivPath, b.PixivTmp)
 	if err != nil {
 		callbackText += fmt.Sprintf("😕 download error: %s", err)
 	} else {
