@@ -21,6 +21,7 @@
     "username": "",
     "password": "",
     "imgPath": "",
+    "tmpDir": "",
     "proxy": ""
   },
   "rss": {

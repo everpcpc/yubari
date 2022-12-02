@@ -96,7 +96,7 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			callbackText = "use tube error: " + err.Error()
 			break
 		}
-		_, err = conn.Put(data, 1, 10*time.Second, 10*time.Minute)
+		_, err = conn.Put(data, 1, 5*time.Second, 10*time.Minute)
 		if err != nil {
 			callbackText = fmt.Sprintf("queue pixiv error: %s", err)
 		} else {
