@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	meilisearch "github.com/meilisearch/meilisearch-go"
 	"github.com/sirupsen/logrus"
@@ -140,7 +140,7 @@ func (b *Bot) Send(chat int64, msg string) (tgbotapi.Message, error) {
 	return b.Client.Send(message)
 }
 
-func (b *Bot) GetUserName(chatID int64, userID int) (name string, err error) {
+func (b *Bot) GetUserName(chatID int64, userID int64) (name string, err error) {
 	cacheKey := fmt.Sprintf("tg:user:%d", userID)
 	cache, err := b.redis.Get(cacheKey).Result()
 	if err == nil {
@@ -151,9 +151,11 @@ func (b *Bot) GetUserName(chatID int64, userID int) (name string, err error) {
 			return
 		}
 	}
-	member, err := b.Client.GetChatMember(tgbotapi.ChatConfigWithUser{
-		ChatID: chatID,
-		UserID: userID,
+	member, err := b.Client.GetChatMember(tgbotapi.GetChatMemberConfig{
+		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
+			ChatID: chatID,
+			UserID: userID,
+		},
 	})
 	if err != nil {
 		return
@@ -291,12 +293,11 @@ func (b *Bot) startDeleteMessage() {
 				err = fmt.Errorf("err msg with no chat: %+v", msg)
 				return
 			}
-			delMsg := tgbotapi.DeleteMessageConfig{
+			b.logger.Infof("del:[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
+			_, err = b.Client.Send(tgbotapi.DeleteMessageConfig{
 				ChatID:    msg.Chat.ID,
 				MessageID: msg.MessageID,
-			}
-			b.logger.Infof("del:[%s]{%s}", getMsgTitle(msg), strconv.Quote(msg.Text))
-			_, err = b.Client.DeleteMessage(delMsg)
+			})
 
 		}()
 		b.Queue.Release(conn, false)
@@ -309,96 +310,89 @@ func (b *Bot) Start() {
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 30
-	for {
-		updates, err := b.Client.GetUpdatesChan(u)
-		if err != nil {
-			b.logger.Errorf("%s", err)
-			time.Sleep(3 * time.Second)
+	updates := b.Client.GetUpdatesChan(u)
+	var message *tgbotapi.Message
+	for update := range updates {
+		if update.Message != nil {
+			message = update.Message
+		} else if update.EditedMessage != nil {
+			message = update.EditedMessage
+		} else if update.CallbackQuery != nil {
+			b.logger.Infof(
+				"recv:(%d)[%s]reaction:{%s}",
+				update.CallbackQuery.Message.Chat.ID,
+				update.CallbackQuery.From.String(),
+				update.CallbackQuery.Data,
+			)
+			data := strings.SplitN(update.CallbackQuery.Data, ":", 2)
+			switch data[0] {
+			case "comic", "pic", "pixiv":
+				go onReaction(b, update.CallbackQuery)
+			case "pixivCandidate":
+				if !b.isAuthedChat(update.CallbackQuery.Message.Chat) {
+					b.logger.Warning("reaction from illegal chat, ignore")
+					break
+				}
+				go onReactionCandidate(b, update.CallbackQuery)
+			case "search":
+				go onReactionSearch(b, update.CallbackQuery)
+			default:
+			}
+			continue
+		} else {
 			continue
 		}
-		var message *tgbotapi.Message
-		for update := range updates {
-			if update.Message != nil {
-				message = update.Message
-			} else if update.EditedMessage != nil {
-				message = update.EditedMessage
-			} else if update.CallbackQuery != nil {
-				b.logger.Infof(
-					"recv:(%d)[%s]reaction:{%s}",
-					update.CallbackQuery.Message.Chat.ID,
-					update.CallbackQuery.From.String(),
-					update.CallbackQuery.Data,
-				)
-				data := strings.SplitN(update.CallbackQuery.Data, ":", 2)
-				switch data[0] {
-				case "comic", "pic", "pixiv":
-					go onReaction(b, update.CallbackQuery)
-				case "pixivCandidate":
-					if !b.isAuthedChat(update.CallbackQuery.Message.Chat) {
-						b.logger.Warning("reaction from illegal chat, ignore")
-						break
-					}
-					go onReactionCandidate(b, update.CallbackQuery)
-				case "search":
-					go onReactionSearch(b, update.CallbackQuery)
-				default:
-				}
-				continue
-			} else {
-				continue
-			}
 
-			if !b.checkInWhitelist(message.Chat.ID) {
+		if !b.checkInWhitelist(message.Chat.ID) {
+			continue
+		}
+		if message.Chat.IsGroup() {
+			b.logger.Infof(
+				"recv:(%d)[%s:%s]{%s}",
+				message.Chat.ID,
+				message.Chat.Title,
+				message.From.String(),
+				strconv.Quote(message.Text))
+		} else {
+			b.logger.Infof(
+				"recv:(%d)[%s]{%s}",
+				message.Chat.ID,
+				message.From.String(),
+				strconv.Quote(message.Text),
+			)
+		}
+		if message.IsCommand() {
+			switch message.Command() {
+			case "start":
+				go onStart(b, message)
+			case "roll":
+				go onRoll(b, message)
+			case "comic":
+				go onComic(b, message)
+			case "pixiv":
+				args := message.CommandArguments()
+				if args != "" {
+					go onPixivWithArgs(args, b, message)
+				} else {
+					go onPixivNoArgs(b, message)
+				}
+			case "search":
+				go onSearch(b, message)
+			default:
+				b.logger.Infof("ignore unknown cmd: %s", message.Command())
 				continue
 			}
-			if message.Chat.IsGroup() {
-				b.logger.Infof(
-					"recv:(%d)[%s:%s]{%s}",
-					message.Chat.ID,
-					message.Chat.Title,
-					message.From.String(),
-					strconv.Quote(message.Text))
-			} else {
-				b.logger.Infof(
-					"recv:(%d)[%s]{%s}",
-					message.Chat.ID,
-					message.From.String(),
-					strconv.Quote(message.Text),
-				)
+		} else {
+			if message.Text == "" {
+				continue
 			}
-			if message.IsCommand() {
-				switch message.Command() {
-				case "start":
-					go onStart(b, message)
-				case "roll":
-					go onRoll(b, message)
-				case "comic":
-					go onComic(b, message)
-				case "pixiv":
-					args := message.CommandArguments()
-					if args != "" {
-						go onPixivWithArgs(args, b, message)
-					} else {
-						go onPixivNoArgs(b, message)
-					}
-				case "search":
-					go onSearch(b, message)
-				default:
-					b.logger.Infof("ignore unknown cmd: %s", message.Command())
-					continue
-				}
-			} else {
-				if message.Text == "" {
-					continue
-				}
-				go checkRepeat(b, message)
-				go checkPixiv(b, message)
-				go checkSave(b, message)
-			}
+			go checkRepeat(b, message)
+			go checkPixiv(b, message)
+			go checkSave(b, message)
 		}
-		b.logger.Warning("tg bot restarted.")
-		time.Sleep(3 * time.Second)
 	}
+	b.logger.Warning("tg bot restarted.")
+	time.Sleep(3 * time.Second)
 }
 
 func (b *Bot) checkInWhitelist(id int64) bool {
@@ -429,7 +423,7 @@ func (b *Bot) probate(_type, _id string) error {
 
 func (b *Bot) setChatAction(chatID int64, action string) error {
 	a := tgbotapi.NewChatAction(chatID, action)
-	_, err := b.Client.Send(a)
+	_, err := b.Client.Request(a)
 	if err != nil {
 		b.logger.Errorf("set action %s failed: %s", action, err)
 	}

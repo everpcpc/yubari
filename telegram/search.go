@@ -8,7 +8,7 @@ import (
 	"time"
 	"yubari/meili"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	meilisearch "github.com/meilisearch/meilisearch-go"
 )
 
@@ -58,7 +58,7 @@ func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, 
 	}
 	for i, hit := range hits {
 		t := time.Unix(hit.Date, 0)
-		author, err := b.GetUserName(chatID, int(hit.User))
+		author, err := b.GetUserName(chatID, hit.User)
 		if err != nil {
 			b.logger.Warningf("get username error: %s", err)
 		}
@@ -105,19 +105,17 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 
 	var reply string
 	defer func() {
-		callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, reply)
-		_, err = b.Client.AnswerCallbackQuery(callbackMsg)
+		_, err = b.Client.Request(tgbotapi.NewCallback(callbackQuery.ID, reply))
 		if err != nil {
 			b.logger.Errorf("answer callback error: %s", err)
 		}
 	}()
 
 	if from < 0 {
-		delMsg := tgbotapi.DeleteMessageConfig{
-			ChatID:    callbackQuery.Message.Chat.ID,
-			MessageID: callbackQuery.Message.MessageID,
-		}
-		_, err = b.Client.DeleteMessage(delMsg)
+		_, err = b.Client.Send(tgbotapi.NewDeleteMessage(
+			callbackQuery.Message.Chat.ID,
+			callbackQuery.Message.MessageID,
+		))
 		if err != nil {
 			reply = fmt.Sprintf("delete error: %s", err)
 		} else {

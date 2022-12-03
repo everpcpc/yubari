@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
@@ -26,11 +26,10 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 			)
 			_, err = b.Client.Send(msg)
 		} else {
-			delMsg := tgbotapi.DeleteMessageConfig{
-				ChatID:    callbackQuery.Message.Chat.ID,
-				MessageID: callbackQuery.Message.MessageID,
-			}
-			_, err = b.Client.DeleteMessage(delMsg)
+			_, err = b.Client.Send(tgbotapi.NewDeleteMessage(
+				callbackQuery.Message.Chat.ID,
+				callbackQuery.Message.MessageID,
+			))
 			if err == nil {
 				err = b.probate(_type, _id)
 			}
@@ -44,8 +43,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackText = reaction + " " + _id + "!"
 	}
 
-	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
+	_, err = b.Client.Request(tgbotapi.NewCallback(callbackQuery.ID, callbackText))
 	if err != nil {
 		b.logger.Errorf("%s", err)
 	}
@@ -116,8 +114,7 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	callbackMsg := tgbotapi.NewCallback(callbackQuery.ID, callbackText)
-	_, err = b.Client.AnswerCallbackQuery(callbackMsg)
+	_, err = b.Client.Request(tgbotapi.NewCallback(callbackQuery.ID, callbackText))
 	if err != nil {
 		b.logger.Errorf("%s", err)
 	}
@@ -163,7 +160,7 @@ func buildLikeButton(rds *redis.Client, _type, _id string) tgbotapi.InlineKeyboa
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
-func saveReaction(rds *redis.Client, key string, user int) (_type, _id, reaction string, err error) {
+func saveReaction(rds *redis.Client, key string, user int64) (_type, _id, reaction string, err error) {
 	token := strings.Split(key, ":")
 	if len(token) != 3 {
 		err = fmt.Errorf("react data error: %s", key)
@@ -176,8 +173,8 @@ func saveReaction(rds *redis.Client, key string, user int) (_type, _id, reaction
 	pipe := rds.Pipeline()
 	switch reaction {
 	case "like":
-		likeCount := pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
-		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
+		likeCount := pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.FormatInt(user, 10))
+		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.FormatInt(user, 10))
 		_, err = pipe.Exec()
 		if err == nil {
 			if likeCount.Val()+dissCount.Val() == 0 {
@@ -185,8 +182,8 @@ func saveReaction(rds *redis.Client, key string, user int) (_type, _id, reaction
 			}
 		}
 	case "diss":
-		dissCount := pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
-		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		dissCount := pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.FormatInt(user, 10))
+		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.FormatInt(user, 10))
 		_, err = pipe.Exec()
 		if err == nil {
 			if likeCount.Val()+dissCount.Val() == 0 {
@@ -194,8 +191,8 @@ func saveReaction(rds *redis.Client, key string, user int) (_type, _id, reaction
 			}
 		}
 	case "reset":
-		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.Itoa(user))
-		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.Itoa(user))
+		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.FormatInt(user, 10))
+		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.FormatInt(user, 10))
 		_, err = pipe.Exec()
 		if err == nil {
 			if likeCount.Val()+dissCount.Val() == 0 {

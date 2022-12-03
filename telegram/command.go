@@ -10,7 +10,7 @@ import (
 	"time"
 	"yubari/pixiv"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -145,7 +145,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		return
 	}
 
-	msg := tgbotapi.NewPhotoUpload(message.Chat.ID, tgbotapi.FileBytes{
+	msg := tgbotapi.NewPhoto(message.Chat.ID, tgbotapi.FileBytes{
 		Name:  fileName,
 		Bytes: mw.GetImageBlob(),
 	})
@@ -153,7 +153,6 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		"<a href=\"%s\">pixiv:%d</a>(%dx%d)",
 		pixiv.URLWithID(pid), pid, width, height,
 	)
-	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", fileName)
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
