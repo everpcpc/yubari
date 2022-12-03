@@ -2,6 +2,7 @@ package pixiv
 
 import (
 	"math/rand"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,10 +14,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-)
-
-var (
-	proxy *url.URL
 )
 
 type Config struct {
@@ -45,15 +42,26 @@ func NewBot(cfg *Config, redisClient *redis.Client, logger *logrus.Logger) (*Bot
 		return nil, err
 	}
 
-	papp := pixiv.NewApp().WithDownloadTimeout(2 * time.Minute).WithTmpdir(cfg.TmpDir)
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	downloadClient := &http.Client{
+		Timeout: 2 * time.Minute,
+	}
 	if cfg.Proxy != "" {
-		if u, err := url.Parse(cfg.Proxy); err != nil {
+		u, err := url.Parse(cfg.Proxy)
+		if err != nil {
 			return nil, err
-		} else {
-			papp = papp.WithDownloadProxy(u)
+		}
+		client.Transport = &http.Transport{
+			Proxy: http.ProxyURL(u),
+		}
+		downloadClient.Transport = &http.Transport{
+			Proxy: http.ProxyURL(u),
 		}
 	}
-	b.papp = papp
+
+	b.papp = pixiv.NewApp().WithTmpdir(cfg.TmpDir)
 	return b, nil
 }
 
@@ -80,13 +88,6 @@ func (b *Bot) init() error {
 		}
 		return b.redis.HMSet(tokenKey, v).Err()
 	})
-	if b.config.Proxy != "" {
-		if u, err := url.Parse(b.config.Proxy); err != nil {
-			return err
-		} else {
-			proxy = u
-		}
-	}
 
 	var account *pixiv.Account
 	var err error
@@ -140,51 +141,16 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 }
 
 func (b *Bot) Download(id uint64) ([]int64, error) {
-	// illust, err := b.papp.IllustDetail(id)
-	// if err != nil {
-	// 	err = errors.Wrapf(err, "illust %d detail error", id)
-	// 	return
-	// }
-	// if illust == nil {
-	// 	err = errors.Wrapf(err, "illust %d is nil", id)
-	// 	return
-	// }
-	// if illust.MetaSinglePage == nil {
-	// 	err = errors.Wrapf(err, "illust %d has no single page", id)
-	// 	return
-	// }
-
-	// var urls []string
-	// if illust.MetaSinglePage.OriginalImageURL == "" {
-	// 	for _, img := range illust.MetaPages {
-	// 		urls = append(urls, img.Images.Original)
-	// 	}
-	// } else {
-	// 	urls = append(urls, illust.MetaSinglePage.OriginalImageURL)
-	// }
-
-	// dclient := &http.Client{}
-	// if a.proxy != nil {
-	// 	dclient.Transport = &http.Transport{
-	// 		Proxy: http.ProxyURL(a.proxy),
-	// 	}
-	// }
-	// if a.timeout != 0 {
-	// 	dclient.Timeout = a.timeout
-	// }
-
-	// for _, u := range urls {
-	// 	size, e := download(dclient, u, path, filepath.Base(u), a.tmpDir, false)
-	// 	if e != nil {
-	// 		err = errors.Wrapf(e, "download url %s failed", u)
-	// 		return
-	// 	}
-	// 	sizes = append(sizes, size)
-	// }
-
-	// return
-
-	return b.papp.Download(id, b.config.ImgPath)
+	fn := func(illust *pixiv.Illust) string {
+		subdir := illust.CreateDate.Format("2006-01")
+		path := filepath.Join(b.config.ImgPath, subdir)
+		if err := os.MkdirAll(path, 0755); err != nil {
+			b.logger.Warn(err)
+			return b.config.ImgPath
+		}
+		return path
+	}
+	return b.papp.Download(id, fn)
 }
 
 func (b *Bot) RandomPic() (filePath string, fileName string, err error) {

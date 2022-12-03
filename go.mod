@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/everpcpc/chobits v0.0.0-20220404065101-4efca02f7e81
-	github.com/everpcpc/pixiv v0.0.0-20221203033246-cf15ccaaf1a0
+	github.com/everpcpc/pixiv v0.1.0
 	github.com/getsentry/sentry-go v0.15.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
