@@ -25,13 +25,13 @@ func TestStoreAndSearch(t *testing.T) {
 		Date:    123456789,
 		Content: "看需求……\nns有主机和掌机模式\nlite是阉割轻量版，只有掌机模式",
 	}
-	task, err := idx.AddDocuments(&message, "id")
+	taskInfo, err := idx.AddDocuments(&message, "id")
 	require.Nil(t, err)
 
 loop1:
 	for {
 		time.Sleep(time.Second)
-		task, err = client.GetTask(task.UID)
+		task, err := client.GetTask(taskInfo.TaskUID)
 		require.Nil(t, err)
 		switch task.Status {
 		case meilisearch.TaskStatusSucceeded:
@@ -47,7 +47,7 @@ loop1:
 		Limit: 5,
 	})
 	require.Nil(t, err)
-	require.Equal(t, int64(1), res.NbHits)
+	require.Equal(t, int64(1), res.EstimatedTotalHits)
 
 	hits, err := DecodeArticles(res.Hits)
 	require.Nil(t, err)
@@ -62,13 +62,13 @@ loop1:
 		Date:    13567890124,
 		Content: "lite是阉割轻量版，只有掌机模式",
 	}
-	task, err = idx.AddDocuments(&message2, "id")
+	taskInfo, err = idx.AddDocuments(&message2, "id")
 	require.Nil(t, err)
 
 loop2:
 	for {
 		time.Sleep(time.Second)
-		task, err = client.GetTask(task.UID)
+		task, err := client.GetTask(taskInfo.TaskUID)
 		require.Nil(t, err)
 		switch task.Status {
 		case meilisearch.TaskStatusSucceeded:
@@ -83,7 +83,7 @@ loop2:
 		Limit: 5,
 	})
 	require.Nil(t, err)
-	require.Equal(t, int64(1), res.NbHits)
+	require.Equal(t, int64(1), res.EstimatedTotalHits)
 
 	hits, err = DecodeArticles(res.Hits)
 	require.Nil(t, err)

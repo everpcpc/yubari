@@ -39,7 +39,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, buildSearchResponse(b, message.Chat.ID, res, 0))
 	msg.ParseMode = tgbotapi.ModeHTML
-	msg.ReplyMarkup = buildSearchResponseButton(res.NbHits, 0, q)
+	msg.ReplyMarkup = buildSearchResponseButton(res.EstimatedTotalHits, 0, q)
 	msg.DisableWebPagePreview = true
 
 	_, err = b.Client.Send(msg)
@@ -49,7 +49,7 @@ func onSearch(b *Bot, message *tgbotapi.Message) {
 }
 
 func buildSearchResponse(b *Bot, chatID int64, res *meilisearch.SearchResponse, from int) string {
-	total := res.NbHits
+	total := res.EstimatedTotalHits
 	respond := fmt.Sprintf(
 		"<code>[%d]</code> results in %s: \n", total, prettyDuration(res.ProcessingTimeMs))
 	hits, err := meili.DecodeArticles(res.Hits)
@@ -141,7 +141,7 @@ func onReactionSearch(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		callbackQuery.Message.MessageID,
 		buildSearchResponse(b, callbackQuery.Message.Chat.ID, res, int(from)),
 	)
-	button := buildSearchResponseButton(res.NbHits, from, string(q))
+	button := buildSearchResponseButton(res.EstimatedTotalHits, from, string(q))
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.ReplyMarkup = &button
 	msg.DisableWebPagePreview = true

@@ -140,6 +140,50 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 }
 
 func (b *Bot) Download(id uint64) ([]int64, error) {
+	// illust, err := b.papp.IllustDetail(id)
+	// if err != nil {
+	// 	err = errors.Wrapf(err, "illust %d detail error", id)
+	// 	return
+	// }
+	// if illust == nil {
+	// 	err = errors.Wrapf(err, "illust %d is nil", id)
+	// 	return
+	// }
+	// if illust.MetaSinglePage == nil {
+	// 	err = errors.Wrapf(err, "illust %d has no single page", id)
+	// 	return
+	// }
+
+	// var urls []string
+	// if illust.MetaSinglePage.OriginalImageURL == "" {
+	// 	for _, img := range illust.MetaPages {
+	// 		urls = append(urls, img.Images.Original)
+	// 	}
+	// } else {
+	// 	urls = append(urls, illust.MetaSinglePage.OriginalImageURL)
+	// }
+
+	// dclient := &http.Client{}
+	// if a.proxy != nil {
+	// 	dclient.Transport = &http.Transport{
+	// 		Proxy: http.ProxyURL(a.proxy),
+	// 	}
+	// }
+	// if a.timeout != 0 {
+	// 	dclient.Timeout = a.timeout
+	// }
+
+	// for _, u := range urls {
+	// 	size, e := download(dclient, u, path, filepath.Base(u), a.tmpDir, false)
+	// 	if e != nil {
+	// 		err = errors.Wrapf(e, "download url %s failed", u)
+	// 		return
+	// 	}
+	// 	sizes = append(sizes, size)
+	// }
+
+	// return
+
 	return b.papp.Download(id, b.config.ImgPath)
 }
 
