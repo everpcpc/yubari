@@ -149,6 +149,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		Name:  fileName,
 		Bytes: mw.GetImageBlob(),
 	})
+	msg.ParseMode = tgbotapi.ModeHTML
 	msg.Caption = fmt.Sprintf(
 		"<a href=\"%s\">pixiv:%d</a>(%dx%d)",
 		pixiv.URLWithID(pid), pid, width, height,
