@@ -46,7 +46,7 @@ func NewBot(cfg *Config, redisClient *redis.Client, logger *logrus.Logger) (*Bot
 		Timeout: 10 * time.Second,
 	}
 	downloadClient := &http.Client{
-		Timeout: 2 * time.Minute,
+		Timeout: time.Minute,
 	}
 	if cfg.Proxy != "" {
 		u, err := url.Parse(cfg.Proxy)
@@ -153,26 +153,34 @@ func (b *Bot) Download(id uint64) ([]int64, error) {
 	return b.papp.Download(id, fn)
 }
 
-func (b *Bot) RandomPic() (filePath string, fileName string, err error) {
-	files, err := filepath.Glob(filepath.Join(b.config.ImgPath, "*"))
+func (b *Bot) RandomPic() (filePath string, err error) {
+	now := time.Now()
+	current := now.Format("2006-01")
+	previous := now.AddDate(0, -1, 0).Format("2006-01")
+	currentFiles, err := filepath.Glob(filepath.Join(b.config.ImgPath, current, "*"))
 	if err != nil {
-		err = errors.Wrap(err, "glob")
+		err = errors.Wrap(err, "glob current")
 		return
 	}
+	previousFiles, err := filepath.Glob(filepath.Join(b.config.ImgPath, previous, "*"))
+	if err != nil {
+		err = errors.Wrap(err, "glob previous")
+		return
+	}
+	files := append(currentFiles, previousFiles...)
 	if files == nil {
 		err = errors.New("no files")
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
 	filePath = files[rand.Intn(len(files))]
-	fileName = filepath.Base(filePath)
 	return
 }
 
-func (b *Bot) Probate(_id string) error {
+func (b *Bot) Probate(target string) error {
 	return os.Rename(
-		filepath.Join(b.config.ImgPath, _id),
-		filepath.Join(b.config.ImgPath, "probation", _id),
+		filepath.Join(b.config.ImgPath, target),
+		filepath.Join(b.config.ImgPath, "probation", filepath.Base(target)),
 	)
 }
 

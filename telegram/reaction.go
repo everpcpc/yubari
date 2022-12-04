@@ -3,6 +3,7 @@ package telegram
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,15 +15,15 @@ import (
 func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	var callbackText string
 
-	_type, _id, reaction, err := saveReaction(b.redis, callbackQuery.Data, callbackQuery.From.ID)
+	_type, _target, reaction, err := saveReaction(b.redis, callbackQuery.Data, callbackQuery.From.ID)
 	if err == nil {
-		diss := b.redis.SCard(buildReactionKey(_type, _id, "diss")).Val()
-		like := b.redis.SCard(buildReactionKey(_type, _id, "like")).Val()
+		diss := b.redis.SCard(buildReactionKey(_type, _target, "diss")).Val()
+		like := b.redis.SCard(buildReactionKey(_type, _target, "like")).Val()
 		if diss-like < 2 {
 			msg := tgbotapi.NewEditMessageReplyMarkup(
 				callbackQuery.Message.Chat.ID,
 				callbackQuery.Message.MessageID,
-				buildLikeButton(b.redis, _type, _id),
+				buildLikeButton(b.redis, _type, _target),
 			)
 			_, err = b.Client.Send(msg)
 		} else {
@@ -31,7 +32,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 				callbackQuery.Message.MessageID,
 			))
 			if err == nil {
-				err = b.probate(_type, _id)
+				err = b.probate(_type, _target)
 			}
 		}
 	}
@@ -40,7 +41,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		b.logger.Debugf("%s", err)
 		callbackText = err.Error()
 	} else {
-		callbackText = reaction + " " + _id + "!"
+		callbackText = reaction + " " + _target + "!"
 	}
 
 	_, err = b.Client.Request(tgbotapi.NewCallback(callbackQuery.ID, callbackText))
@@ -131,17 +132,20 @@ func onReactionCandidate(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 	}
 }
 
-func buildReactionData(_type, _id, reaction string) string {
-	return _type + ":" + _id + ":" + reaction
-}
-func buildReactionKey(_type, _id, reaction string) string {
-	return "reaction_" + buildReactionData(_type, _id, reaction)
+func buildReactionData(_type, _target, reaction string) string {
+	return _type + ":" + _target + ":" + reaction
 }
 
-func buildLikeButton(rds *redis.Client, _type, _id string) tgbotapi.InlineKeyboardMarkup {
+func buildReactionKey(_type, _target, reaction string) string {
+	if strings.Contains(_target, "/") {
+		_target = filepath.Base(_target)
+	}
+	return "reaction_" + buildReactionData(_type, _target, reaction)
+}
 
-	likeCount, _ := rds.SCard(buildReactionKey(_type, _id, "like")).Result()
-	dissCount, _ := rds.SCard(buildReactionKey(_type, _id, "diss")).Result()
+func buildLikeButton(rds *redis.Client, _type, _target string) tgbotapi.InlineKeyboardMarkup {
+	likeCount, _ := rds.SCard(buildReactionKey(_type, _target, "like")).Result()
+	dissCount, _ := rds.SCard(buildReactionKey(_type, _target, "diss")).Result()
 
 	likeText := "❤️"
 	if likeCount > 0 {
@@ -153,28 +157,28 @@ func buildLikeButton(rds *redis.Client, _type, _id string) tgbotapi.InlineKeyboa
 	}
 
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(likeText, buildReactionData(_type, _id, "like")),
-		tgbotapi.NewInlineKeyboardButtonData("♻️", buildReactionData(_type, _id, "reset")),
-		tgbotapi.NewInlineKeyboardButtonData(dissText, buildReactionData(_type, _id, "diss")),
+		tgbotapi.NewInlineKeyboardButtonData(likeText, buildReactionData(_type, _target, "like")),
+		tgbotapi.NewInlineKeyboardButtonData("♻️", buildReactionData(_type, _target, "reset")),
+		tgbotapi.NewInlineKeyboardButtonData(dissText, buildReactionData(_type, _target, "diss")),
 	)
 	return tgbotapi.NewInlineKeyboardMarkup(row)
 }
 
-func saveReaction(rds *redis.Client, key string, user int64) (_type, _id, reaction string, err error) {
+func saveReaction(rds *redis.Client, key string, user int64) (_type, _target, reaction string, err error) {
 	token := strings.Split(key, ":")
 	if len(token) != 3 {
 		err = fmt.Errorf("react data error: %s", key)
 		return
 	}
 	_type = token[0]
-	_id = token[1]
+	_target = token[1]
 	reaction = token[2]
 
 	pipe := rds.Pipeline()
 	switch reaction {
 	case "like":
-		likeCount := pipe.SAdd(buildReactionKey(_type, _id, "like"), strconv.FormatInt(user, 10))
-		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.FormatInt(user, 10))
+		likeCount := pipe.SAdd(buildReactionKey(_type, _target, "like"), strconv.FormatInt(user, 10))
+		dissCount := pipe.SRem(buildReactionKey(_type, _target, "diss"), strconv.FormatInt(user, 10))
 		_, err = pipe.Exec()
 		if err == nil {
 			if likeCount.Val()+dissCount.Val() == 0 {
@@ -182,8 +186,8 @@ func saveReaction(rds *redis.Client, key string, user int64) (_type, _id, reacti
 			}
 		}
 	case "diss":
-		dissCount := pipe.SAdd(buildReactionKey(_type, _id, "diss"), strconv.FormatInt(user, 10))
-		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.FormatInt(user, 10))
+		dissCount := pipe.SAdd(buildReactionKey(_type, _target, "diss"), strconv.FormatInt(user, 10))
+		likeCount := pipe.SRem(buildReactionKey(_type, _target, "like"), strconv.FormatInt(user, 10))
 		_, err = pipe.Exec()
 		if err == nil {
 			if likeCount.Val()+dissCount.Val() == 0 {
@@ -191,8 +195,8 @@ func saveReaction(rds *redis.Client, key string, user int64) (_type, _id, reacti
 			}
 		}
 	case "reset":
-		dissCount := pipe.SRem(buildReactionKey(_type, _id, "diss"), strconv.FormatInt(user, 10))
-		likeCount := pipe.SRem(buildReactionKey(_type, _id, "like"), strconv.FormatInt(user, 10))
+		dissCount := pipe.SRem(buildReactionKey(_type, _target, "diss"), strconv.FormatInt(user, 10))
+		likeCount := pipe.SRem(buildReactionKey(_type, _target, "like"), strconv.FormatInt(user, 10))
 		_, err = pipe.Exec()
 		if err == nil {
 			if likeCount.Val()+dissCount.Val() == 0 {

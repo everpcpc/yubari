@@ -405,17 +405,17 @@ func (b *Bot) checkInWhitelist(id int64) bool {
 	return false
 }
 
-func (b *Bot) probate(_type, _id string) error {
-	b.logger.Infof("%s: %s", _type, _id)
+func (b *Bot) probate(_type, _target string) error {
+	b.logger.Infof("%s: %s", _type, _target)
 	switch _type {
 	case "comic":
-		fileName := "nhentai.net@" + _id + ".epub"
+		fileName := "nhentai.net@" + _target + ".epub"
 		return os.Rename(
 			filepath.Join(b.ComicPath, fileName),
 			filepath.Join(b.ComicPath, "probation", fileName),
 		)
 	case "pixiv":
-		return b.pixivBot.Probate(_id)
+		return b.pixivBot.Probate(_target)
 	default:
 		return fmt.Errorf("prohibit unkown type")
 	}

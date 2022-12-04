@@ -114,11 +114,12 @@ func onPixivWithArgs(args string, b *Bot, message *tgbotapi.Message) {
 }
 
 func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
-	filePath, fileName, err := b.pixivBot.RandomPic()
+	filePath, err := b.pixivBot.RandomPic()
 	if err != nil {
 		b.logger.Errorf("random pixiv error: %s", err)
 		return
 	}
+	fileName := filepath.Base(filePath)
 
 	b.logger.Infof("send pixiv:[%s]{%s}", getMsgTitle(message), strconv.Quote(filePath))
 
@@ -154,7 +155,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		"<a href=\"%s\">pixiv:%d</a>(%dx%d)",
 		pixiv.URLWithID(pid), pid, width, height,
 	)
-	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", fileName)
+	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filePath)
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
 
