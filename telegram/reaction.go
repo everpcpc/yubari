@@ -41,7 +41,7 @@ func onReaction(b *Bot, callbackQuery *tgbotapi.CallbackQuery) {
 		b.logger.Debugf("%s", err)
 		callbackText = err.Error()
 	} else {
-		callbackText = reaction + " " + _target + "!"
+		callbackText = reaction + " " + filepath.Base(_target) + "!"
 	}
 
 	_, err = b.Client.Request(tgbotapi.NewCallback(callbackQuery.ID, callbackText))
