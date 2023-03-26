@@ -134,10 +134,10 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 			}
 			if illust.IllustAIType == pixiv.IllustAITypeAIGenerated {
 				b.logger.Infof("pixiv post:[%s](%d) (AI Generated)", illust.User.Name, illust.User.ID)
-				continue
+			} else {
+				b.logger.Infof("pixiv post:[%s](%d) %s", illust.User.Name, illust.User.ID, URLWithID(illust.ID))
+				output <- illust.ID
 			}
-			b.logger.Infof("pixiv post:[%s](%d) %s", illust.User.Name, illust.User.ID, URLWithID(illust.ID))
-			output <- illust.ID
 		}
 		if err := b.redis.Set(maxIDKey, illusts[0].ID, 0).Err(); err != nil {
 			b.logger.Error(err)
