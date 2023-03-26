@@ -128,11 +128,16 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 			continue
 		}
 		for i := range illusts {
-			if maxID >= illusts[i].ID {
+			illust := illusts[i]
+			if maxID >= illust.ID {
 				break
 			}
-			b.logger.Infof("pixiv post:[%s](%d) %s", illusts[i].User.Name, illusts[i].User.ID, URLWithID(illusts[i].ID))
-			output <- illusts[i].ID
+			if illust.IllustAIType == pixiv.IllustAITypeAIGenerated {
+				b.logger.Infof("pixiv post:[%s](%d) (AI Generated)", illust.User.Name, illust.User.ID)
+				continue
+			}
+			b.logger.Infof("pixiv post:[%s](%d) %s", illust.User.Name, illust.User.ID, URLWithID(illust.ID))
+			output <- illust.ID
 		}
 		if err := b.redis.Set(maxIDKey, illusts[0].ID, 0).Err(); err != nil {
 			b.logger.Error(err)
