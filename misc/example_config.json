@@ -9,7 +9,8 @@
     "selfID": 0,
     "whitelistChats": [],
     "comicPath": "",
-    "deleteDelay": "1h"
+    "deleteDelay": "1h",
+    "openAIKey": ""
   },
   "mastodon": {
     "server": "",

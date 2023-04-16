@@ -47,8 +47,8 @@ func onRoll(b *Bot, message *tgbotapi.Message) {
 		limit = 100
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(rand.Intn(limit)))
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🎲 "+strconv.Itoa(r.Intn(limit)))
 	msg.ReplyToMessageID = message.MessageID
 	msg.DisableNotification = true
 
@@ -71,8 +71,8 @@ func onComic(b *Bot, message *tgbotapi.Message) {
 		return
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	file := files[rand.Intn(len(files))]
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	file := files[r.Intn(len(files))]
 	number := strings.Split(strings.Split(file, "@")[1], ".")[0]
 	msg := tgbotapi.NewMessage(message.Chat.ID, "🔞 https://nhentai.net/g/"+number)
 

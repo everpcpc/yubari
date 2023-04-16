@@ -86,6 +86,10 @@ func main() {
 	}
 	telegramBot = telegramBot.WithLogger(logger).WithRedis(redisClient).WithQueue(queue).WithMeilisearch(meili)
 	telegramBot = telegramBot.WithPixiv(pixivBot)
+	if cfg.Telegram.OpenAIKey != "" {
+		logger.Debug("bot: openai: enabled")
+		telegramBot = telegramBot.WithOpenAI(cfg.Telegram.OpenAIKey)
+	}
 
 	rssUpdate := make(chan string)
 	logger.Debugf("bot: rss: %+v", cfg.RSS.Feeds)

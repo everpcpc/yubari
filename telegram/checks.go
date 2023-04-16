@@ -1,11 +1,13 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	openai "github.com/sashabaranov/go-openai"
 	"golang.org/x/net/html"
 
 	"yubari/meili"
@@ -87,5 +89,66 @@ func checkSave(b *Bot, message *tgbotapi.Message) {
 	_, err := idx.AddDocuments(&article, "id")
 	if err != nil {
 		b.logger.Errorf("save message error: %s", err)
+	}
+}
+
+func checkOpenAI(b *Bot, message *tgbotapi.Message) {
+	if !b.isAuthedChat(message.Chat) {
+		return
+	}
+
+	enabled := false
+	for _, entity := range message.Entities {
+		if !entity.IsMention() {
+			continue
+		}
+		if entity.User.ID == b.Client.Self.ID {
+			enabled = true
+			break
+		}
+	}
+	submessage := message.ReplyToMessage
+	if submessage != nil {
+		if submessage.From.ID == b.Client.Self.ID {
+			enabled = true
+		}
+	}
+	if message.Chat.IsPrivate() {
+		enabled = true
+	}
+	if !enabled {
+		return
+	}
+
+	b.setChatAction(message.Chat.ID, "typing")
+
+	chatMessages := make([]openai.ChatCompletionMessage, 0)
+	chatMessages = append(chatMessages, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: message.Text,
+	})
+	for submessage != nil {
+		chatMessages = append(chatMessages, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: submessage.Text,
+		})
+		submessage = submessage.ReplyToMessage
+	}
+	resp, err := b.ai.CreateChatCompletion(context.TODO(), openai.ChatCompletionRequest{
+		Model:    openai.GPT3Dot5Turbo,
+		Messages: chatMessages,
+	})
+	if err != nil {
+		b.logger.Errorf("openai request error: %s", err)
+		return
+	}
+	content := resp.Choices[0].Message.Content
+
+	msg := tgbotapi.NewMessage(message.Chat.ID, content)
+	msg.ReplyToMessageID = message.MessageID
+
+	_, err = b.Client.Send(msg)
+	if err != nil {
+		b.logger.Errorf("openai reply error: %s", err)
 	}
 }

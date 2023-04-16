@@ -14,6 +14,7 @@ require (
 	github.com/meilisearch/meilisearch-go v0.21.1
 	github.com/mmcdole/gofeed v1.1.3
 	github.com/pkg/errors v0.9.1
+	github.com/sashabaranov/go-openai v1.8.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/net v0.7.0

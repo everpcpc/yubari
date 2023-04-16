@@ -14,6 +14,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	bt "github.com/ikool-cn/gobeanstalk-connection-pool"
 	meilisearch "github.com/meilisearch/meilisearch-go"
+	openai "github.com/sashabaranov/go-openai"
 	"github.com/sirupsen/logrus"
 
 	"yubari/pixiv"
@@ -37,6 +38,7 @@ type Config struct {
 	WhitelistChats []int64 `json:"whitelistChats"`
 	ComicPath      string  `json:"comicPath"`
 	DeleteDelay    string  `json:"deleteDelay"`
+	OpenAIKey      string  `json:"openAIKey"`
 }
 
 type DownloadPixiv struct {
@@ -61,6 +63,7 @@ type Bot struct {
 	meili       *meilisearch.Client
 
 	pixivBot *pixiv.Bot
+	ai       *openai.Client
 }
 
 func NewBot(cfg *Config) (b *Bot, err error) {
@@ -72,7 +75,6 @@ func NewBot(cfg *Config) (b *Bot, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("delete delay error: %s", err)
 	}
-
 	b = &Bot{
 		Name:           bot.Self.UserName,
 		SelfID:         cfg.SelfID,
@@ -82,6 +84,7 @@ func NewBot(cfg *Config) (b *Bot, err error) {
 		DeleteDelay:    delay,
 		Client:         bot,
 	}
+
 	return
 }
 
@@ -107,6 +110,11 @@ func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
 
 func (b *Bot) WithMeilisearch(meili *meilisearch.Client) *Bot {
 	b.meili = meili
+	return b
+}
+
+func (b *Bot) WithOpenAI(key string) *Bot {
+	b.ai = openai.NewClient(key)
 	return b
 }
 
@@ -389,6 +397,7 @@ func (b *Bot) Start() {
 			go checkRepeat(b, message)
 			go checkPixiv(b, message)
 			go checkSave(b, message)
+			go checkOpenAI(b, message)
 		}
 	}
 	b.logger.Warning("tg bot restarted.")
