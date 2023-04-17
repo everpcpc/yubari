@@ -98,14 +98,10 @@ func checkOpenAI(b *Bot, message *tgbotapi.Message) {
 	}
 
 	enabled := false
-	for _, entity := range message.Entities {
-		if !entity.IsMention() {
-			continue
-		}
-		if entity.User.ID == b.Client.Self.ID {
-			enabled = true
-			break
-		}
+	if message.Chat.IsPrivate() {
+		enabled = true
+	} else if strings.HasPrefix(message.Text, "@yubari_bot") {
+		enabled = true
 	}
 	submessage := message.ReplyToMessage
 	if submessage != nil {
@@ -113,9 +109,7 @@ func checkOpenAI(b *Bot, message *tgbotapi.Message) {
 			enabled = true
 		}
 	}
-	if message.Chat.IsPrivate() {
-		enabled = true
-	}
+
 	if !enabled {
 		return
 	}
