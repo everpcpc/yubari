@@ -116,16 +116,20 @@ func checkOpenAI(b *Bot, message *tgbotapi.Message) {
 
 	b.setChatAction(message.Chat.ID, "typing")
 
-	chatMessages := make([]openai.ChatCompletionMessage, 0)
-	chatMessages = append(chatMessages, openai.ChatCompletionMessage{
+	m := openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
 		Content: message.Text,
-	})
+	}
+	chatMessages := []openai.ChatCompletionMessage{m}
 	for submessage != nil {
-		chatMessages = append(chatMessages, openai.ChatCompletionMessage{
+		m := openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleUser,
 			Content: submessage.Text,
-		})
+		}
+		if submessage.From.ID == b.Client.Self.ID {
+			m.Role = openai.ChatMessageRoleAssistant
+		}
+		chatMessages = append([]openai.ChatCompletionMessage{m}, chatMessages...)
 		submessage = submessage.ReplyToMessage
 	}
 	resp, err := b.ai.CreateChatCompletion(context.TODO(), openai.ChatCompletionRequest{
