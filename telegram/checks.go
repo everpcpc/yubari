@@ -136,11 +136,14 @@ func checkOpenAI(b *Bot, message *tgbotapi.Message) {
 		Model:    openai.GPT3Dot5Turbo,
 		Messages: chatMessages,
 	})
+
+	content := ""
 	if err != nil {
+		content = "😕 openai error, please try again"
 		b.logger.Errorf("openai request error: %s", err)
-		return
+	} else {
+		content = resp.Choices[0].Message.Content
 	}
-	content := resp.Choices[0].Message.Content
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, content)
 	msg.ReplyToMessageID = message.MessageID
