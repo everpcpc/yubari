@@ -133,8 +133,9 @@ func checkOpenAI(b *Bot, message *tgbotapi.Message) {
 		submessage = submessage.ReplyToMessage
 	}
 	resp, err := b.ai.CreateChatCompletion(context.TODO(), openai.ChatCompletionRequest{
-		Model:    openai.GPT3Dot5Turbo,
-		Messages: chatMessages,
+		Model:       openai.GPT3Dot5Turbo,
+		Messages:    chatMessages,
+		Temperature: 0.0,
 	})
 
 	content := ""
