@@ -93,6 +93,9 @@ func checkSave(b *Bot, message *tgbotapi.Message) {
 }
 
 func checkOpenAI(b *Bot, message *tgbotapi.Message) {
+	if b.ai == nil {
+		return
+	}
 	if !b.isAuthedChat(message.Chat) {
 		return
 	}
