@@ -15,7 +15,6 @@ import (
 )
 
 func checkRepeat(b *Bot, message *tgbotapi.Message) {
-
 	key := "tg_last_" + strconv.FormatInt(message.Chat.ID, 10)
 	flattendMsg := strings.TrimSpace(message.Text)
 	defer b.redis.LTrim(key, 0, 10)
@@ -136,7 +135,7 @@ func checkOpenAI(b *Bot, message *tgbotapi.Message) {
 		submessage = submessage.ReplyToMessage
 	}
 	resp, err := b.ai.CreateChatCompletion(context.TODO(), openai.ChatCompletionRequest{
-		Model:       openai.GPT3Dot5Turbo,
+		Model:       b.aiModel,
 		Messages:    chatMessages,
 		Temperature: 0.0,
 	})

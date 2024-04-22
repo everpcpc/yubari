@@ -32,14 +32,19 @@ var (
 )
 
 type Config struct {
-	Token          string  `json:"token"`
-	SelfID         int64   `json:"selfID"`
-	AdmissionID    int64   `json:"admissionID"`
-	WhitelistChats []int64 `json:"whitelistChats"`
-	ComicPath      string  `json:"comicPath"`
-	DeleteDelay    string  `json:"deleteDelay"`
-	OpenAIBaseURL  string  `json:"openAIBaseURL"`
-	OpenAIKey      string  `json:"openAIKey"`
+	Token          string        `json:"token"`
+	SelfID         int64         `json:"selfID"`
+	AdmissionID    int64         `json:"admissionID"`
+	WhitelistChats []int64       `json:"whitelistChats"`
+	ComicPath      string        `json:"comicPath"`
+	DeleteDelay    string        `json:"deleteDelay"`
+	OpenAI         *OpenAIConfig `json:"openAIConfig"`
+}
+
+type OpenAIConfig struct {
+	BaseURL string `json:"baseURL"`
+	Key     string `json:"key"`
+	Model   string `json:"model"`
 }
 
 type DownloadPixiv struct {
@@ -65,6 +70,7 @@ type Bot struct {
 
 	pixivBot *pixiv.Bot
 	ai       *openai.Client
+	aiModel  string
 }
 
 func NewBot(cfg *Config) (b *Bot, err error) {
@@ -114,10 +120,11 @@ func (b *Bot) WithMeilisearch(meili *meilisearch.Client) *Bot {
 	return b
 }
 
-func (b *Bot) WithOpenAI(baseURL, key string) *Bot {
-	config := openai.DefaultConfig(key)
-	config.BaseURL = baseURL
+func (b *Bot) WithOpenAI(cfg *OpenAIConfig) *Bot {
+	config := openai.DefaultConfig(cfg.Key)
+	config.BaseURL = cfg.BaseURL
 	b.ai = openai.NewClientWithConfig(config)
+	b.aiModel = cfg.Model
 	return b
 }
 
