@@ -38,6 +38,7 @@ type Config struct {
 	WhitelistChats []int64 `json:"whitelistChats"`
 	ComicPath      string  `json:"comicPath"`
 	DeleteDelay    string  `json:"deleteDelay"`
+	OpenAIBaseURL  string  `json:"openAIBaseURL"`
 	OpenAIKey      string  `json:"openAIKey"`
 }
 
@@ -113,8 +114,10 @@ func (b *Bot) WithMeilisearch(meili *meilisearch.Client) *Bot {
 	return b
 }
 
-func (b *Bot) WithOpenAI(key string) *Bot {
-	b.ai = openai.NewClient(key)
+func (b *Bot) WithOpenAI(baseURL, key string) *Bot {
+	config := openai.DefaultConfig(key)
+	config.BaseURL = baseURL
+	b.ai = openai.NewClientWithConfig(config)
 	return b
 }
 

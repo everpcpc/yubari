@@ -88,7 +88,7 @@ func main() {
 	telegramBot = telegramBot.WithPixiv(pixivBot)
 	if cfg.Telegram.OpenAIKey != "" {
 		logger.Debug("bot: openai: enabled")
-		telegramBot = telegramBot.WithOpenAI(cfg.Telegram.OpenAIKey)
+		telegramBot = telegramBot.WithOpenAI(cfg.Telegram.OpenAIBaseURL, cfg.Telegram.OpenAIKey)
 	}
 
 	rssUpdate := make(chan string)
