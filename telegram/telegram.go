@@ -38,7 +38,7 @@ type Config struct {
 	WhitelistChats []int64       `json:"whitelistChats"`
 	ComicPath      string        `json:"comicPath"`
 	DeleteDelay    string        `json:"deleteDelay"`
-	OpenAI         *OpenAIConfig `json:"openAIConfig"`
+	OpenAI         *OpenAIConfig `json:"openAI"`
 }
 
 type OpenAIConfig struct {
