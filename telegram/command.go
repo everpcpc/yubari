@@ -11,7 +11,7 @@ import (
 	"yubari/pixiv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 func onStart(b *Bot, message *tgbotapi.Message) {
@@ -140,15 +140,20 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 	width := mw.GetImageWidth()
 	height := mw.GetImageHeight()
 
-	err = mw.ResizeImage(640, 640*height/width, 0, 1)
+	err = mw.ResizeImage(640, 640*height/width, imagick.FILTER_BOX)
 	if err != nil {
 		b.logger.Errorf("resize image failed: %s", err)
 		return
 	}
 
+	blob, err := mw.GetImageBlob()
+	if err != nil {
+		b.logger.Errorf("get image blob failed: %s", err)
+		return
+	}
 	msg := tgbotapi.NewPhoto(message.Chat.ID, tgbotapi.FileBytes{
 		Name:  fileName,
-		Bytes: mw.GetImageBlob(),
+		Bytes: blob,
 	})
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.Caption = fmt.Sprintf(
