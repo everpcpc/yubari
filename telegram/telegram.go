@@ -66,7 +66,7 @@ type Bot struct {
 	Queue       *bt.Pool
 	logger      *logrus.Logger
 	redis       *redis.Client
-	meili       *meilisearch.Client
+	meili       meilisearch.ServiceManager
 
 	pixivBot *pixiv.Bot
 	ai       *openai.Client
@@ -115,7 +115,7 @@ func (b *Bot) WithQueue(queue *bt.Pool) *Bot {
 	return b
 }
 
-func (b *Bot) WithMeilisearch(meili *meilisearch.Client) *Bot {
+func (b *Bot) WithMeilisearch(meili meilisearch.ServiceManager) *Bot {
 	b.meili = meili
 	return b
 }
@@ -185,7 +185,7 @@ func (b *Bot) GetUserName(chatID int64, userID int64) (name string, err error) {
 	return
 }
 
-func (b *Bot) getIndex(message *tgbotapi.Message) *meilisearch.Index {
+func (b *Bot) getIndex(message *tgbotapi.Message) meilisearch.IndexManager {
 	return b.meili.Index(fmt.Sprintf("%s-%d", message.Chat.Type, message.Chat.ID))
 }
 

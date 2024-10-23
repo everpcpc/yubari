@@ -69,10 +69,7 @@ func main() {
 		Wait:        true,
 	}
 
-	meili := meilisearch.NewClient(meilisearch.ClientConfig{
-		Host:   cfg.Meilisearch.Host,
-		APIKey: cfg.Meilisearch.APIKey,
-	})
+	meili := meilisearch.New(cfg.Meilisearch.Host, meilisearch.WithAPIKey(cfg.Meilisearch.APIKey))
 
 	mastodonBot := mastodon.NewBot(cfg.Mastodon)
 	pixivBot, err := pixiv.NewBot(cfg.Pixiv, redisClient, logger)

@@ -10,9 +10,7 @@ import (
 )
 
 func TestStoreAndSearch(t *testing.T) {
-	client := meilisearch.NewClient(meilisearch.ClientConfig{
-		Host: "http://localhost:7700",
-	})
+	client := meilisearch.New("http://localhost:7700")
 	health, err := client.Health()
 	fmt.Println(health)
 	require.Nil(t, err)
