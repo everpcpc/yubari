@@ -166,7 +166,7 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		tags += fmt.Sprintf("#%s ", tag.Name)
 	}
 	msg.Caption = fmt.Sprintf(
-		"<a href=\"%s\">%s: %s</a>\n%s",
+		"<a href=\"%s\">%s\n%s</a>\n\n%s",
 		pixiv.URLWithID(pid),
 		illust.User.Name, illust.Title,
 		tags,
