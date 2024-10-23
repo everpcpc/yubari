@@ -1,4 +1,4 @@
-name: test
+name: ci
 
 on:
   push:
@@ -7,20 +7,18 @@ on:
     branches: [ main ]
 
 jobs:
-
-  build:
-    name: Build
+  test:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.18
-      uses: actions/setup-go@v3
+    - name: Set up Go 1.23
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.18
+        go-version: 1.23
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup Meilisearch
       run: docker run -d -p 7700:7700 getmeili/meilisearch:latest meilisearch --no-analytics
