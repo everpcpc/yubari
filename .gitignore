@@ -4,3 +4,5 @@ venv/
 *.session
 *.session-journal
 local_config.py
+
+Pipfile.lock
