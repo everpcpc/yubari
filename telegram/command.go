@@ -128,6 +128,11 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		b.logger.Errorf("parse pid from file name failed: %s", err)
 		return
 	}
+	illust, err := b.pixivBot.Get(pid)
+	if err != nil {
+		b.logger.Errorf("get pixiv illust failed: %s", err)
+		return
+	}
 
 	mw := imagick.NewMagickWand()
 	defer mw.Destroy()
@@ -156,9 +161,15 @@ func onPixivNoArgs(b *Bot, message *tgbotapi.Message) {
 		Bytes: blob,
 	})
 	msg.ParseMode = tgbotapi.ModeHTML
+	tags := ""
+	for _, tag := range illust.Tags {
+		tags += fmt.Sprintf("#%s ", tag.Name)
+	}
 	msg.Caption = fmt.Sprintf(
-		"<a href=\"%s\">pixiv:%d</a>(%dx%d)",
-		pixiv.URLWithID(pid), pid, width, height,
+		"<a href=\"%s\">%s: %s</a>\n%s",
+		pixiv.URLWithID(pid),
+		illust.User.Name, illust.Title,
+		tags,
 	)
 	msg.ReplyMarkup = buildLikeButton(b.redis, "pixiv", filePath)
 	msg.ReplyToMessageID = message.MessageID

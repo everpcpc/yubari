@@ -61,7 +61,7 @@ func NewBot(cfg *Config, redisClient *redis.Client, logger *logrus.Logger) (*Bot
 		}
 	}
 
-	b.papp = pixiv.NewApp().WithTmpdir(cfg.TmpDir)
+	b.papp = pixiv.NewApp().WithTmpdir(cfg.TmpDir).WithClient(client).WithDownloadClient(downloadClient)
 	return b, nil
 }
 
@@ -143,6 +143,10 @@ func (b *Bot) StartFollow(ttl int, output chan uint64) {
 			b.logger.Error(err)
 		}
 	}
+}
+
+func (b *Bot) Get(id uint64) (*pixiv.Illust, error) {
+	return b.papp.IllustDetail(id)
 }
 
 func (b *Bot) Download(id uint64) ([]int64, error) {
