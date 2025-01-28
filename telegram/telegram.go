@@ -401,12 +401,19 @@ func (b *Bot) Start() {
 				continue
 			}
 		} else {
+			if !b.isAuthedChat(message.Chat) {
+				continue
+			}
 			if message.Text == "" {
 				continue
 			}
-			go checkRepeat(b, message)
-			go checkPixiv(b, message)
 			go checkSave(b, message)
+			if checkRepeat(b, message) {
+				continue
+			}
+			if checkPixiv(b, message) {
+				continue
+			}
 			go checkOpenAI(b, message)
 		}
 	}
