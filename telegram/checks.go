@@ -15,6 +15,9 @@ import (
 )
 
 func checkRepeat(b *Bot, message *tgbotapi.Message) bool {
+	if strings.HasPrefix(message.Text, "@yubari_bot") {
+		return false
+	}
 	key := "tg_last_" + strconv.FormatInt(message.Chat.ID, 10)
 	flattendMsg := strings.TrimSpace(message.Text)
 	defer b.redis.LTrim(key, 0, 10)

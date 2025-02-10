@@ -408,10 +408,10 @@ func (b *Bot) Start() {
 				continue
 			}
 			go checkSave(b, message)
-			if checkRepeat(b, message) {
+			if checkPixiv(b, message) {
 				continue
 			}
-			if checkPixiv(b, message) {
+			if checkRepeat(b, message) {
 				continue
 			}
 			go checkOpenAI(b, message)
