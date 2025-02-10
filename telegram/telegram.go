@@ -407,13 +407,13 @@ func (b *Bot) Start() {
 			if message.Text == "" {
 				continue
 			}
-			go checkSave(b, message)
 			if checkPixiv(b, message) {
 				continue
 			}
 			if checkRepeat(b, message) {
 				continue
 			}
+			go checkSave(b, message)
 			go checkOpenAI(b, message)
 		}
 	}
